@@ -1,0 +1,87 @@
+server:
+  port: ${API_PORT:4000}
+
+spring:
+  profiles:
+    active: ${ENV:local}
+
+  application:
+    name: order-management-service
+    version: ${VERSION:0.0.1}
+    auth-token-header:
+      name: ${HEADER_KEY:Authorization}
+    auth-token: ${API_KEY:fdasrv34atdzbt4zeex7y}
+
+  datasource:
+    url: ${POSTGRESQL_URI:jdbc:postgresql://localhost:5432/order_management?currentSchema=public}
+    username: ${POSTGRESQL_USER:postgres}
+    password: ${POSTGRESQL_PASSWORD:abc13579}
+    hikari:
+      maximum-pool-size: ${HIKARI_POOL_SIZE:50}
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+  #    driver-class-name: org.postgresql.Driver
+  jpa:
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+    generate-ddl: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 10
+        order_inserts: true
+        order_updates: true
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  servlet:
+    multipart:
+      max-file-size: ${MAX_UPLOAD_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:100MB}
+
+security:
+  path-matcher:
+    permit-all-path-patterns:
+      - /v0/api-docs/**
+      - /v2/api-docs
+      - /v2/api-docs/**
+      - /v3/api-docs/**
+      - /swagger-resources
+      - /swagger-resources/**
+      - /webjars/**
+      - /swagger-ui.html
+      - /swagger-ui/**
+
+management:
+  health:
+    defaults:
+      enabled: false
+  endpoints:
+    enabled-by-default: false
+    health:
+      enabled: false
+    web:
+      exposure:
+        include: [ ]
+      cors:
+        allowed-origins: ${CORS_ORIGINS:*}
+        allowed-methods: ${CORS_METHODS:*}
+        allowed-headers: ${CORS_HEADERS:*}
+        allow-credentials: ${CORS_CREDENTIALS:false}
+  endpoint:
+    info:
+      enabled: false
+
+#gcp:
+#  config:
+#    credential: ${GCP_CREDENTIAL:/google/908631785165-compute.json}
+#    server-domain: ${GCP_DOMAIN:https://storage.googleapis.com}
+#  project:
+#    id: ${GCP_PROJECT_ID:order-management}
+#  bucket:
+#    id: ${GCP_BUCKET_ID:order-management}
+

@@ -1,0 +1,24 @@
+server:
+  port: ${API_PORT:4000}
+
+spring:
+  datasource:
+    url: ${POSTGRESQL_URI:jdbc:postgresql://localhost:5432/order_management?currentSchema=public}
+    username: ${POSTGRESQL_USER:postgres}
+    password: ${POSTGRESQL_PASSWORD:abc13579}
+    hikari:
+      maximum-pool-size: ${HIKARI_POOL_SIZE:50}
+    jpa:
+      show-sql: true
+      database: postgresql
+      database-platform: org.hibernate.dialect.PostgreSQLDialect
+      open-in-view: false
+      generate-ddl: false
+      hibernate:
+        ddl-auto: update
+      properties:
+        hibernate:
+        jdbc:
+        batch_size: 50
+        order_inserts: true
+        order_updates: true
