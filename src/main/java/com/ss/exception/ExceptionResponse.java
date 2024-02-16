@@ -3,6 +3,8 @@ package com.ss.exception;
 import lombok.Getter;
 import lombok.Setter;
 
+import static com.ss.exception.BadRequestError.INVALID_INPUT;
+
 @Getter
 @Setter
 public class ExceptionResponse extends RuntimeException {
@@ -16,6 +18,10 @@ public class ExceptionResponse extends RuntimeException {
 
     public ExceptionResponse(String message, Throwable cause, ResponseError error) {
         this(null, message, cause, error);
+    }
+
+    public ExceptionResponse(String message) {
+        this(null, message, null, INVALID_INPUT, null);
     }
 
     public ExceptionResponse(String message, ResponseError error, Object... params) {

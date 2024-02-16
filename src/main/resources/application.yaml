@@ -1,5 +1,7 @@
 server:
   port: ${API_PORT:4000}
+  servlet:
+    context-path: ${SERVICE_PATH:/api/v0}
 
 spring:
   profiles:
@@ -76,12 +78,11 @@ management:
     info:
       enabled: false
 
-#gcp:
-#  config:
-#    credential: ${GCP_CREDENTIAL:/google/908631785165-compute.json}
-#    server-domain: ${GCP_DOMAIN:https://storage.googleapis.com}
-#  project:
-#    id: ${GCP_PROJECT_ID:order-management}
-#  bucket:
-#    id: ${GCP_BUCKET_ID:order-management}
+gcp:
+  server: http://localhost
+  port: ":4443"
+  project:
+    id: ${GCP_PROJECT_ID:order-management}
+  bucket:
+    id: ${GCP_BUCKET_ID:order-management}
 
