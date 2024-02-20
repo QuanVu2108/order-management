@@ -27,28 +27,8 @@ public class PageCriteriaPageableMapper implements PageableMapper<PageCriteria> 
                 }
             }
         }else{
-            /** CuongVM7 20220822 Bổ sung thêm tuỳ chọn nếu không chọn sort thì sẽ mặc định lấy theo ngày update */
             orders.add(Sort.Order.desc(PageCriteria.DEFAULT_SORT_BY_LAST_MODIFIED_DATE));
         }
         return PageRequest.of(criteria.getPageIndex() - 1, criteria.getPageSize(), Sort.by(orders));
     }
-
-
-//    public Pageable toPageable(PageCriteria criteria) {
-//        List<Sort.Order> orders = new ArrayList<>();
-//        if (!CollectionUtils.isEmpty(criteria.getSort())) {
-//            String sortStr = criteria.getSort().get(criteria.getSort().size() - 1);
-//            if (!StringUtils.isEmpty(sortStr)) {
-//                if (sortStr.startsWith(PageCriteria.DESC_SYMBOL) && sortStr.length() > 1) {
-//                    orders.add(Sort.Order.desc(sortStr.substring(1)));
-//                } else if (sortStr.startsWith(PageCriteria.ASC_SYMBOL) && sortStr.length() > 1) {
-//                    orders.add(Sort.Order.asc(sortStr.substring(1)));
-//                } else {
-//                    orders.add(Sort.Order.asc(sortStr));
-//                }
-//            }
-//        }
-//        return PageRequest.of(criteria.getPageIndex() - 1, criteria.getPageSize(), Sort.by(orders));
-//    }
-
 }

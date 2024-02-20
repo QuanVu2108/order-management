@@ -5,6 +5,7 @@ import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.OrderItemRequest;
+import com.ss.dto.request.OrderItemSubmittedRequest;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.exception.ExceptionResponse;
@@ -14,6 +15,7 @@ import com.ss.model.OrderModel;
 import com.ss.repository.FileRepository;
 import com.ss.repository.OrderItemRepository;
 import com.ss.repository.OrderRepository;
+import com.ss.service.AsyncService;
 import com.ss.service.OrderService;
 import com.ss.util.StorageUtil;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +44,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final FileRepository fileRepository;
 
+    private final AsyncService asyncService;
+
     @Override
     @Transactional
     public OrderModel createOrder(String title, String content) {
@@ -53,6 +57,7 @@ public class OrderServiceImpl implements OrderService {
                 .content(content)
                 .code(code)
                 .build();
+        order.setAuditDefault();
         orderRepository.save(order);
         return order;
     }
@@ -67,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
         OrderModel order = orderModelOptional.get();
         order.setTitle(title);
         order.setContent(content);
+        order.setUpdatedAt(Instant.now());
         orderRepository.save(order);
         return order;
     }
@@ -86,6 +92,7 @@ public class OrderServiceImpl implements OrderService {
         OrderItemModel orderItem = new OrderItemModel();
         orderItem.update(request);
         orderItem.setOrderModel(order);
+        orderItem.setAuditDefault();
         orderItemRepository.save(orderItem);
 
         if (fileRequest != null) {
@@ -104,6 +111,7 @@ public class OrderServiceImpl implements OrderService {
             throw new ExceptionResponse("order item is not existed!!!");
         OrderItemModel orderItem = orderItemModelOptional.get();
         orderItem.update(request);
+        orderItemRepository.save(orderItem);
 
         if (fileRequest != null) {
             FileModel file = storageUtil.uploadFile(fileRequest);
@@ -150,4 +158,22 @@ public class OrderServiceImpl implements OrderService {
                 .data(orderPage.getContent())
                 .build();
     }
+
+    @Override
+    public List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request) {
+        List<OrderItemModel> orderItems = orderItemRepository.findAllById(request.getIds());
+        Set<UUID> orderIds = new HashSet<>();
+        orderItems.forEach(item -> {
+            item.setStatus(OrderItemStatus.SUBMITTED);
+            item.setUpdatedAt(Instant.now());
+            orderIds.add(item.getOrderModel().getId());
+        });
+        orderItemRepository.saveAll(orderItems);
+
+        List<OrderModel> orders = orderRepository.findAllById(orderIds);
+        orders.forEach(order -> asyncService.updateStatusOrders(order, orderItems));
+
+        return orderItems;
+    }
+
 }

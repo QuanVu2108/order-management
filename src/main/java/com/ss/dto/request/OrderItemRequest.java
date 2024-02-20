@@ -1,8 +1,10 @@
 package com.ss.dto.request;
 
+import com.ss.enums.OrderItemStatus;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.util.UUID;
 
 @Data
@@ -22,4 +24,7 @@ public class OrderItemRequest {
     private Double priceOrder;
 
     private Double priceReality;
+
+    @NotNull
+    private OrderItemStatus status;
 }

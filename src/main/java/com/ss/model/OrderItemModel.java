@@ -11,6 +11,7 @@ import lombok.Data;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,6 +58,7 @@ public class OrderItemModel extends AuditModel {
 
     public OrderItemModel() {
         this.id = UUID.randomUUID();
+        this.status = OrderItemStatus.NEW;
     }
 
     public void update(OrderItemRequest request) {
@@ -66,5 +68,7 @@ public class OrderItemModel extends AuditModel {
         this.quantityReality = request.getQuantityReality();
         this.priceOrder = request.getPriceOrder();
         this.priceReality = request.getPriceReality();
+        this.status = request.getStatus();
+        setUpdatedAt(Instant.now());
     }
 }

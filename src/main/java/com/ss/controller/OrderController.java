@@ -52,19 +52,21 @@ public class OrderController {
             @RequestParam(name = "orderId", required = false) UUID orderId,
             @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "content", required = false) String content,
-            @RequestParam(name = "amountOrder", required = false) Long amountOrder,
-            @RequestParam(name = "amountReality", required = false) Long amountReality,
+            @RequestParam(name = "quantityOrder", required = false) Long quantityOrder,
+            @RequestParam(name = "quantityReality", required = false) Long quantityReality,
             @RequestParam(name = "priceOrder", required = false) Double priceOrder,
             @RequestParam(name = "priceReality", required = false) Double priceReality,
+            @RequestParam(name = "status", required = false) OrderItemStatus status,
             @RequestParam(name = "fileRequest", required = false) MultipartFile fileRequest) {
         OrderItemRequest request = OrderItemRequest.builder()
                 .orderId(orderId)
                 .name(name)
                 .content(content)
-                .quantityOrder(amountOrder)
-                .quantityReality(amountReality)
+                .quantityOrder(quantityOrder)
+                .quantityReality(quantityReality)
                 .priceOrder(priceOrder)
                 .priceReality(priceReality)
+                .status(status)
                 .build();
         return ServiceResponse.succeed(HttpStatus.OK, orderService.createOrderItem(request, fileRequest));
     }
@@ -75,19 +77,21 @@ public class OrderController {
             @RequestParam(name = "orderId", required = false) UUID orderId,
             @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "content", required = false) String content,
-            @RequestParam(name = "amountOrder", required = false) Long amountOrder,
-            @RequestParam(name = "amountReality", required = false) Long amountReality,
+            @RequestParam(name = "quantityOrder", required = false) Long quantityOrder,
+            @RequestParam(name = "quantityReality", required = false) Long quantityReality,
             @RequestParam(name = "priceOrder", required = false) Double priceOrder,
             @RequestParam(name = "priceReality", required = false) Double priceReality,
+            @RequestParam(name = "status", required = false) OrderItemStatus status,
             @RequestParam(name = "fileRequest", required = false) MultipartFile fileRequest) {
         OrderItemRequest request = OrderItemRequest.builder()
                 .orderId(orderId)
                 .name(name)
                 .content(content)
-                .quantityOrder(amountOrder)
-                .quantityReality(amountReality)
+                .quantityOrder(quantityOrder)
+                .quantityReality(quantityReality)
                 .priceOrder(priceOrder)
                 .priceReality(priceReality)
+                .status(status)
                 .build();
         return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrderItem(orderItemId, request, fileRequest));
     }

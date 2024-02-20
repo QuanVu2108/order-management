@@ -36,4 +36,9 @@ public abstract class AuditModel implements Serializable {
 
     @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
     private boolean deleted = false;
+
+    public void setAuditDefault() {
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
 }
