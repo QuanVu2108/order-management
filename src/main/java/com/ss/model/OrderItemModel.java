@@ -71,4 +71,13 @@ public class OrderItemModel extends AuditModel {
         this.status = request.getStatus();
         setUpdatedAt(Instant.now());
     }
+
+    public void updateByTool(OrderItemRequest request) {
+        this.quantityOrder = request.getQuantityOrder();
+        this.quantityReality = request.getQuantityReality();
+        this.priceOrder = request.getPriceOrder();
+        this.priceReality = request.getPriceReality();
+        this.status = request.getStatus();
+        setUpdatedAt(Instant.now());
+    }
 }

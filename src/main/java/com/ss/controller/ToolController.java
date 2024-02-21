@@ -30,7 +30,7 @@ public class ToolController {
             @RequestParam(name = "status") OrderItemStatus status) {
         PageCriteria pageCriteria = PageCriteria.builder()
                 .pageIndex(1)
-                .pageSize(50)
+                .pageSize((OrderItemStatus.OK.equals(status)) ? 250 : 50)
                 .build();
         return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderId, keyword, status, pageCriteria));
     }
@@ -39,7 +39,7 @@ public class ToolController {
     ServiceResponse<OrderItemModel> updateOrderItem(
             @PathVariable @Valid UUID orderItemId,
             @RequestBody @Valid OrderItemRequest request) {
-        return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrderItem(orderItemId, request, null));
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrderItemByTool(orderItemId, request, null));
     }
 
     @PostMapping("/order-item/submit")

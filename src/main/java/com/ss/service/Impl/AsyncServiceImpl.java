@@ -28,10 +28,10 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Override
     @Async
-    public void updateStatusOrders(OrderModel order, List<OrderItemModel> orderItems) {
+    public void updateStatusOrders(OrderModel order, List<UUID> submittedOrderItemIds) {
         List<OrderItemModel> allOrderItems = orderItemRepository.findByOrderModel(order);
         List<OrderItemModel> unsubmittedOrderItems = allOrderItems.stream()
-                .filter(item -> !orderItems.contains(item) && !OrderItemStatus.SUBMITTED.equals(item.getStatus()))
+                .filter(item -> !submittedOrderItemIds.contains(item.getId()) && !OrderItemStatus.SUBMITTED.equals(item.getStatus()))
                 .collect(Collectors.toList());
         if (unsubmittedOrderItems.isEmpty()) {
             order.setStatus(OrderStatus.COMPLETED);

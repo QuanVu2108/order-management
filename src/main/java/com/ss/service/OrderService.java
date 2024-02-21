@@ -27,4 +27,6 @@ public interface OrderService {
     PageResponse<OrderItemModel> searchOrderItem(UUID orderId, String keyword, OrderItemStatus status, PageCriteria pageCriteria);
 
     List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request);
+
+    OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemRequest request, MultipartFile fileRequest);
 }

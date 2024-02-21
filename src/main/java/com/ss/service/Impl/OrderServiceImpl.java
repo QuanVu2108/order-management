@@ -105,7 +105,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderItemModel updateOrderItem(UUID orderItemId, OrderItemRequest request, MultipartFile fileRequest) {
-
         Optional<OrderItemModel> orderItemModelOptional = orderItemRepository.findById(orderItemId);
         if (orderItemModelOptional.isEmpty())
             throw new ExceptionResponse("order item is not existed!!!");
@@ -160,6 +159,26 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemRequest request, MultipartFile fileRequest) {
+        Optional<OrderItemModel> orderItemModelOptional = orderItemRepository.findById(orderItemId);
+        if (orderItemModelOptional.isEmpty())
+            throw new ExceptionResponse("order item is not existed!!!");
+        OrderItemModel orderItem = orderItemModelOptional.get();
+        if (orderItem.getStatus() != null && !orderItem.getStatus().equals(OrderItemStatus.NEW))
+            throw new ExceptionResponse("order item was updated!!!");
+
+        orderItem.updateByTool(request);
+        orderItemRepository.save(orderItem);
+
+        if (fileRequest != null) {
+            FileModel file = storageUtil.uploadFile(fileRequest);
+            file.setOrderItem(orderItem);
+            fileRepository.save(file);
+        }
+        return orderItem;
+    }
+
+    @Override
     public List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request) {
         List<OrderItemModel> orderItems = orderItemRepository.findAllById(request.getIds());
         Set<UUID> orderIds = new HashSet<>();
@@ -171,7 +190,7 @@ public class OrderServiceImpl implements OrderService {
         orderItemRepository.saveAll(orderItems);
 
         List<OrderModel> orders = orderRepository.findAllById(orderIds);
-        orders.forEach(order -> asyncService.updateStatusOrders(order, orderItems));
+        orders.forEach(order -> asyncService.updateStatusOrders(order, request.getIds()));
 
         return orderItems;
     }
