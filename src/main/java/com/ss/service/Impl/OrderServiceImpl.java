@@ -159,22 +159,17 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemRequest request, MultipartFile fileRequest) {
+    public OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemRequest request) {
         Optional<OrderItemModel> orderItemModelOptional = orderItemRepository.findById(orderItemId);
         if (orderItemModelOptional.isEmpty())
             throw new ExceptionResponse("order item is not existed!!!");
         OrderItemModel orderItem = orderItemModelOptional.get();
-        if (orderItem.getStatus() != null && !orderItem.getStatus().equals(OrderItemStatus.NEW))
+        if (orderItem.getStatus() != null && !(orderItem.getStatus().equals(OrderItemStatus.NEW) || orderItem.getStatus().equals(OrderItemStatus.OK)))
             throw new ExceptionResponse("order item was updated!!!");
 
         orderItem.updateByTool(request);
         orderItemRepository.save(orderItem);
 
-        if (fileRequest != null) {
-            FileModel file = storageUtil.uploadFile(fileRequest);
-            file.setOrderItem(orderItem);
-            fileRepository.save(file);
-        }
         return orderItem;
     }
 

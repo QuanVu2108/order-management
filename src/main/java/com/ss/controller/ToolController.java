@@ -39,7 +39,7 @@ public class ToolController {
     ServiceResponse<OrderItemModel> updateOrderItem(
             @PathVariable @Valid UUID orderItemId,
             @RequestBody @Valid OrderItemRequest request) {
-        return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrderItemByTool(orderItemId, request, null));
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrderItemByTool(orderItemId, request));
     }
 
     @PostMapping("/order-item/submit")

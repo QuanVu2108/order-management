@@ -28,5 +28,5 @@ public interface OrderService {
 
     List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request);
 
-    OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemRequest request, MultipartFile fileRequest);
+    OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemRequest request);
 }
