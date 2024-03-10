@@ -40,5 +40,6 @@ public abstract class AuditModel implements Serializable {
     public void setAuditDefault() {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
+        this.deleted = false;
     }
 }

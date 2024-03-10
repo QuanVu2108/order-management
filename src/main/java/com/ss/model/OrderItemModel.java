@@ -43,6 +43,9 @@ public class OrderItemModel extends AuditModel {
     @Column(name = "price_reality")
     public Double priceReality;
 
+    @Column(name = "warehouse_id")
+    public UUID warehouseId;
+
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private OrderItemStatus status;
@@ -69,6 +72,7 @@ public class OrderItemModel extends AuditModel {
         this.priceOrder = request.getPriceOrder();
         this.priceReality = request.getPriceReality();
         this.status = request.getStatus();
+        this.warehouseId = request.getWarehouseId();
         setUpdatedAt(Instant.now());
     }
 

@@ -12,11 +12,13 @@ import com.ss.exception.ExceptionResponse;
 import com.ss.model.FileModel;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
+import com.ss.model.WarehouseModel;
 import com.ss.repository.FileRepository;
 import com.ss.repository.OrderItemRepository;
 import com.ss.repository.OrderRepository;
 import com.ss.service.AsyncService;
 import com.ss.service.OrderService;
+import com.ss.service.WarehouseService;
 import com.ss.util.StorageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +48,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final AsyncService asyncService;
 
+    private final WarehouseService warehouseService;
+
     @Override
     @Transactional
     public OrderModel createOrder(String title, String content) {
@@ -65,7 +69,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderModel updateOrder(UUID orderId, String title, String content) {
-
         Optional<OrderModel> orderModelOptional = orderRepository.findById(orderId);
         if (orderModelOptional.isEmpty())
             throw new ExceptionResponse("order is not existed!!!");
@@ -89,6 +92,11 @@ public class OrderServiceImpl implements OrderService {
                 throw new ExceptionResponse("order is not existed!!!");
             order = orderModelOptional.get();
         }
+        if (request.getWarehouseId() != null) {
+            WarehouseModel warehouse = warehouseService.findById(request.getWarehouseId());
+            if (warehouse == null)
+                throw new ExceptionResponse("warehouse is not existed!!!");
+        }
         OrderItemModel orderItem = new OrderItemModel();
         orderItem.update(request);
         orderItem.setOrderModel(order);
@@ -109,6 +117,12 @@ public class OrderServiceImpl implements OrderService {
         if (orderItemModelOptional.isEmpty())
             throw new ExceptionResponse("order item is not existed!!!");
         OrderItemModel orderItem = orderItemModelOptional.get();
+        if (request.getWarehouseId() != orderItem.getWarehouseId() && request.getWarehouseId() != null) {
+            WarehouseModel warehouse = warehouseService.findById(request.getWarehouseId());
+            if (warehouse == null)
+                throw new ExceptionResponse("warehouse is not existed!!!");
+        }
+
         orderItem.update(request);
         orderItemRepository.save(orderItem);
 
