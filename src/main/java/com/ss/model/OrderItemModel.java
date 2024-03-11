@@ -47,6 +47,9 @@ public class OrderItemModel extends AuditModel {
     @Column(name = "warehouse_id")
     private UUID warehouseId;
 
+    @Column(name = "delay_day")
+    private Long delayDay;
+
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private OrderItemStatus status;
@@ -62,7 +65,7 @@ public class OrderItemModel extends AuditModel {
 
     public OrderItemModel() {
         this.id = UUID.randomUUID();
-        this.status = OrderItemStatus.NEW;
+        this.status = OrderItemStatus.PENDING;
     }
 
     public void update(OrderItemRequest request) {
@@ -74,6 +77,7 @@ public class OrderItemModel extends AuditModel {
         this.priceReality = request.getPriceReality();
         this.status = request.getStatus();
         this.warehouseId = request.getWarehouseId();
+        this.delayDay = request.getDelayDay();
         setUpdatedAt(Instant.now());
     }
 
@@ -82,6 +86,7 @@ public class OrderItemModel extends AuditModel {
         this.quantityReality = request.getQuantityReality();
         this.priceOrder = request.getPriceOrder();
         this.priceReality = request.getPriceReality();
+        this.delayDay = request.getDelayDay();
         this.status = request.getStatus();
         setUpdatedAt(Instant.now());
     }

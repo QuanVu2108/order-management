@@ -21,6 +21,8 @@ public class OrderItemRequest {
 
     private Long quantityReality;
 
+    private Long delayDay;
+
     private Double priceOrder;
 
     private Double priceReality;

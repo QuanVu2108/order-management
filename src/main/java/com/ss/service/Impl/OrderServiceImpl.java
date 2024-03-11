@@ -193,8 +193,6 @@ public class OrderServiceImpl implements OrderService {
         if (orderItemModelOptional.isEmpty())
             throw new ExceptionResponse("order item is not existed!!!");
         OrderItemModel orderItem = orderItemModelOptional.get();
-        if (orderItem.getStatus() != null && !(orderItem.getStatus().equals(OrderItemStatus.NEW) || orderItem.getStatus().equals(OrderItemStatus.OK)))
-            throw new ExceptionResponse("order item was updated!!!");
 
         orderItem.updateByTool(request);
         orderItemRepository.save(orderItem);
@@ -207,7 +205,7 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItemModel> orderItems = orderItemRepository.findAllById(request.getIds());
         Set<UUID> orderIds = new HashSet<>();
         orderItems.forEach(item -> {
-            item.setStatus(OrderItemStatus.SUBMITTED);
+            item.setStatus(OrderItemStatus.OK);
             item.setUpdatedAt(Instant.now());
             orderIds.add(item.getOrderModel().getId());
         });
