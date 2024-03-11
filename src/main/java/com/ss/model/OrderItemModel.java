@@ -8,6 +8,7 @@ import com.ss.enums.OrderItemStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
@@ -26,25 +27,25 @@ public class OrderItemModel extends AuditModel {
     private UUID id;
 
     @Column(name = "name")
-    public String name;
+    private String name;
 
     @Column(name = "content", columnDefinition = "text")
     private String content;
 
     @Column(name = "quantity_order")
-    public Long quantityOrder;
+    private Long quantityOrder;
 
     @Column(name = "quantity_reality")
-    public Long quantityReality;
+    private Long quantityReality;
 
     @Column(name = "price_order")
-    public Double priceOrder;
+    private Double priceOrder;
 
     @Column(name = "price_reality")
-    public Double priceReality;
+    private Double priceReality;
 
     @Column(name = "warehouse_id")
-    public UUID warehouseId;
+    private UUID warehouseId;
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
@@ -54,7 +55,7 @@ public class OrderItemModel extends AuditModel {
     @JsonManagedReference
     private List<FileModel> files;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
     @JsonBackReference
     private OrderModel orderModel;

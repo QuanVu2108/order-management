@@ -23,7 +23,7 @@ public class FileModel extends AuditModel {
     private UUID id;
 
     @Column(name = "name")
-    public String name;
+    private String name;
 
     @Column(name = "url", columnDefinition = "text")
     private String url;

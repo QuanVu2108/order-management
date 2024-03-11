@@ -6,6 +6,7 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemSubmittedRequest;
+import com.ss.dto.response.OrderItemResponse;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.exception.ExceptionResponse;
@@ -150,7 +151,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public PageResponse<OrderItemModel> searchOrderItem(UUID orderId, String keyword, OrderItemStatus status, PageCriteria pageCriteria) {
+    @Transactional
+    public PageResponse<OrderItemResponse> searchOrderItem(UUID orderId, UUID warehouseId, String keyword, OrderItemStatus status, PageCriteria pageCriteria) {
         if (keyword != null)
             keyword = "%" + keyword.toUpperCase() + "%";
         List<UUID> itemIds = null;
@@ -161,14 +163,27 @@ public class OrderServiceImpl implements OrderService {
             List<OrderItemModel> orderItems = orderItemRepository.findByOrderModel(orderModel.get());
             itemIds = orderItems.stream().map(OrderItemModel::getId).collect(Collectors.toList());
         }
-        Page<OrderItemModel> orderPage = orderItemRepository.searchItem(itemIds, keyword, status, pageCriteriaPageableMapper.toPageable(pageCriteria));
+        Page<OrderItemModel> orderPage = orderItemRepository.searchItem(itemIds, warehouseId, keyword, status, pageCriteriaPageableMapper.toPageable(pageCriteria));
+        List<OrderItemModel> orderItemModels = orderPage.getContent();
+        List<UUID> warehouseIds = orderItemModels.stream()
+                .filter(item -> item.getWarehouseId() != null)
+                .map(OrderItemModel::getWarehouseId)
+                .collect(Collectors.toList());
+        List<WarehouseModel> warehouses = warehouseService.findByIds(warehouseIds);
+        List<OrderItemResponse> responses = new ArrayList<>();
+        orderItemModels.forEach(orderItemModel -> {
+            WarehouseModel warehouse = warehouses.stream()
+                    .filter(item -> orderItemModel.getWarehouseId() != null && orderItemModel.getWarehouseId().equals(item.getId()))
+                    .findFirst().orElse(null);
+            responses.add(new OrderItemResponse(orderItemModel, warehouse));
+        });
 
-        return PageResponse.<OrderItemModel>builder()
+        return PageResponse.<OrderItemResponse>builder()
                 .paging(Paging.builder().totalCount(orderPage.getTotalElements())
                         .pageIndex(pageCriteria.getPageIndex())
                         .pageSize(pageCriteria.getPageSize())
                         .build())
-                .data(orderPage.getContent())
+                .data(responses)
                 .build();
     }
 

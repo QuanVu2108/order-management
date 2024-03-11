@@ -3,10 +3,7 @@ package com.ss.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.ss.enums.OrderStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
@@ -25,10 +22,10 @@ public class OrderModel extends AuditModel {
     private UUID id;
 
     @Column(name = "title")
-    public String title;
+    private String title;
 
     @Column(name = "code")
-    public String code;
+    private String code;
 
     @Column(name = "content", columnDefinition = "text")
     private String content;

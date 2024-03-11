@@ -57,6 +57,7 @@ public class OrderController {
             @RequestParam(name = "priceOrder", required = false) Double priceOrder,
             @RequestParam(name = "priceReality", required = false) Double priceReality,
             @RequestParam(name = "status", required = false) OrderItemStatus status,
+            @RequestParam(name = "warehouseId", required = false) UUID warehouseId,
             @RequestParam(name = "fileRequest", required = false) MultipartFile fileRequest) {
         OrderItemRequest request = OrderItemRequest.builder()
                 .orderId(orderId)
@@ -67,6 +68,7 @@ public class OrderController {
                 .priceOrder(priceOrder)
                 .priceReality(priceReality)
                 .status(status)
+                .warehouseId(warehouseId)
                 .build();
         return ServiceResponse.succeed(HttpStatus.OK, orderService.createOrderItem(request, fileRequest));
     }
@@ -82,6 +84,7 @@ public class OrderController {
             @RequestParam(name = "priceOrder", required = false) Double priceOrder,
             @RequestParam(name = "priceReality", required = false) Double priceReality,
             @RequestParam(name = "status", required = false) OrderItemStatus status,
+            @RequestParam(name = "warehouseId", required = false) UUID warehouseId,
             @RequestParam(name = "fileRequest", required = false) MultipartFile fileRequest) {
         OrderItemRequest request = OrderItemRequest.builder()
                 .orderId(orderId)
@@ -92,6 +95,7 @@ public class OrderController {
                 .priceOrder(priceOrder)
                 .priceReality(priceReality)
                 .status(status)
+                .warehouseId(warehouseId)
                 .build();
         return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrderItem(orderItemId, request, fileRequest));
     }
@@ -99,10 +103,11 @@ public class OrderController {
     @GetMapping("/item")
     PageResponse<OrderItemModel> searchOrderItem(
             @RequestParam(name = "orderId", required = false) UUID orderId,
+            @RequestParam(name = "warehouseId", required = false) UUID warehouseId,
             @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "status", required = false) OrderItemStatus status,
             @Valid PageCriteria pageCriteria) {
-        return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderId, keyword, status, pageCriteria));
+        return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderId, warehouseId, keyword, status, pageCriteria));
     }
 
 }

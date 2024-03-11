@@ -5,6 +5,7 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.WarehouseRequest;
 import com.ss.model.WarehouseModel;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface WarehouseService {
@@ -17,4 +18,6 @@ public interface WarehouseService {
     PageResponse<WarehouseModel> search(String keyword, PageCriteria pageCriteria);
 
     WarehouseModel findById(UUID id);
+
+    List<WarehouseModel> findByIds(List<UUID> ids);
 }

@@ -4,6 +4,7 @@ import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemSubmittedRequest;
+import com.ss.dto.response.OrderItemResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.enums.OrderItemStatus;
 import com.ss.model.OrderItemModel;
@@ -24,15 +25,16 @@ public class ToolController {
     private final OrderService orderService;
 
     @GetMapping("/order-item")
-    PageResponse<OrderItemModel> getOrderItem(
+    PageResponse<OrderItemResponse> getOrderItem(
             @RequestParam(name = "orderId", required = false) UUID orderId,
+            @RequestParam(name = "warehouseId", required = false) UUID warehouseId,
             @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "status") OrderItemStatus status) {
         PageCriteria pageCriteria = PageCriteria.builder()
                 .pageIndex(1)
                 .pageSize((OrderItemStatus.OK.equals(status)) ? 250 : 50)
                 .build();
-        return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderId, keyword, status, pageCriteria));
+        return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderId, warehouseId, keyword, status, pageCriteria));
     }
 
     @PutMapping("/order-item/{orderItemId}")

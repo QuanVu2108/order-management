@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -81,5 +83,12 @@ public class WarehouseServiceImpl implements WarehouseService {
         if (warehouseOptional.isEmpty())
             return null;
         return warehouseOptional.get();
+    }
+
+    @Override
+    public List<WarehouseModel> findByIds(List<UUID> ids) {
+        if (ids == null || ids.isEmpty())
+            return new ArrayList<>();
+        return warehouseRepository.findAllById(ids);
     }
 }

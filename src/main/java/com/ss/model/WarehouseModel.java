@@ -25,13 +25,13 @@ public class WarehouseModel extends AuditModel {
     private UUID id;
 
     @Column(name = "code")
-    public String code;
+    private String code;
 
     @Column(name = "name")
-    public String name;
+    private String name;
 
     @Column(name = "phone_number")
-    public String phoneNumber;
+    private String phoneNumber;
 
     @Column(name = "address", columnDefinition = "text")
     private String address;

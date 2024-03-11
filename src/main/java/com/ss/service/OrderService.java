@@ -4,6 +4,7 @@ import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemSubmittedRequest;
+import com.ss.dto.response.OrderItemResponse;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
@@ -24,7 +25,7 @@ public interface OrderService {
 
     PageResponse<OrderModel> searchOrder(String keyword, OrderStatus status, PageCriteria pageCriteria);
 
-    PageResponse<OrderItemModel> searchOrderItem(UUID orderId, String keyword, OrderItemStatus status, PageCriteria pageCriteria);
+    PageResponse<OrderItemResponse> searchOrderItem(UUID orderId, UUID warehouseId, String keyword, OrderItemStatus status, PageCriteria pageCriteria);
 
     List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request);
 
