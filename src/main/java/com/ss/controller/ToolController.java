@@ -27,14 +27,14 @@ public class ToolController {
     @GetMapping("/order-item")
     PageResponse<OrderItemResponse> getOrderItem(
             @RequestParam(name = "orderId", required = false) UUID orderId,
-            @RequestParam(name = "warehouseId", required = false) UUID warehouseId,
+            @RequestParam(name = "storeId", required = false) UUID storeId,
             @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "status") OrderItemStatus status) {
         PageCriteria pageCriteria = PageCriteria.builder()
                 .pageIndex(1)
                 .pageSize((OrderItemStatus.OK.equals(status)) ? 250 : 50)
                 .build();
-        return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderId, warehouseId, keyword, status, pageCriteria));
+        return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderId, storeId, keyword, status, pageCriteria));
     }
 
     @PutMapping("/order-item/{orderItemId}")

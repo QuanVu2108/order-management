@@ -25,7 +25,7 @@ public interface OrderService {
 
     PageResponse<OrderModel> searchOrder(String keyword, OrderStatus status, PageCriteria pageCriteria);
 
-    PageResponse<OrderItemResponse> searchOrderItem(UUID orderId, UUID warehouseId, String keyword, OrderItemStatus status, PageCriteria pageCriteria);
+    PageResponse<OrderItemResponse> searchOrderItem(UUID orderId, UUID storeId, String keyword, OrderItemStatus status, PageCriteria pageCriteria);
 
     List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request);
 

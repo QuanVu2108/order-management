@@ -1,31 +1,25 @@
 package com.ss.model;
 
 
-import com.ss.dto.request.WarehouseRequest;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.ss.dto.Store;
+import lombok.*;
 import org.hibernate.annotations.Where;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "warehouse")
+@Table(name = "store_tbl")
 @Where(clause = "deleted = false")
-@Data
+@Setter
+@Getter
 @Builder
 @AllArgsConstructor
-public class WarehouseModel extends AuditModel {
+public class StoreModel extends AuditModel {
     @Id
     private UUID id;
-
-    @Column(name = "code")
-    private String code;
 
     @Column(name = "name")
     private String name;
@@ -39,13 +33,14 @@ public class WarehouseModel extends AuditModel {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
-    public WarehouseModel() {
+    @ManyToMany(mappedBy = "stores")
+    private Set<UserModel> users = new HashSet<>();
+
+    public StoreModel() {
         this.id = UUID.randomUUID();
-        setAuditDefault();
     }
 
-    public void update(WarehouseRequest request) {
-        this.code = request.getCode();
+    public void update(Store request) {
         this.name = request.getName();
         this.phoneNumber = request.getPhoneNumber();
         this.address = request.getAddress();

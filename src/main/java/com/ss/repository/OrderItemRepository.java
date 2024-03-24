@@ -19,9 +19,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID>
     @Query("SELECT e FROM OrderItemModel e " +
             " WHERE 1=1 " +
             " AND ( (COALESCE(:ids, NULL) IS NULL) or e.id in :ids) " +
-            " AND ( (COALESCE(:warehouseId, NULL) IS NULL) or e.warehouseId = :warehouseId) " +
+            " AND ( (COALESCE(:storeId, NULL) IS NULL) or e.storeId = :storeId) " +
             " AND (:status is null or e.status = :status) " +
             " AND (:keyword is null or UPPER(e.name) like :keyword or UPPER(e.content) like :keyword)"
     )
-    Page<OrderItemModel> searchItem(List<UUID> ids, UUID warehouseId, String keyword, OrderItemStatus status, Pageable pageable);
+    Page<OrderItemModel> searchItem(List<UUID> ids, UUID storeId, String keyword, OrderItemStatus status, Pageable pageable);
 }

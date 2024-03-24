@@ -2,10 +2,7 @@ package com.ss.model;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
@@ -14,7 +11,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "file_tbl")
 @Where(clause = "deleted = false")
-@Data
+@Setter
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

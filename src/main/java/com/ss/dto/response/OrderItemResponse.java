@@ -4,7 +4,7 @@ import com.ss.enums.OrderItemStatus;
 import com.ss.model.FileModel;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
-import com.ss.model.WarehouseModel;
+import com.ss.model.StoreModel;
 import lombok.Data;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class OrderItemResponse {
 
     private Double priceReality;
 
-    private WarehouseModel warehouse;
+    private StoreModel store;
 
     private OrderItemStatus status;
 
@@ -35,7 +35,7 @@ public class OrderItemResponse {
 
     private OrderModel orderModel;
 
-    public OrderItemResponse(OrderItemModel model, WarehouseModel warehouse) {
+    public OrderItemResponse(OrderItemModel model, StoreModel store) {
         this.id = model.getId();
         this.name = model.getName();
         this.content = model.getContent();
@@ -46,7 +46,7 @@ public class OrderItemResponse {
         this.status = model.getStatus();
         this.files = model.getFiles();
         this.orderModel = model.getOrderModel();
-        this.warehouse = warehouse;
+        this.store = store;
     }
 
 }

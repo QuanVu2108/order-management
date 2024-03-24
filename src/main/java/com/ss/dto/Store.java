@@ -1,13 +1,11 @@
-package com.ss.dto.request;
+package com.ss.dto;
 
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 
 @Data
-public class WarehouseRequest {
-    @NotBlank
-    private String code;
+public class Store {
     @NotBlank
     private String name;
     private String phoneNumber;

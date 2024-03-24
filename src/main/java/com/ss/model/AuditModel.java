@@ -1,6 +1,7 @@
 package com.ss.model;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -15,7 +16,8 @@ import java.time.Instant;
 
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-@Data
+@Getter
+@Setter
 public abstract class AuditModel implements Serializable {
 
     @CreatedDate
@@ -35,11 +37,6 @@ public abstract class AuditModel implements Serializable {
     private String updatedBy;
 
     @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
-    private boolean deleted = false;
+    protected boolean deleted = false;
 
-    public void setAuditDefault() {
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
-        this.deleted = false;
-    }
 }

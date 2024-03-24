@@ -27,7 +27,7 @@ public class OrderItemRequest {
 
     private Double priceReality;
 
-    private UUID warehouseId;
+    private UUID storeId;
 
     @NotNull
     private OrderItemStatus status;

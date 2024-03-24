@@ -13,13 +13,13 @@ import com.ss.exception.ExceptionResponse;
 import com.ss.model.FileModel;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
-import com.ss.model.WarehouseModel;
+import com.ss.model.StoreModel;
 import com.ss.repository.FileRepository;
 import com.ss.repository.OrderItemRepository;
 import com.ss.repository.OrderRepository;
 import com.ss.service.AsyncService;
 import com.ss.service.OrderService;
-import com.ss.service.WarehouseService;
+import com.ss.service.StoreService;
 import com.ss.util.StorageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final AsyncService asyncService;
 
-    private final WarehouseService warehouseService;
+    private final StoreService storeService;
 
     @Override
     @Transactional
@@ -62,8 +62,7 @@ public class OrderServiceImpl implements OrderService {
                 .content(content)
                 .code(code)
                 .build();
-        order.setAuditDefault();
-        orderRepository.save(order);
+        order = orderRepository.save(order);
         return order;
     }
 
@@ -77,7 +76,7 @@ public class OrderServiceImpl implements OrderService {
         order.setTitle(title);
         order.setContent(content);
         order.setUpdatedAt(Instant.now());
-        orderRepository.save(order);
+        order = orderRepository.save(order);
         return order;
     }
 
@@ -93,16 +92,15 @@ public class OrderServiceImpl implements OrderService {
                 throw new ExceptionResponse("order is not existed!!!");
             order = orderModelOptional.get();
         }
-        if (request.getWarehouseId() != null) {
-            WarehouseModel warehouse = warehouseService.findById(request.getWarehouseId());
-            if (warehouse == null)
-                throw new ExceptionResponse("warehouse is not existed!!!");
+        if (request.getStoreId() != null) {
+            StoreModel store = storeService.findById(request.getStoreId());
+            if (store == null)
+                throw new ExceptionResponse("store is not existed!!!");
         }
         OrderItemModel orderItem = new OrderItemModel();
         orderItem.update(request);
         orderItem.setOrderModel(order);
-        orderItem.setAuditDefault();
-        orderItemRepository.save(orderItem);
+        orderItem = orderItemRepository.save(orderItem);
 
         if (fileRequest != null) {
             FileModel file = storageUtil.uploadFile(fileRequest);
@@ -118,14 +116,14 @@ public class OrderServiceImpl implements OrderService {
         if (orderItemModelOptional.isEmpty())
             throw new ExceptionResponse("order item is not existed!!!");
         OrderItemModel orderItem = orderItemModelOptional.get();
-        if (request.getWarehouseId() != orderItem.getWarehouseId() && request.getWarehouseId() != null) {
-            WarehouseModel warehouse = warehouseService.findById(request.getWarehouseId());
-            if (warehouse == null)
-                throw new ExceptionResponse("warehouse is not existed!!!");
+        if (request.getStoreId() != orderItem.getStoreId() && request.getStoreId() != null) {
+            StoreModel store = storeService.findById(request.getStoreId());
+            if (store == null)
+                throw new ExceptionResponse("store is not existed!!!");
         }
 
         orderItem.update(request);
-        orderItemRepository.save(orderItem);
+        orderItem = orderItemRepository.save(orderItem);
 
         if (fileRequest != null) {
             FileModel file = storageUtil.uploadFile(fileRequest);
@@ -152,7 +150,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public PageResponse<OrderItemResponse> searchOrderItem(UUID orderId, UUID warehouseId, String keyword, OrderItemStatus status, PageCriteria pageCriteria) {
+    public PageResponse<OrderItemResponse> searchOrderItem(UUID orderId, UUID storeId, String keyword, OrderItemStatus status, PageCriteria pageCriteria) {
         if (keyword != null)
             keyword = "%" + keyword.toUpperCase() + "%";
         List<UUID> itemIds = null;
@@ -163,19 +161,19 @@ public class OrderServiceImpl implements OrderService {
             List<OrderItemModel> orderItems = orderItemRepository.findByOrderModel(orderModel.get());
             itemIds = orderItems.stream().map(OrderItemModel::getId).collect(Collectors.toList());
         }
-        Page<OrderItemModel> orderPage = orderItemRepository.searchItem(itemIds, warehouseId, keyword, status, pageCriteriaPageableMapper.toPageable(pageCriteria));
+        Page<OrderItemModel> orderPage = orderItemRepository.searchItem(itemIds, storeId, keyword, status, pageCriteriaPageableMapper.toPageable(pageCriteria));
         List<OrderItemModel> orderItemModels = orderPage.getContent();
-        List<UUID> warehouseIds = orderItemModels.stream()
-                .filter(item -> item.getWarehouseId() != null)
-                .map(OrderItemModel::getWarehouseId)
+        List<UUID> storeIds = orderItemModels.stream()
+                .filter(item -> item.getStoreId() != null)
+                .map(OrderItemModel::getStoreId)
                 .collect(Collectors.toList());
-        List<WarehouseModel> warehouses = warehouseService.findByIds(warehouseIds);
+        Set<StoreModel> stores = storeService.findByIds(storeIds);
         List<OrderItemResponse> responses = new ArrayList<>();
         orderItemModels.forEach(orderItemModel -> {
-            WarehouseModel warehouse = warehouses.stream()
-                    .filter(item -> orderItemModel.getWarehouseId() != null && orderItemModel.getWarehouseId().equals(item.getId()))
+            StoreModel store = stores.stream()
+                    .filter(item -> orderItemModel.getStoreId() != null && orderItemModel.getStoreId().equals(item.getId()))
                     .findFirst().orElse(null);
-            responses.add(new OrderItemResponse(orderItemModel, warehouse));
+            responses.add(new OrderItemResponse(orderItemModel, store));
         });
 
         return PageResponse.<OrderItemResponse>builder()
@@ -195,7 +193,7 @@ public class OrderServiceImpl implements OrderService {
         OrderItemModel orderItem = orderItemModelOptional.get();
 
         orderItem.updateByTool(request);
-        orderItemRepository.save(orderItem);
+        orderItem = orderItemRepository.save(orderItem);
 
         return orderItem;
     }
@@ -209,7 +207,7 @@ public class OrderServiceImpl implements OrderService {
             item.setUpdatedAt(Instant.now());
             orderIds.add(item.getOrderModel().getId());
         });
-        orderItemRepository.saveAll(orderItems);
+        orderItems = orderItemRepository.saveAll(orderItems);
 
         List<OrderModel> orders = orderRepository.findAllById(orderIds);
         orders.forEach(order -> asyncService.updateStatusOrders(order, request.getIds()));

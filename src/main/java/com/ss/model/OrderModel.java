@@ -13,7 +13,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "order_tbl")
 @Where(clause = "deleted = false")
-@Data
+@Setter
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

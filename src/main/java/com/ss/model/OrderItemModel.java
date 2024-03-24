@@ -5,10 +5,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.enums.OrderItemStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
@@ -19,7 +16,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "order_item")
 @Where(clause = "deleted = false")
-@Data
+@Setter
+@Getter
 @Builder
 @AllArgsConstructor
 public class OrderItemModel extends AuditModel {
@@ -44,8 +42,8 @@ public class OrderItemModel extends AuditModel {
     @Column(name = "price_reality")
     private Double priceReality;
 
-    @Column(name = "warehouse_id")
-    private UUID warehouseId;
+    @Column(name = "store_id")
+    private UUID storeId;
 
     @Column(name = "delay_day")
     private Long delayDay;
@@ -76,7 +74,7 @@ public class OrderItemModel extends AuditModel {
         this.priceOrder = request.getPriceOrder();
         this.priceReality = request.getPriceReality();
         this.status = request.getStatus();
-        this.warehouseId = request.getWarehouseId();
+        this.storeId = request.getStoreId();
         this.delayDay = request.getDelayDay();
         setUpdatedAt(Instant.now());
     }

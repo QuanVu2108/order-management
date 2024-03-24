@@ -1,0 +1,17 @@
+package com.ss.repository;
+
+import com.ss.model.PermissionGroupModel;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface PermissionGroupRepository extends JpaRepository<PermissionGroupModel, UUID> {
+    List<PermissionGroupModel> findByName(String groupName);
+
+    List<PermissionGroupModel> findByNameLike(String name);
+}

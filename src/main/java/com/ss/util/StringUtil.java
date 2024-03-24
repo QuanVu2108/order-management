@@ -22,8 +22,7 @@ public class StringUtil<T> {
         return notContainItemList;
     }
 
-    public static String nullToBlank(String text) {
-        if (text == null) return "";
-        return text.trim();
+    public static String convertSqlSearchText(String keyword) {
+        return "%" + (keyword == null ? "" :  keyword.toUpperCase()) + "%";
     }
 }
