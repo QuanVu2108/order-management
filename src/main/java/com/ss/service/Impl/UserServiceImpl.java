@@ -19,11 +19,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static com.ss.util.StringUtil.convertSqlSearchText;
 
 @Service
 @RequiredArgsConstructor
@@ -96,4 +100,18 @@ public class UserServiceImpl implements UserService {
         return new UserResponse(user, permissionGroup, stores);
     }
 
+    @Override
+    @Transactional
+    public List<UserResponse> get(String username, String store, String permissionGroup, String position, String email, String fullName) {
+        username = convertSqlSearchText(username);
+        store = convertSqlSearchText(store);
+        permissionGroup = convertSqlSearchText(permissionGroup);
+        position = convertSqlSearchText(position);
+        email = convertSqlSearchText(email);
+        fullName = convertSqlSearchText(fullName);
+        List<UserModel> users = userRepository.search(username, store, permissionGroup, position, email, fullName);
+        return users.stream()
+                .map(item -> new UserResponse(item, item.getPermissionGroupModel(), item.getStores()))
+                .collect(Collectors.toList());
+    }
 }

@@ -23,6 +23,8 @@ public class StringUtil<T> {
     }
 
     public static String convertSqlSearchText(String keyword) {
-        return "%" + (keyword == null ? "" :  keyword.toUpperCase()) + "%";
+        if (keyword == null)
+            return null;
+        return "%" +  keyword.toUpperCase() + "%";
     }
 }

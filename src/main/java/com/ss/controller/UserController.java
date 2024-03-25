@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -42,6 +43,17 @@ public class UserController {
             @PathVariable @Valid UUID id,
             @Valid @RequestBody UserRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, userService.update(id, request));
+    }
+
+    @GetMapping
+    public ServiceResponse<List<UserResponse>> get(
+            @RequestParam(name = "username", required = false) String username,
+            @RequestParam(name = "store", required = false) String store,
+            @RequestParam(name = "permissionGroup", required = false) String permissionGroup,
+            @RequestParam(name = "position", required = false) String position,
+            @RequestParam(name = "email", required = false) String email,
+            @RequestParam(name = "fullName", required = false) String fullName) {
+        return ServiceResponse.succeed(HttpStatus.OK, userService.get(username, store, permissionGroup, position, email, fullName));
     }
 
 }

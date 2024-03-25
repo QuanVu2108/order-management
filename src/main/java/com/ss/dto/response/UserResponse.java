@@ -8,6 +8,7 @@ import lombok.Data;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Data
 public class UserResponse {
@@ -23,7 +24,7 @@ public class UserResponse {
 
     private String email;
 
-    private Set<StoreModel> stores;
+    private Set<StoreRes> stores;
 
     private Boolean isActive;
 
@@ -35,6 +36,21 @@ public class UserResponse {
         this.email = user.getEmail();
         this.isActive = user.getIsActive();
         this.permissionGroup = permissionGroup;
-        this.stores = stores;
+        this.stores = stores.stream()
+                .map(item -> new StoreRes(item))
+                .collect(Collectors.toSet());
+    }
+
+    @Data
+    private static class StoreRes {
+        private UUID id;
+        private String name;
+        private String address;
+
+        public StoreRes(StoreModel store) {
+            this.id = store.getId();
+            this.name = store.getName();
+            this.address = store.getAddress();
+        }
     }
 }
