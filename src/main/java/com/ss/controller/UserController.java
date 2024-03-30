@@ -1,5 +1,7 @@
 package com.ss.controller;
 
+import com.ss.dto.pagination.PageCriteria;
+import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.SignInRequest;
 import com.ss.dto.request.UserRequest;
 import com.ss.dto.response.ServiceResponse;
@@ -46,14 +48,15 @@ public class UserController {
     }
 
     @GetMapping
-    public ServiceResponse<List<UserResponse>> get(
+    public PageResponse<List<UserResponse>> search(
             @RequestParam(name = "username", required = false) String username,
             @RequestParam(name = "store", required = false) String store,
             @RequestParam(name = "permissionGroup", required = false) String permissionGroup,
             @RequestParam(name = "position", required = false) String position,
             @RequestParam(name = "email", required = false) String email,
-            @RequestParam(name = "fullName", required = false) String fullName) {
-        return ServiceResponse.succeed(HttpStatus.OK, userService.get(username, store, permissionGroup, position, email, fullName));
+            @RequestParam(name = "fullName", required = false) String fullName,
+            @Valid PageCriteria pageCriteria) {
+        return PageResponse.succeed(HttpStatus.OK, userService.search(username, store, permissionGroup, position, email, fullName, pageCriteria));
     }
 
 }

@@ -1,5 +1,9 @@
 package com.ss.service.Impl;
 
+import com.ss.dto.pagination.PageCriteria;
+import com.ss.dto.pagination.PageCriteriaPageableMapper;
+import com.ss.dto.pagination.PageResponse;
+import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.UserRequest;
 import com.ss.dto.response.UserResponse;
 import com.ss.exception.CustomException;
@@ -13,6 +17,7 @@ import com.ss.service.StoreService;
 import com.ss.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -51,6 +56,8 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
+
     @Override
     public String signin(String username, String password) {
         try {
@@ -63,7 +70,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse create(UserRequest request) {
-         UserModel checkedUser = userRepository.findByUsername(request.getUserName());
+        UserModel checkedUser = userRepository.findByUsername(request.getUserName());
         if (checkedUser != null)
             throw new CustomException("username is duplicated", HttpStatus.CONFLICT);
 
@@ -102,16 +109,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public List<UserResponse> get(String username, String store, String permissionGroup, String position, String email, String fullName) {
+    public PageResponse<UserResponse> search(String username, String store, String permissionGroup, String position, String email, String fullName, PageCriteria pageCriteria) {
         username = convertSqlSearchText(username);
         store = convertSqlSearchText(store);
         permissionGroup = convertSqlSearchText(permissionGroup);
         position = convertSqlSearchText(position);
         email = convertSqlSearchText(email);
         fullName = convertSqlSearchText(fullName);
-        List<UserModel> users = userRepository.search(username, store, permissionGroup, position, email, fullName);
-        return users.stream()
+        Page<UserModel> page = userRepository.search(username, store, permissionGroup, position, email, fullName, pageCriteriaPageableMapper.toPageable(pageCriteria));
+        List<UserModel> users = page.getContent();
+        List<UserResponse> responses = users.stream()
                 .map(item -> new UserResponse(item, item.getPermissionGroupModel(), item.getStores()))
                 .collect(Collectors.toList());
+
+        return PageResponse.<UserResponse>builder()
+                .paging(Paging.builder().totalCount(page.getTotalElements())
+                        .pageIndex(pageCriteria.getPageIndex())
+                        .pageSize(pageCriteria.getPageSize())
+                        .build())
+                .data(responses)
+                .build();
     }
 }

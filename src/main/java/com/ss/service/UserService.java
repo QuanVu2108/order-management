@@ -1,5 +1,7 @@
 package com.ss.service;
 
+import com.ss.dto.pagination.PageCriteria;
+import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.UserRequest;
 import com.ss.dto.response.UserResponse;
 
@@ -14,5 +16,5 @@ public interface UserService {
 
     UserResponse update(UUID id, UserRequest request);
 
-    List<UserResponse> get(String username, String store, String permissionGroup, String position, String email, String fullName);
+    PageResponse<UserResponse> search(String username, String store, String permissionGroup, String position, String email, String fullName, PageCriteria pageCriteria);
 }

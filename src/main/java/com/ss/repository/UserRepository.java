@@ -1,17 +1,15 @@
 package com.ss.repository;
 
 import com.ss.model.UserModel;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<UserModel, UUID> {
     UserModel findByUsername(String username);
-
-    boolean existsByUsername(String username);
 
     @Query("SELECT user FROM UserModel user " +
             " LEFT JOIN user.permissionGroupModel permissionGroup " +
@@ -24,5 +22,5 @@ public interface UserRepository extends JpaRepository<UserModel, UUID> {
             " AND (:store is null or store.name = :store) " +
             " AND (:permissionGroup is null or UPPER(permissionGroup.name) like :permissionGroup )"
     )
-    List<UserModel> search(String username, String store, String permissionGroup, String position, String email, String fullName);
+    Page<UserModel> search(String username, String store, String permissionGroup, String position, String email, String fullName, Pageable pageable);
 }
