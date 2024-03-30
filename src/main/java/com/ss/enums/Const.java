@@ -10,6 +10,7 @@ public interface Const {
     String ADMIN = "admin";
     String DEFAULT_PASSWORD = "abc13579";
 
+    int REFRESH_TOKEN = 5400000;
 }
 
 

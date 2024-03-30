@@ -3,14 +3,18 @@ package com.ss.controller;
 import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.SignInRequest;
+import com.ss.dto.request.TokenRefreshRequest;
 import com.ss.dto.request.UserRequest;
+import com.ss.dto.response.MessageResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.dto.response.TokenResponse;
 import com.ss.dto.response.UserResponse;
+import com.ss.service.RefreshTokenService;
 import com.ss.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -25,14 +29,27 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
     @PostMapping("/signin")
     public ServiceResponse<TokenResponse> login(@Valid @RequestBody SignInRequest request) {
         String userName = request.getUserName();
         String password = request.getPassword();
-        String token = userService.signin(userName, password);
-        TokenResponse tokenDTO = new TokenResponse();
-        tokenDTO.setToken(token);
-        return ServiceResponse.succeed(HttpStatus.OK, tokenDTO);
+        TokenResponse tokenResponse = userService.signin(userName, password);
+        return ServiceResponse.succeed(HttpStatus.OK, tokenResponse);
+    }
+
+    @PostMapping("/refresh-token")
+    public ServiceResponse<TokenResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
+        String requestRefreshToken = request.getRefreshToken();
+        return ServiceResponse.succeed(HttpStatus.OK, userService.refreshToken(requestRefreshToken));
+    }
+
+    @PostMapping("/signout")
+    public ResponseEntity<?> logoutUser() {
+        userService.logout();
+        return ResponseEntity.ok(new MessageResponse("Log out successful!"));
     }
 
     @PostMapping

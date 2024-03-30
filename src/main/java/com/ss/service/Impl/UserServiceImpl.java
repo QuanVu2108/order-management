@@ -5,14 +5,17 @@ import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.UserRequest;
+import com.ss.dto.response.TokenResponse;
 import com.ss.dto.response.UserResponse;
 import com.ss.exception.CustomException;
 import com.ss.model.PermissionGroupModel;
+import com.ss.model.RefreshToken;
 import com.ss.model.StoreModel;
 import com.ss.model.UserModel;
 import com.ss.repository.UserRepository;
 import com.ss.security.JwtTokenProvider;
 import com.ss.service.PermissionService;
+import com.ss.service.RefreshTokenService;
 import com.ss.service.StoreService;
 import com.ss.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +53,9 @@ public class UserServiceImpl implements UserService {
     private StoreService storeService;
 
     @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -59,13 +67,20 @@ public class UserServiceImpl implements UserService {
     private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
 
     @Override
-    public String signin(String username, String password) {
+    public TokenResponse signin(String username, String password) {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-            return jwtTokenProvider.createToken(username, userRepository.findByUsername(username).getRoles());
+            UserModel user = userRepository.findByUsername(username);
+            return generateToken(user);
         } catch (AuthenticationException e) {
             throw new CustomException("Invalid username/password supplied", HttpStatus.UNPROCESSABLE_ENTITY);
         }
+    }
+
+    public TokenResponse generateToken(UserModel user) {
+        String token = jwtTokenProvider.createToken(user.getUsername(), user.getRoles());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        return new TokenResponse(token, refreshToken.getToken());
     }
 
     @Override
@@ -129,5 +144,22 @@ public class UserServiceImpl implements UserService {
                         .build())
                 .data(responses)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public TokenResponse refreshToken(String requestRefreshToken) {
+        RefreshToken refreshToken = refreshTokenService.findByToken(requestRefreshToken);
+        refreshTokenService.verifyExpiration(refreshToken);
+        UserModel user = refreshToken.getUser();
+        return generateToken(user);
+    }
+
+    @Override
+    @Transactional
+    public void logout() {
+        User auth = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserModel user = userRepository.findByUsername(auth.getUsername());
+        refreshTokenService.deleteByUser(user);
     }
 }
