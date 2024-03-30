@@ -33,9 +33,6 @@ public class StoreModel extends AuditModel {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
-    @ManyToMany(mappedBy = "stores")
-    private Set<UserModel> users = new HashSet<>();
-
     public StoreModel() {
         this.id = UUID.randomUUID();
     }
