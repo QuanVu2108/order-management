@@ -7,7 +7,10 @@ import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.UserRequest;
 import com.ss.dto.response.TokenResponse;
 import com.ss.dto.response.UserResponse;
-import com.ss.exception.CustomException;
+import com.ss.exception.ExceptionResponse;
+import com.ss.exception.http.DuplicatedError;
+import com.ss.exception.http.InvalidInputError;
+import com.ss.exception.http.NotFoundError;
 import com.ss.model.PermissionGroupModel;
 import com.ss.model.RefreshToken;
 import com.ss.model.StoreModel;
@@ -73,7 +76,7 @@ public class UserServiceImpl implements UserService {
             UserModel user = userRepository.findByUsername(username);
             return generateToken(user);
         } catch (AuthenticationException e) {
-            throw new CustomException("Invalid username/password supplied", HttpStatus.UNPROCESSABLE_ENTITY);
+            throw new ExceptionResponse(InvalidInputError.USER_PASSWORD_INVALID.getMessage(), InvalidInputError.USER_PASSWORD_INVALID);
         }
     }
 
@@ -87,13 +90,13 @@ public class UserServiceImpl implements UserService {
     public UserResponse create(UserRequest request) {
         UserModel checkedUser = userRepository.findByUsername(request.getUserName());
         if (checkedUser != null)
-            throw new CustomException("username is duplicated", HttpStatus.CONFLICT);
+            throw new ExceptionResponse(DuplicatedError.USERNAME_DUPLICATED.getMessage(), DuplicatedError.USERNAME_DUPLICATED);
 
         UserModel user = new UserModel(request);
 
         PermissionGroupModel permissionGroup = permissionService.findById(request.getPermissionGroupId());
         if (permissionGroup == null)
-            throw new CustomException("permission group is not existed", HttpStatus.BAD_REQUEST);
+            throw new ExceptionResponse(InvalidInputError.PERMISSION_GROUP_INVALID.getMessage(), InvalidInputError.PERMISSION_GROUP_INVALID);
 
         Set<StoreModel> stores = storeService.findByIds(request.getStoreIds());
 
@@ -107,11 +110,11 @@ public class UserServiceImpl implements UserService {
     public UserResponse update(UUID id, UserRequest request) {
         Optional<UserModel> userOptional = userRepository.findById(id);
         if (userOptional.isEmpty())
-            throw new CustomException("user is not existed", HttpStatus.BAD_REQUEST);
+            throw new ExceptionResponse(NotFoundError.USER_NOT_FOUND.getMessage(), NotFoundError.USER_NOT_FOUND);
 
         PermissionGroupModel permissionGroup = permissionService.findById(request.getPermissionGroupId());
         if (permissionGroup == null)
-            throw new CustomException("permission group is not existed", HttpStatus.BAD_REQUEST);
+            throw new ExceptionResponse(NotFoundError.PERMISSION_GROUP_NOT_FOUND.getMessage(), NotFoundError.PERMISSION_GROUP_NOT_FOUND);
 
         Set<StoreModel> stores = storeService.findByIds(request.getStoreIds());
 

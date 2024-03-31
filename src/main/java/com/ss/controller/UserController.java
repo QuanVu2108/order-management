@@ -9,7 +9,6 @@ import com.ss.dto.response.MessageResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.dto.response.TokenResponse;
 import com.ss.dto.response.UserResponse;
-import com.ss.service.RefreshTokenService;
 import com.ss.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +28,29 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private RefreshTokenService refreshTokenService;
+    @PostMapping
+    public ServiceResponse<UserResponse> create(@Valid @RequestBody UserRequest request) {
+        return ServiceResponse.succeed(HttpStatus.OK, userService.create(request));
+    }
+
+    @PutMapping("{id}")
+    public ServiceResponse<UserResponse> update(
+            @PathVariable @Valid UUID id,
+            @Valid @RequestBody UserRequest request) {
+        return ServiceResponse.succeed(HttpStatus.OK, userService.update(id, request));
+    }
+
+    @GetMapping
+    public PageResponse<UserResponse> search(
+            @RequestParam(name = "username", required = false) String username,
+            @RequestParam(name = "store", required = false) String store,
+            @RequestParam(name = "permissionGroup", required = false) String permissionGroup,
+            @RequestParam(name = "position", required = false) String position,
+            @RequestParam(name = "email", required = false) String email,
+            @RequestParam(name = "fullName", required = false) String fullName,
+            @Valid PageCriteria pageCriteria) {
+        return PageResponse.succeed(HttpStatus.OK, userService.search(username, store, permissionGroup, position, email, fullName, pageCriteria));
+    }
 
     @PostMapping("/signin")
     public ServiceResponse<TokenResponse> login(@Valid @RequestBody SignInRequest request) {
@@ -50,30 +70,6 @@ public class UserController {
     public ResponseEntity<?> logoutUser() {
         userService.logout();
         return ResponseEntity.ok(new MessageResponse("Log out successful!"));
-    }
-
-    @PostMapping
-    public ServiceResponse<UserResponse> create(@Valid @RequestBody UserRequest request) {
-        return ServiceResponse.succeed(HttpStatus.OK, userService.create(request));
-    }
-
-    @PutMapping("{id}")
-    public ServiceResponse<UserResponse> update(
-            @PathVariable @Valid UUID id,
-            @Valid @RequestBody UserRequest request) {
-        return ServiceResponse.succeed(HttpStatus.OK, userService.update(id, request));
-    }
-
-    @GetMapping
-    public PageResponse<List<UserResponse>> search(
-            @RequestParam(name = "username", required = false) String username,
-            @RequestParam(name = "store", required = false) String store,
-            @RequestParam(name = "permissionGroup", required = false) String permissionGroup,
-            @RequestParam(name = "position", required = false) String position,
-            @RequestParam(name = "email", required = false) String email,
-            @RequestParam(name = "fullName", required = false) String fullName,
-            @Valid PageCriteria pageCriteria) {
-        return PageResponse.succeed(HttpStatus.OK, userService.search(username, store, permissionGroup, position, email, fullName, pageCriteria));
     }
 
 }

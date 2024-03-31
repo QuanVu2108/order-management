@@ -1,5 +1,7 @@
 package com.ss.service;
 
+import com.ss.dto.pagination.PageCriteria;
+import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.PermissionGroupRequest;
 import com.ss.dto.request.PermissionMenuRequest;
 import com.ss.dto.request.PermissionRequest;
@@ -19,7 +21,7 @@ public interface PermissionService {
 
     void delete(UUID id);
 
-    List<PermissionGroupModel> search(String keyword);
+    PageResponse<PermissionGroupModel> search(String keyword, PageCriteria pageCriteria);
 
     PermissionGroupModel findById(UUID id);
 
@@ -29,5 +31,5 @@ public interface PermissionService {
 
     void deletePermissionMenu(UUID id);
 
-    List<PermissionMenuModel> getPermissionMenu();
+    PageResponse<PermissionMenuModel> getPermissionMenu(String name, PageCriteria pageCriteria);
 }

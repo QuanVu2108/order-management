@@ -1,10 +1,14 @@
 package com.ss.service.Impl;
 
+import com.ss.dto.pagination.PageCriteria;
+import com.ss.dto.pagination.PageCriteriaPageableMapper;
+import com.ss.dto.pagination.PageResponse;
+import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.PermissionGroupRequest;
 import com.ss.dto.request.PermissionMenuRequest;
 import com.ss.dto.request.PermissionRequest;
 import com.ss.dto.response.PermissionGroupResponse;
-import com.ss.exception.CustomException;
+import com.ss.exception.ExceptionResponse;
 import com.ss.model.PermissionGroupModel;
 import com.ss.model.PermissionMenuModel;
 import com.ss.model.PermissionModel;
@@ -15,6 +19,7 @@ import com.ss.service.PermissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,12 +42,14 @@ public class PermissionServiceImpl implements PermissionService {
     @Autowired
     private PermissionMenuRepository permissionMenuRepository;
 
+    private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
+
     @Override
     @Transactional
     public PermissionGroupResponse create(PermissionGroupRequest request) {
         List<PermissionGroupModel> permissionGroups = permissionGroupRepository.findByName(request.getGroupName());
         if (!permissionGroups.isEmpty())
-            throw new CustomException("name of group is duplicated", HttpStatus.CONFLICT);
+            throw new ExceptionResponse("name of group is duplicated");
         PermissionGroupModel permissionGroup = new PermissionGroupModel(request.getGroupName());
         permissionGroup = permissionGroupRepository.save(permissionGroup);
         Set<PermissionModel> permissions = new HashSet<>();
@@ -65,12 +72,12 @@ public class PermissionServiceImpl implements PermissionService {
     public PermissionGroupResponse update(UUID id, String groupName) {
         Optional<PermissionGroupModel> permissionGroupOptional = permissionGroupRepository.findById(id);
         if (permissionGroupOptional.isEmpty())
-            throw new CustomException("permission group is not existed", HttpStatus.BAD_REQUEST);
+            throw new ExceptionResponse("permission group is not existed");
         PermissionGroupModel permissionGroup = permissionGroupOptional.get();
         if (!permissionGroup.getName().equals(groupName)) {
             List<PermissionGroupModel> permissionGroups = permissionGroupRepository.findByName(groupName);
             if (!permissionGroups.isEmpty())
-                throw new CustomException("name of group is duplicated", HttpStatus.CONFLICT);
+                throw new ExceptionResponse("name of group is duplicated");
         }
         permissionGroup.setName(groupName);
         permissionGroup = permissionGroupRepository.save(permissionGroup);
@@ -84,7 +91,7 @@ public class PermissionServiceImpl implements PermissionService {
     public PermissionGroupResponse updatePermission(UUID id, List<PermissionRequest> permissionRequests) {
         Optional<PermissionGroupModel> permissionGroupOptional = permissionGroupRepository.findById(id);
         if (permissionGroupOptional.isEmpty())
-            throw new CustomException("permission group is not existed", HttpStatus.BAD_REQUEST);
+            throw new ExceptionResponse("permission group is not existed");
         PermissionGroupModel permissionGroup = permissionGroupOptional.get();
         List<PermissionMenuModel> permissionMenus = permissionMenuRepository.findAll();
         List<PermissionModel> existedPermissions = permissionRepository.findByPermissionGroupAndPermissionMenuIn(permissionGroup, permissionMenus);
@@ -109,15 +116,22 @@ public class PermissionServiceImpl implements PermissionService {
     public void delete(UUID id) {
         Optional<PermissionGroupModel> permissionGroupOptional = permissionGroupRepository.findById(id);
         if (permissionGroupOptional.isEmpty())
-            throw new CustomException("permission group is not existed", HttpStatus.BAD_REQUEST);
+            throw new ExceptionResponse("permission group is not existed");
         PermissionGroupModel permissionGroup = permissionGroupOptional.get();
         permissionGroup.setDeleted(true);
         permissionGroupRepository.save(permissionGroup);
     }
 
     @Override
-    public List<PermissionGroupModel> search(String keyword) {
-        return permissionGroupRepository.findByNameLike(convertSqlSearchText(keyword));
+    public PageResponse<PermissionGroupModel> search(String keyword, PageCriteria pageCriteria) {
+        Page<PermissionGroupModel> pages = permissionGroupRepository.search(convertSqlSearchText(keyword), pageCriteriaPageableMapper.toPageable(pageCriteria));
+        return PageResponse.<PermissionGroupModel>builder()
+                .paging(Paging.builder().totalCount(pages.getTotalElements())
+                        .pageIndex(pageCriteria.getPageIndex())
+                        .pageSize(pageCriteria.getPageSize())
+                        .build())
+                .data(pages.getContent())
+                .build();
     }
 
     @Override
@@ -133,7 +147,7 @@ public class PermissionServiceImpl implements PermissionService {
     public PermissionMenuModel createPermissionMenu(PermissionMenuRequest request) {
         List<PermissionMenuModel> permissionMenus = permissionMenuRepository.findByName(request.getName());
         if (!permissionMenus.isEmpty())
-            throw new CustomException("name of permission menu is duplicated", HttpStatus.CONFLICT);
+            throw new ExceptionResponse("name of permission menu is duplicated");
         PermissionMenuModel permissionMenu = new PermissionMenuModel();
         permissionMenu.update(request);
         permissionMenu = permissionMenuRepository.save(permissionMenu);
@@ -150,7 +164,7 @@ public class PermissionServiceImpl implements PermissionService {
     public PermissionMenuModel updatePermissionMenu(UUID id, PermissionMenuRequest request) {
         Optional<PermissionMenuModel> permissionMenuOptional = permissionMenuRepository.findById(id);
         if (permissionMenuOptional.isEmpty())
-            throw new CustomException("permission group is not existed", HttpStatus.BAD_REQUEST);
+            throw new ExceptionResponse("permission group is not existed");
         PermissionMenuModel permissionMenu = permissionMenuOptional.get();
         permissionMenu.update(request);
         permissionMenu = permissionMenuRepository.save(permissionMenu);
@@ -161,7 +175,7 @@ public class PermissionServiceImpl implements PermissionService {
     public void deletePermissionMenu(UUID id) {
         Optional<PermissionMenuModel> permissionMenuOptional = permissionMenuRepository.findById(id);
         if (permissionMenuOptional.isEmpty())
-            throw new CustomException("permission group is not existed", HttpStatus.BAD_REQUEST);
+            throw new ExceptionResponse("permission group is not existed");
         PermissionMenuModel permissionMenu = permissionMenuOptional.get();
         List<PermissionModel> permissions = permissionRepository.findByPermissionMenu(permissionMenu);
         permissions.forEach(permission -> permission.setDeleted(true));
@@ -171,7 +185,14 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
-    public List<PermissionMenuModel> getPermissionMenu() {
-        return permissionMenuRepository.findAll();
+    public PageResponse<PermissionMenuModel> getPermissionMenu(String name, PageCriteria pageCriteria) {
+        Page<PermissionMenuModel> pages = permissionMenuRepository.search(convertSqlSearchText(name), pageCriteriaPageableMapper.toPageable(pageCriteria));
+        return PageResponse.<PermissionMenuModel>builder()
+                .paging(Paging.builder().totalCount(pages.getTotalElements())
+                        .pageIndex(pageCriteria.getPageIndex())
+                        .pageSize(pageCriteria.getPageSize())
+                        .build())
+                .data(pages.getContent())
+                .build();
     }
 }

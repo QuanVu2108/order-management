@@ -1,6 +1,6 @@
 package com.ss.service.Impl;
 
-import com.ss.exception.CustomException;
+import com.ss.exception.ExceptionResponse;
 import com.ss.model.RefreshToken;
 import com.ss.model.UserModel;
 import com.ss.repository.RefreshTokenRepository;
@@ -29,7 +29,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken findByToken(String token) {
         Optional<RefreshToken> refreshToken = refreshTokenRepository.findByToken(token);
         if (refreshToken.isEmpty())
-            throw new CustomException("Refresh token was expired. Please make a new signin request", HttpStatus.BAD_REQUEST);
+            throw new ExceptionResponse("Refresh token was expired. Please make a new signin request");
         return refreshToken.get();
     }
 
@@ -54,7 +54,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public void verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
             refreshTokenRepository.delete(token);
-            throw new CustomException("Refresh token was expired. Please make a new signin request", HttpStatus.BAD_REQUEST);
+            throw new ExceptionResponse("Refresh token was expired. Please make a new signin request");
         }
     }
 

@@ -1,6 +1,6 @@
 package com.ss.security;
 
-import com.ss.exception.CustomException;
+import com.ss.exception.ExceptionResponse;
 import com.ss.model.RoleModel;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -82,7 +82,7 @@ public class JwtTokenProvider {
       Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
       return true;
     } catch (JwtException | IllegalArgumentException e) {
-      throw new CustomException("Expired or invalid JWT token", HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new ExceptionResponse("Expired or invalid JWT token");
     }
   }
 

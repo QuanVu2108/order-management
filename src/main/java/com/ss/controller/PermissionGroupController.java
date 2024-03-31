@@ -1,5 +1,7 @@
 package com.ss.controller;
 
+import com.ss.dto.pagination.PageCriteria;
+import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.PermissionGroupRequest;
 import com.ss.dto.request.PermissionMenuRequest;
 import com.ss.dto.request.PermissionRequest;
@@ -49,8 +51,9 @@ public class PermissionGroupController {
     }
 
     @GetMapping
-    ServiceResponse<List<PermissionGroupModel>> search(@RequestParam(name = "keyword", required = false) String keyword) {
-        return ServiceResponse.succeed(HttpStatus.OK, permissionService.search(keyword));
+    PageResponse<PermissionGroupModel> search(@RequestParam(name = "keyword", required = false) String keyword,
+                                                       @Valid PageCriteria pageCriteria) {
+        return PageResponse.succeed(HttpStatus.OK, permissionService.search(keyword, pageCriteria));
     }
 
     @PostMapping("/permission-menu")
@@ -71,8 +74,9 @@ public class PermissionGroupController {
     }
 
     @GetMapping("/permission-menu")
-    ServiceResponse<List<PermissionMenuModel>> getPermissionMenu() {
-        return ServiceResponse.succeed(HttpStatus.OK, permissionService.getPermissionMenu());
+    PageResponse<PermissionMenuModel> getPermissionMenu(@RequestParam(name = "name", required = false) String name,
+                                                        @Valid PageCriteria pageCriteria) {
+        return PageResponse.succeed(HttpStatus.OK, permissionService.getPermissionMenu(name, pageCriteria));
     }
 
 }

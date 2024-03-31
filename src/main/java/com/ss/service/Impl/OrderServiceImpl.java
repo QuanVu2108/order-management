@@ -21,6 +21,7 @@ import com.ss.service.AsyncService;
 import com.ss.service.OrderService;
 import com.ss.service.StoreService;
 import com.ss.util.StorageUtil;
+import com.ss.util.StringUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -135,8 +136,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public PageResponse<OrderModel> searchOrder(String keyword, OrderStatus status, PageCriteria pageCriteria) {
-        if (keyword != null)
-            keyword = "%" + keyword.toUpperCase() + "%";
+        keyword = StringUtil.convertSqlSearchText(keyword);
         Page<OrderModel> orderPage = orderRepository.search(keyword, status, pageCriteriaPageableMapper.toPageable(pageCriteria));
 
         return PageResponse.<OrderModel>builder()
@@ -151,8 +151,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public PageResponse<OrderItemResponse> searchOrderItem(UUID orderId, UUID storeId, String keyword, OrderItemStatus status, PageCriteria pageCriteria) {
-        if (keyword != null)
-            keyword = "%" + keyword.toUpperCase() + "%";
+        keyword = StringUtil.convertSqlSearchText(keyword);
         List<UUID> itemIds = null;
         if (orderId != null) {
             Optional<OrderModel> orderModel = orderRepository.findById(orderId);
