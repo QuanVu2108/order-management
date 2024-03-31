@@ -4,12 +4,12 @@ import com.ss.exception.CustomException;
 import com.ss.model.RefreshToken;
 import com.ss.model.UserModel;
 import com.ss.repository.RefreshTokenRepository;
-import com.ss.repository.UserRepository;
 import com.ss.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -25,9 +25,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
     @Override
     public RefreshToken findByToken(String token) {
         Optional<RefreshToken> refreshToken = refreshTokenRepository.findByToken(token);
@@ -37,6 +34,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
+    @Transactional
     public RefreshToken createRefreshToken(UserModel user) {
         RefreshToken refreshToken = new RefreshToken();
         List<RefreshToken> existedRefreshTokens = refreshTokenRepository.findByUser(user);
@@ -52,6 +50,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
+    @Transactional
     public void verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
             refreshTokenRepository.delete(token);
@@ -60,6 +59,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
+    @Transactional
     public void deleteByUser(UserModel user) {
         refreshTokenRepository.deleteByUser(user);
     }

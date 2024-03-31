@@ -3,9 +3,12 @@ server:
 
 spring:
   datasource:
-    url: ${POSTGRESQL_URI:jdbc:postgresql://localhost:5432/order_management?currentSchema=public}
-    username: ${POSTGRESQL_USER:postgres}
-    password: ${POSTGRESQL_PASSWORD:abc13579}
+    url: ${POSTGRESQL_URI:jdbc:postgresql://sharitek-postgre-dev.ccyavljensy4.ap-southeast-1.rds.amazonaws.com:5432/db_sharitek?currentSchema=order_management}
+    username: ${POSTGRESQL_USER:srt_master}
+    password: ${POSTGRESQL_PASSWORD:123456aA}
+#    url: ${POSTGRESQL_URI:jdbc:postgresql://localhost:5432/order_management?currentSchema=public}
+#    username: ${POSTGRESQL_USER:postgres}
+#    password: ${POSTGRESQL_PASSWORD:abc13579}
     hikari:
       maximum-pool-size: ${HIKARI_POOL_SIZE:50}
     jpa:
