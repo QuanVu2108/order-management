@@ -38,15 +38,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
-    private final StorageUtil storageUtil;
-
     private final OrderRepository orderRepository;
 
     private final OrderItemRepository orderItemRepository;
 
     private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
-
-    private final FileRepository fileRepository;
 
     private final AsyncService asyncService;
 
@@ -82,7 +78,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderItemModel createOrderItem(OrderItemRequest request, MultipartFile fileRequest) {
+    public OrderItemModel createOrderItem(OrderItemRequest request) {
         OrderModel order = null;
         if (request.getOrderId() == null) {
             order = createOrder(null, null);
@@ -102,17 +98,11 @@ public class OrderServiceImpl implements OrderService {
         orderItem.update(request);
         orderItem.setOrderModel(order);
         orderItem = orderItemRepository.save(orderItem);
-
-        if (fileRequest != null) {
-            FileModel file = storageUtil.uploadFile(fileRequest);
-            file.setOrderItem(orderItem);
-            fileRepository.save(file);
-        }
         return orderItem;
     }
 
     @Override
-    public OrderItemModel updateOrderItem(UUID orderItemId, OrderItemRequest request, MultipartFile fileRequest) {
+    public OrderItemModel updateOrderItem(UUID orderItemId, OrderItemRequest request) {
         Optional<OrderItemModel> orderItemModelOptional = orderItemRepository.findById(orderItemId);
         if (orderItemModelOptional.isEmpty())
             throw new ExceptionResponse("order item is not existed!!!");
@@ -125,12 +115,6 @@ public class OrderServiceImpl implements OrderService {
 
         orderItem.update(request);
         orderItem = orderItemRepository.save(orderItem);
-
-        if (fileRequest != null) {
-            FileModel file = storageUtil.uploadFile(fileRequest);
-            file.setOrderItem(orderItem);
-            fileRepository.save(file);
-        }
         return orderItem;
     }
 

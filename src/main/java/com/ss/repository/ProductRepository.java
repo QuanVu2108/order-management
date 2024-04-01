@@ -14,7 +14,7 @@ import java.util.UUID;
 @Repository
 public interface ProductRepository extends JpaRepository<ProductModel, Long> {
 
-    @Query("SELECT e FROM ProductModel e " +
+    @Query("SELECT DISTINCT e FROM ProductModel e " +
             " WHERE 1=1 " +
             " AND ((:#{#query.code} is null) or (upper(e.code) like :#{#query.code}))" +
             " AND ((:#{#query.number} is null) or (e.id = :#{#query.number}))" +

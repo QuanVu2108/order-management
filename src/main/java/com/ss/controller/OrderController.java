@@ -57,8 +57,7 @@ public class OrderController {
             @RequestParam(name = "priceOrder", required = false) Double priceOrder,
             @RequestParam(name = "priceReality", required = false) Double priceReality,
             @RequestParam(name = "status", required = false) OrderItemStatus status,
-            @RequestParam(name = "storeId", required = false) UUID storeId,
-            @RequestParam(name = "fileRequest", required = false) MultipartFile fileRequest) {
+            @RequestParam(name = "storeId", required = false) UUID storeId) {
         OrderItemRequest request = OrderItemRequest.builder()
                 .orderId(orderId)
                 .name(name)
@@ -70,7 +69,7 @@ public class OrderController {
                 .status(status)
                 .storeId(storeId)
                 .build();
-        return ServiceResponse.succeed(HttpStatus.OK, orderService.createOrderItem(request, fileRequest));
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.createOrderItem(request));
     }
 
     @PutMapping("/item/{orderItemId}")
@@ -97,7 +96,7 @@ public class OrderController {
                 .status(status)
                 .storeId(storeId)
                 .build();
-        return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrderItem(orderItemId, request, fileRequest));
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrderItem(orderItemId, request));
     }
 
     @GetMapping("/item")

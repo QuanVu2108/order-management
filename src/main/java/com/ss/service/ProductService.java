@@ -5,7 +5,9 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.ProductRequest;
 import com.ss.model.ProductModel;
 import com.ss.model.ProductPropertyModel;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ProductService {
@@ -16,4 +18,6 @@ public interface ProductService {
     void delete(long id);
 
     PageResponse<ProductModel> search(String code, String number, String name, String category, String brand, String color, String size, PageCriteria pageCriteria);
+
+    ProductModel uploadImage(long id, MultipartFile[] fileRequests);
 }

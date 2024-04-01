@@ -14,8 +14,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -38,6 +40,12 @@ public class ProductController {
     ServiceResponse<ProductModel> update(@PathVariable @Valid long id,
                                          @RequestBody @Valid ProductRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, productService.update(id, request));
+    }
+
+    @PostMapping("/upload-image/{id}")
+    ServiceResponse<ProductModel> uploadImage(@PathVariable @Valid long id,
+                                              @RequestPart(name = "fileRequests") MultipartFile[] fileRequests) {
+        return ServiceResponse.succeed(HttpStatus.OK, productService.uploadImage(id, fileRequests));
     }
 
     @DeleteMapping("/{id}")

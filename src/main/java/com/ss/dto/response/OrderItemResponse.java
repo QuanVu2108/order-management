@@ -31,8 +31,6 @@ public class OrderItemResponse {
 
     private OrderItemStatus status;
 
-    private List<FileModel> files;
-
     private OrderModel orderModel;
 
     public OrderItemResponse(OrderItemModel model, StoreModel store) {
@@ -44,7 +42,6 @@ public class OrderItemResponse {
         this.priceOrder = model.getPriceOrder();
         this.priceReality = model.getPriceReality();
         this.status = model.getStatus();
-        this.files = model.getFiles();
         this.orderModel = model.getOrderModel();
         this.store = store;
     }

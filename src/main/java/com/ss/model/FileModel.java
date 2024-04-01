@@ -27,8 +27,8 @@ public class FileModel extends AuditModel {
     private String url;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_item_id")
+    @JoinColumn(name = "product_id")
     @JsonBackReference
-    private OrderItemModel orderItem;
+    private ProductModel product;
 
 }

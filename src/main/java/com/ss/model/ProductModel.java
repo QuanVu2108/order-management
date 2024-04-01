@@ -1,11 +1,13 @@
 package com.ss.model;
 
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.ss.dto.request.ProductRequest;
 import lombok.*;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
+import java.util.Set;
 
 @Entity
 @Table(name = "product_tbl")
@@ -51,6 +53,10 @@ public class ProductModel extends AuditModel {
 
     @Column(name = "is_active")
     private Boolean isActive;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonManagedReference
+    private Set<FileModel> images;
 
     public void update(ProductRequest request, ProductPropertyModel category, ProductPropertyModel brand) {
         this.code = request.getCode();

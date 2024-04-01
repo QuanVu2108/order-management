@@ -6,21 +6,22 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.ProductRequest;
 import com.ss.exception.ExceptionResponse;
+import com.ss.model.FileModel;
 import com.ss.model.ProductModel;
 import com.ss.model.ProductPropertyModel;
+import com.ss.repository.FileRepository;
 import com.ss.repository.ProductPropertyRepository;
 import com.ss.repository.ProductRepository;
 import com.ss.repository.query.ProductQuery;
 import com.ss.service.ProductService;
+import com.ss.util.StorageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static com.ss.util.StringUtil.convertSqlSearchText;
 
@@ -34,6 +35,10 @@ public class ProductServiceImpl implements ProductService {
     private final ProductPropertyRepository propertyRepository;
 
     private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
+
+    private final StorageUtil storageUtil;
+
+    private final FileRepository fileRepository;
 
     @Override
     public ProductModel create(ProductRequest request) {
@@ -103,5 +108,25 @@ public class ProductServiceImpl implements ProductService {
                         .build())
                 .data(pages.getContent())
                 .build();
+    }
+
+    @Override
+    public ProductModel uploadImage(long id, MultipartFile[] fileRequests) {
+        Optional<ProductModel> productOptional = repository.findById(id);
+        if (productOptional.isEmpty())
+            throw new ExceptionResponse("product is not existed!!!");
+        ProductModel product = productOptional.get();
+
+        Set<FileModel> images = new HashSet<>();
+        for (int i = 0; i < fileRequests.length; i++) {
+            FileModel file = storageUtil.uploadFile(fileRequests[i]);
+            file.setProduct(product);
+            fileRepository.save(file);
+            images.add(file);
+        }
+        Set<FileModel> existedImages = product.getImages();
+        existedImages.addAll(images);
+        product.setImages(existedImages);
+        return product;
     }
 }

@@ -9,7 +9,6 @@ import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,9 +18,9 @@ public interface OrderService {
 
     OrderModel updateOrder(UUID orderId, String title, String content);
 
-    OrderItemModel createOrderItem(OrderItemRequest request, MultipartFile fileRequest);
+    OrderItemModel createOrderItem(OrderItemRequest request);
 
-    OrderItemModel updateOrderItem(UUID orderItemId, OrderItemRequest request, MultipartFile fileRequest);
+    OrderItemModel updateOrderItem(UUID orderItemId, OrderItemRequest request);
 
     PageResponse<OrderModel> searchOrder(String keyword, OrderStatus status, PageCriteria pageCriteria);
 

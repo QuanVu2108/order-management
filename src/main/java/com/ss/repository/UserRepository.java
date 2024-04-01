@@ -11,7 +11,7 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<UserModel, UUID> {
     UserModel findByUsername(String username);
 
-    @Query("SELECT user FROM UserModel user " +
+    @Query("SELECT DISTINCT user FROM UserModel user " +
             " LEFT JOIN user.permissionGroupModel permissionGroup " +
             " LEFT JOIN user.stores store " +
             " WHERE 1=1 " +
