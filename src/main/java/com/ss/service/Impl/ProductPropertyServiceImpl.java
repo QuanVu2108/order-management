@@ -7,14 +7,17 @@ import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.ProductPropertyRequest;
 import com.ss.enums.ProductPropertyType;
 import com.ss.exception.ExceptionResponse;
+import com.ss.model.ProductModel;
 import com.ss.model.ProductPropertyModel;
 import com.ss.repository.ProductPropertyRepository;
+import com.ss.repository.ProductRepository;
 import com.ss.service.ProductPropertyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +30,8 @@ import static com.ss.util.StringUtil.convertSqlSearchText;
 public class ProductPropertyServiceImpl implements ProductPropertyService {
 
     private final ProductPropertyRepository repository;
+
+    private final ProductRepository productRepository;
 
     private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
 
@@ -66,6 +71,11 @@ public class ProductPropertyServiceImpl implements ProductPropertyService {
         if (propertyOptional.isEmpty())
             throw new ExceptionResponse("property is existed!!!");
         ProductPropertyModel property = propertyOptional.get();
+        if (property.getType() != null) {
+            List<ProductModel> usingPropertyProducts = productRepository.findByBrandOrCategory(property, property);
+            if (!usingPropertyProducts.isEmpty())
+                throw new ExceptionResponse("exists product was using on this property");
+        }
         property.setDeleted(true);
         repository.save(property);
     }

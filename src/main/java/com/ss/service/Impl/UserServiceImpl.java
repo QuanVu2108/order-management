@@ -24,7 +24,6 @@ import com.ss.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -137,7 +136,7 @@ public class UserServiceImpl implements UserService {
         Page<UserModel> page = userRepository.search(username, store, permissionGroup, position, email, fullName, pageCriteriaPageableMapper.toPageable(pageCriteria));
         List<UserModel> users = page.getContent();
         List<UserResponse> responses = users.stream()
-                .map(item -> new UserResponse(item, item.getPermissionGroupModel(), item.getStores()))
+                .map(item -> new UserResponse(item, item.getPermissionGroup(), item.getStores()))
                 .collect(Collectors.toList());
 
         return PageResponse.<UserResponse>builder()

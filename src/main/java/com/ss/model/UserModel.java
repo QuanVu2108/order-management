@@ -2,7 +2,6 @@ package com.ss.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.ss.dto.request.UserRequest;
-import com.ss.enums.Const;
 import lombok.*;
 import org.hibernate.annotations.Where;
 
@@ -50,7 +49,7 @@ public class UserModel extends AuditModel {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "permission_group_id")
     @JsonBackReference
-    private PermissionGroupModel permissionGroupModel;
+    private PermissionGroupModel permissionGroup;
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinTable(name = "user_store",
@@ -74,7 +73,7 @@ public class UserModel extends AuditModel {
         this.position = request.getPosition();
         this.email = request.getEmail();
         this.isActive = request.getIsActive();
-        this.permissionGroupModel = permissionGroupModel;
+        this.permissionGroup = permissionGroupModel;
         this.stores = stores;
     }
 
