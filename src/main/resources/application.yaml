@@ -84,7 +84,7 @@ management:
       enabled: false
 
 gcp:
-  server: http://localhost
+  server: ${GCP_SERVER_URL:http://localhost}
   port: ":4443"
   project:
     id: ${GCP_PROJECT_ID:order-management}
