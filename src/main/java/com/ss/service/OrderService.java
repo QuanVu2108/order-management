@@ -27,7 +27,7 @@ public interface OrderService {
 
     OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemToolRequest request);
 
-    OrderToolResponse searchListOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
+    List<OrderToolResponse> searchListOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
 
     OrderStatisticResponse getStatistic(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
 

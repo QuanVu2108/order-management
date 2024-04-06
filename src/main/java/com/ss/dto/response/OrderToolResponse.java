@@ -1,13 +1,11 @@
 package com.ss.dto.response;
 
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
-import java.util.List;
-
+@Builder
 @Data
-@AllArgsConstructor
 public class OrderToolResponse {
-    private List<OrderResponse> orders;
-    private OrderStatisticResponse statistic;
+    private OrderResponse order;
+    private OrderItemStatisticResponse statistic;
 }
