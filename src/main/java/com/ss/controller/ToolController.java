@@ -30,7 +30,7 @@ public class ToolController {
     private final OrderService orderService;
 
     @GetMapping("/order")
-    ServiceResponse<OrderToolResponse> searchOrder(
+    ServiceResponse<List<OrderToolResponse>> searchOrder(
             @RequestParam(name = "ids", required = false) List<UUID> ids,
             @RequestParam(name = "code", required = false) String code,
             @RequestParam(name = "statuses", required = false) List<OrderStatus> statuses,

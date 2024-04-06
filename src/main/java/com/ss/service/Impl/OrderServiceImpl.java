@@ -5,10 +5,10 @@ import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.*;
+import com.ss.dto.response.OrderItemStatisticResponse;
 import com.ss.dto.response.OrderResponse;
 import com.ss.dto.response.OrderStatisticResponse;
 import com.ss.dto.response.OrderToolResponse;
-import com.ss.dto.response.ServiceResponse;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.exception.ExceptionResponse;
@@ -204,7 +204,7 @@ public class OrderServiceImpl implements OrderService {
         for (int i = 0; i < orders.size(); i++) {
             OrderModel order = orders.get(i);
             UserModel user = users.stream()
-                    .filter(item -> StringUtils.hasText(item.getCreatedBy()) && item.getCreatedBy().equals(order.getCreatedBy()))
+                    .filter(item -> StringUtils.hasText(order.getCreatedBy()) && order.getCreatedBy().equals(item.getUsername()))
                     .findFirst().orElse(null);
             OrderResponse response = new OrderResponse(order, user);
             responses.add(response);
@@ -237,7 +237,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderToolResponse searchListOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser) {
+    @Transactional
+    public List<OrderToolResponse> searchListOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser) {
         List<String> createdUsers = null;
         List<UserModel> users = new ArrayList<>();
         if (StringUtils.hasText(createdUser)) {
@@ -258,22 +259,70 @@ public class OrderServiceImpl implements OrderService {
                 .createdUsers(createdUsers)
                 .build();
         List<OrderModel> orders = orderRepository.searchList(query);
-        List<OrderResponse> orderResponses = enrichOrderResponse(orders, users);
+        if (users.isEmpty()) {
+            Set<String> userNames = orders.stream()
+                    .filter(item -> StringUtils.hasText(item.getCreatedBy()))
+                    .map(OrderModel::getCreatedBy)
+                    .collect(Collectors.toSet());
+            UserQuery userQuery = UserQuery.builder()
+                    .userNames(userNames)
+                    .build();
+            users = userService.searchList(userQuery);
+        }
+
+        List<OrderToolResponse> responses = new ArrayList<>();
+        for (int i = 0; i < orders.size(); i++) {
+            OrderModel order = orders.get(i);
+            UserModel user = users.stream()
+                    .filter(item -> StringUtils.hasText(order.getCreatedBy()) && order.getCreatedBy().equals(item.getUsername()))
+                    .findFirst().orElse(null);
+            OrderItemStatisticResponse statistic = enrichItemStatistic(order.getItems());
+            OrderResponse orderResponse = new OrderResponse(order, user);
+            OrderToolResponse response = OrderToolResponse.builder()
+                    .statistic(statistic)
+                    .order(orderResponse)
+                    .build();
+            responses.add(response);
+        }
+        return responses;
+    }
+
+    private OrderItemStatisticResponse enrichItemStatistic(List<OrderItemModel> items) {
         int allCnt = 0;
-        int newCnt = 0;
         int pendingCnt = 0;
+        int checkedCnt = 0;
+        int delayCnt = 0;
+        int updateCnt = 0;
+        int sentCnt = 0;
+        int inCartCnt = 0;
+        int cancelCnt = 0;
         int doneCnt = 0;
-        for (int i = 0; i < orderResponses.size(); i++) {
+        for (int i = 0; i < items.size(); i++) {
             allCnt++;
-            OrderResponse response = orderResponses.get(i);
-            if (response.getStatus() != null) {
-                if (response.getStatus().equals(OrderStatus.NEW)) newCnt++;
-                if (response.getStatus().equals(OrderStatus.PENDING)) pendingCnt++;
-                if (response.getStatus().equals(OrderStatus.DONE)) doneCnt++;
+            OrderItemModel item = items.get(i);
+            if (item.getStatus() != null) {
+                if (item.getStatus().equals(OrderItemStatus.PENDING)) pendingCnt++;
+                if (item.getStatus().equals(OrderItemStatus.CHECKED)) checkedCnt++;
+                if (item.getStatus().equals(OrderItemStatus.DELAY)) delayCnt++;
+                if (item.getStatus().equals(OrderItemStatus.UPDATE)) updateCnt++;
+                if (item.getStatus().equals(OrderItemStatus.SENT)) sentCnt++;
+                if (item.getStatus().equals(OrderItemStatus.IN_CART)) inCartCnt++;
+                if (item.getStatus().equals(OrderItemStatus.CANCEL)) cancelCnt++;
+                if (item.getStatus().equals(OrderItemStatus.DONE)) doneCnt++;
             }
         }
-        OrderStatisticResponse statisticResponse = new OrderStatisticResponse(allCnt, newCnt, pendingCnt, doneCnt);
-        return new OrderToolResponse(orderResponses, statisticResponse);
+        return OrderItemStatisticResponse.builder()
+                .allCnt(allCnt)
+                .pendingCnt(pendingCnt)
+                .checkedCnt(checkedCnt)
+                .delayCnt(delayCnt)
+                .updateCnt(updateCnt)
+                .sentCnt(sentCnt)
+                .inCartCnt(inCartCnt)
+                .cancelCnt(cancelCnt)
+                .doneCnt(doneCnt)
+                .build();
+
     }
 
     @Override

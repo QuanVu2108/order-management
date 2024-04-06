@@ -9,7 +9,6 @@ import java.util.List;
 @Builder
 @Data
 public class UserQuery {
-//    String username, String store, String permissionGroup, String position, String email, String fullName
     private String keyword;
     private Collection<String> userNames;
     private String fullName;
