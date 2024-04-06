@@ -12,10 +12,7 @@ import com.ss.dto.response.OrderToolResponse;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.exception.ExceptionResponse;
-import com.ss.model.OrderItemModel;
-import com.ss.model.OrderModel;
-import com.ss.model.StoreModel;
-import com.ss.model.UserModel;
+import com.ss.model.*;
 import com.ss.repository.OrderItemRepository;
 import com.ss.repository.OrderRepository;
 import com.ss.repository.query.OrderItemQuery;
@@ -105,6 +102,12 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
         Set<StoreModel> stores = storeService.findByIds(storeIds);
 
+        List<Long> productIds = itemRequests.stream()
+                .filter(item -> item.getProductId() != null)
+                .map(OrderItemRequest::getProductId)
+                .collect(Collectors.toList());
+        List<ProductModel> products = productService.findByIds(productIds);
+
         List<OrderItemModel> existedItems = orderItemRepository.findAllById(updatingItemIds);
         existedItems.forEach(existedItem -> {
             OrderItemRequest itemRequest = updatingItems.stream()
@@ -115,8 +118,15 @@ public class OrderServiceImpl implements OrderService {
                         .filter(item -> itemRequest.getStoreId() != null && item.getId().equals(itemRequest.getStoreId()))
                         .findFirst().orElse(null);
                 if (store == null)
-                    throw new ExceptionResponse("store is invalid by product " + itemRequest.getProductId());
-                existedItem.update(itemRequest, store);
+                    throw new ExceptionResponse("store is invalid by product " + itemRequest.getStoreId());
+
+                ProductModel product = products.stream()
+                        .filter(item -> itemRequest.getProductId() != null && item.getId() == itemRequest.getProductId())
+                        .findFirst().orElse(null);
+                if (product == null)
+                    throw new ExceptionResponse("product is invalid at row " + itemRequest.getProductId());
+
+                existedItem.update(itemRequest, store, product);
                 orderItems.add(existedItem);
             }
         });
@@ -137,6 +147,12 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
         Set<StoreModel> stores = storeService.findByIds(storeIds);
 
+        List<Long> productIds = itemRequests.stream()
+                .filter(item -> item.getProductId() != null)
+                .map(OrderItemRequest::getProductId)
+                .collect(Collectors.toList());
+        List<ProductModel> products = productService.findByIds(productIds);
+
         List<OrderItemModel> orderItems = new ArrayList<>();
         int index = 1;
         for (int i = 0; i < itemRequests.size(); i++) {
@@ -147,7 +163,14 @@ public class OrderServiceImpl implements OrderService {
                     .findFirst().orElse(null);
             if (store == null)
                 throw new ExceptionResponse("store is invalid at row " + i);
-            orderItem.update(itemRequest, store);
+
+            ProductModel product = products.stream()
+                    .filter(item -> itemRequest.getProductId() != null && item.getId() == itemRequest.getProductId())
+                    .findFirst().orElse(null);
+            if (product == null)
+                throw new ExceptionResponse("product is invalid at row " + i);
+
+            orderItem.update(itemRequest, store, product);
             orderItems.add(orderItem);
             index++;
         }
