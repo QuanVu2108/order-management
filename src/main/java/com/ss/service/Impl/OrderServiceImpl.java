@@ -5,10 +5,7 @@ import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.*;
-import com.ss.dto.response.OrderItemStatisticResponse;
-import com.ss.dto.response.OrderResponse;
-import com.ss.dto.response.OrderStatisticResponse;
-import com.ss.dto.response.OrderToolResponse;
+import com.ss.dto.response.*;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.exception.ExceptionResponse;
@@ -20,6 +17,7 @@ import com.ss.repository.query.OrderQuery;
 import com.ss.repository.query.UserQuery;
 import com.ss.service.*;
 import com.ss.util.StringUtil;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -386,6 +384,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderItemModel receiveItem(UUID orderItemId, OrderItemReceivedRequest request) {
         Optional<OrderItemModel> itemOptional = orderItemRepository.findById(orderItemId);
         if (itemOptional.isEmpty())
@@ -393,7 +392,44 @@ public class OrderServiceImpl implements OrderService {
         OrderItemModel item = itemOptional.get();
         item.updateByReceive(request);
         item = orderItemRepository.save(item);
+        if (item.getStatus() != null && item.getStatus().equals(OrderItemStatus.DONE)) {
+            OrderModel order = item.getOrderModel();
+            if (checkFinishOrder(order)) {
+                order.setStatus(OrderStatus.DONE);
+                orderRepository.save(order);
+            }
+        }
         return item;
+    }
+
+    @Override
+    @Transactional
+    public List<OrderItemByStoreResponse> getOrderByStore(List<OrderItemStatus> statuses) {
+        List<OrderItemModel> orderItems = orderItemRepository.findByStatusIn(statuses);
+        Set<OrderItemByStoreResponse> responses = orderItems.stream()
+                .map(item -> new OrderItemByStoreResponse(item.getStore()))
+                .collect(Collectors.toSet());
+        orderItems.forEach(orderItem -> {
+            OrderItemByStoreResponse response = responses.stream()
+                    .filter(item -> item.getStore() != null && item.getStore().equals(orderItem.getStore()))
+                    .findFirst().orElse(null);
+            if (response != null) {
+                response.updateOrderCnt();
+                response.updateProductCnt(orderItem.getQuantityOrder());
+            }
+        });
+        return new ArrayList<>(responses);
+    }
+
+    private boolean checkFinishOrder(OrderModel orderModel) {
+        List<OrderItemModel> orderItems = orderItemRepository.findByOrderModel(orderModel);
+        List<OrderItemStatus> statuses = orderItems.stream().map(OrderItemModel::getStatus).collect(Collectors.toList());
+        OrderItemStatus pendingStatus = statuses.stream()
+                .filter(item -> OrderItemStatus.getPendingStatus().contains(item))
+                .findFirst().orElse(null);
+        if (pendingStatus == null)
+            return true;
+        return false;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.ss.repository.query;
 
 import com.ss.enums.OrderItemStatus;
+import com.ss.enums.OrderStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -18,4 +19,5 @@ public class OrderItemQuery {
     private String store;
     private List<UUID> storeIds;
     private List<OrderItemStatus> statuses;
+    private OrderStatus orderStatus;
 }
