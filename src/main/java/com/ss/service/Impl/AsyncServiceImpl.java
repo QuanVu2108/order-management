@@ -34,7 +34,7 @@ public class AsyncServiceImpl implements AsyncService {
                 .filter(item -> !submittedOrderItemIds.contains(item.getId()) && OrderItemStatus.PENDING.equals(item.getStatus()))
                 .collect(Collectors.toList());
         if (unsubmittedOrderItems.isEmpty()) {
-            order.setStatus(OrderStatus.COMPLETED);
+            order.setStatus(OrderStatus.DONE);
             order.setUpdatedAt(Instant.now());
             orderRepository.save(order);
         }

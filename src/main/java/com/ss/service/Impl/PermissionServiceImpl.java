@@ -12,9 +12,11 @@ import com.ss.exception.ExceptionResponse;
 import com.ss.model.PermissionGroupModel;
 import com.ss.model.PermissionMenuModel;
 import com.ss.model.PermissionModel;
+import com.ss.model.UserModel;
 import com.ss.repository.PermissionGroupRepository;
 import com.ss.repository.PermissionMenuRepository;
 import com.ss.repository.PermissionRepository;
+import com.ss.repository.UserRepository;
 import com.ss.service.PermissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,9 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Autowired
     private PermissionRepository permissionRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private PermissionMenuRepository permissionMenuRepository;
@@ -118,6 +123,10 @@ public class PermissionServiceImpl implements PermissionService {
         if (permissionGroupOptional.isEmpty())
             throw new ExceptionResponse("permission group is not existed");
         PermissionGroupModel permissionGroup = permissionGroupOptional.get();
+        List<UserModel> users = userRepository.findByPermissionGroup(permissionGroup);
+        if (!users.isEmpty())
+            throw new ExceptionResponse("exists users was using this permission");
+
         permissionGroup.setDeleted(true);
         permissionGroupRepository.save(permissionGroup);
     }

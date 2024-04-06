@@ -1,20 +1,21 @@
 package com.ss.dto.request;
 
-import com.ss.model.OrderItemModel;
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 public class OrderRequest {
 
-    private String title;
+    private Long totalQuantity;
 
-    private String content;
+    private Double totalCost;
+
+    private Double actualCost;
+
+    private Double incentive;
 
     @NotEmpty
-    private List<OrderItemModel> items;
+    private List<OrderItemRequest> items;
 }

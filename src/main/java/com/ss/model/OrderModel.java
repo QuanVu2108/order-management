@@ -2,6 +2,7 @@ package com.ss.model;
 
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.ss.dto.request.OrderRequest;
 import com.ss.enums.OrderStatus;
 import lombok.*;
 import org.hibernate.annotations.Where;
@@ -22,14 +23,29 @@ public class OrderModel extends AuditModel {
     @Id
     private UUID id;
 
-    @Column(name = "title")
-    private String title;
-
     @Column(name = "code")
     private String code;
 
-    @Column(name = "content", columnDefinition = "text")
-    private String content;
+    @Column(name = "date")
+    private Long date;
+
+    @Column(name = "total_quantity")
+    private Long totalQuantity;
+
+    @Column(name = "total_cost")
+    private Double totalCost;
+
+    @Column(name = "actual_cost")
+    private Double actualCost;
+
+    @Column(name = "incentive")
+    private Double incentive;
+
+    @Column(name = "note", columnDefinition = "text")
+    private String note;
+
+    @Column(name = "received_quantity")
+    private Long receivedQuantity;
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
@@ -39,4 +55,17 @@ public class OrderModel extends AuditModel {
     @JsonManagedReference
     private List<OrderItemModel> items;
 
+    public OrderModel(String code) {
+        this.id = UUID.randomUUID();
+        this.code = code;
+        this.date = System.currentTimeMillis();
+        this.status = OrderStatus.NEW;
+    }
+
+    public void update(OrderRequest request) {
+        this.totalQuantity = request.getTotalQuantity();
+        this.totalCost = request.getTotalCost();
+        this.incentive = request.getIncentive();
+        this.actualCost = request.getActualCost();
+    }
 }

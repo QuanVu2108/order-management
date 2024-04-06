@@ -1,6 +1,7 @@
 package com.ss.repository;
 
 import com.ss.model.ProductModel;
+import com.ss.model.ProductPropertyModel;
 import com.ss.repository.query.ProductQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -26,4 +28,6 @@ public interface ProductRepository extends JpaRepository<ProductModel, Long> {
             ""
     )
     Page<ProductModel> search(@Param("query") ProductQuery query, Pageable pageable);
+
+    List<ProductModel> findByBrandOrCategory(ProductPropertyModel brand, ProductPropertyModel category);
 }

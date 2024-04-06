@@ -5,7 +5,10 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.UserRequest;
 import com.ss.dto.response.TokenResponse;
 import com.ss.dto.response.UserResponse;
+import com.ss.model.UserModel;
+import com.ss.repository.query.UserQuery;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface UserService {
@@ -21,4 +24,10 @@ public interface UserService {
     TokenResponse refreshToken(String requestRefreshToken);
 
     void logout();
+
+    UserModel getUserInfo();
+
+    List<UserModel> searchList(UserQuery query);
+
+    List<UserModel> findUsersByKeyword(String keyword);
 }

@@ -1,7 +1,11 @@
 package com.ss.enums;
 
 public enum OrderItemStatus {
-    OK,
     PENDING,
+    CHECKED,
+    DELAY,
+    UPDATE,
+    SENT,
+    IN_CART,
     CANCEL
 }
