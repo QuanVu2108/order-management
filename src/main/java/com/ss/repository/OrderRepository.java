@@ -17,7 +17,7 @@ public interface OrderRepository extends JpaRepository<OrderModel, UUID> {
             " WHERE 1=1 " +
             " AND (:#{#query.ids} is null or e.id in :#{#query.ids}) " +
             " AND (:#{#query.code} is null or UPPER(e.code) like :#{#query.code}) " +
-            " AND (:#{#query.statues} is null or e.status in :#{#query.statuses}) " +
+            " AND (:#{#query.statuses} is null or e.status in :#{#query.statuses}) " +
             " AND (:#{#query.fromDate} is null or e.date >= :#{#query.fromDate}) " +
             " AND (:#{#query.toDate} is null or e.date <= :#{#query.toDate}) " +
             " AND (:#{#query.createdUsers} is null or e.createdBy in :#{#query.createdUsers}) "

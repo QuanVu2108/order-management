@@ -6,6 +6,7 @@ import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemSubmittedRequest;
 import com.ss.dto.request.OrderItemToolRequest;
 import com.ss.dto.response.OrderResponse;
+import com.ss.dto.response.OrderToolResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
@@ -29,7 +30,7 @@ public class ToolController {
     private final OrderService orderService;
 
     @GetMapping("/order")
-    ServiceResponse<List<OrderResponse>> searchOrder(
+    ServiceResponse<OrderToolResponse> searchOrder(
             @RequestParam(name = "ids", required = false) List<UUID> ids,
             @RequestParam(name = "code", required = false) String code,
             @RequestParam(name = "statuses", required = false) List<OrderStatus> statuses,

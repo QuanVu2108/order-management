@@ -7,6 +7,7 @@ import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.*;
 import com.ss.dto.response.OrderResponse;
 import com.ss.dto.response.OrderStatisticResponse;
+import com.ss.dto.response.OrderToolResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
@@ -236,7 +237,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderResponse> searchListOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser) {
+    public OrderToolResponse searchListOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser) {
         List<String> createdUsers = null;
         List<UserModel> users = new ArrayList<>();
         if (StringUtils.hasText(createdUser)) {
@@ -257,19 +258,52 @@ public class OrderServiceImpl implements OrderService {
                 .createdUsers(createdUsers)
                 .build();
         List<OrderModel> orders = orderRepository.searchList(query);
-        return enrichOrderResponse(orders, users);
+        List<OrderResponse> orderResponses = enrichOrderResponse(orders, users);
+        int allCnt = 0;
+        int newCnt = 0;
+        int pendingCnt = 0;
+        int doneCnt = 0;
+        for (int i = 0; i < orderResponses.size(); i++) {
+            allCnt++;
+            OrderResponse response = orderResponses.get(i);
+            if (response.getStatus() != null) {
+                if (response.getStatus().equals(OrderStatus.NEW)) newCnt++;
+                if (response.getStatus().equals(OrderStatus.PENDING)) pendingCnt++;
+                if (response.getStatus().equals(OrderStatus.DONE)) doneCnt++;
+            }
+        }
+        OrderStatisticResponse statisticResponse = new OrderStatisticResponse(allCnt, newCnt, pendingCnt, doneCnt);
+        return new OrderToolResponse(orderResponses, statisticResponse);
     }
 
     @Override
     public OrderStatisticResponse getStatistic(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser) {
-        List<OrderResponse> orders = searchListOrder(ids, code, statuses, fromDate, toDate, createdUser);
+        List<String> createdUsers = null;
+        if (StringUtils.hasText(createdUser)) {
+            UserQuery userQuery = UserQuery.builder()
+                    .keyword(createdUser)
+                    .build();
+            List<UserModel> users = userService.searchList(userQuery);
+            createdUsers = users.stream()
+                    .map(UserModel::getUsername)
+                    .collect(Collectors.toList());
+        }
+        OrderQuery query = OrderQuery.builder()
+                .ids(ids)
+                .code(StringUtil.convertSqlSearchText(code))
+                .statuses(statuses)
+                .fromDate(fromDate)
+                .toDate(toDate)
+                .createdUsers(createdUsers)
+                .build();
+        List<OrderModel> orders = orderRepository.searchList(query);
         int allCnt = 0;
         int newCnt = 0;
         int pendingCnt = 0;
         int doneCnt = 0;
         for (int i = 0; i < orders.size(); i++) {
             allCnt++;
-            OrderResponse order = orders.get(i);
+            OrderModel order = orders.get(i);
             if (order.getStatus() != null) {
                 if (order.getStatus().equals(OrderStatus.NEW)) newCnt++;
                 if (order.getStatus().equals(OrderStatus.PENDING)) pendingCnt++;
