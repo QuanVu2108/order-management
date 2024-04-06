@@ -5,10 +5,13 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemSubmittedRequest;
 import com.ss.dto.request.OrderItemToolRequest;
+import com.ss.dto.response.OrderResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.enums.OrderItemStatus;
+import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
 import com.ss.repository.query.OrderItemQuery;
+import com.ss.repository.query.OrderQuery;
 import com.ss.service.OrderService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,6 +27,17 @@ import java.util.UUID;
 public class ToolController {
 
     private final OrderService orderService;
+
+    @GetMapping("/order")
+    ServiceResponse<List<OrderResponse>> searchOrder(
+            @RequestParam(name = "ids", required = false) List<UUID> ids,
+            @RequestParam(name = "code", required = false) String code,
+            @RequestParam(name = "statuses", required = false) List<OrderStatus> statuses,
+            @RequestParam(name = "fromDate", required = false) Long fromDate,
+            @RequestParam(name = "toDate", required = false) Long toDate,
+            @RequestParam(name = "createdUser", required = false) String createdUser) {
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.searchListOrder(ids, code, statuses, fromDate, toDate, createdUser));
+    }
 
     @GetMapping("/order-item")
     PageResponse<OrderItemModel> getOrderItem(

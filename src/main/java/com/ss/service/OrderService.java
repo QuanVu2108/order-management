@@ -7,6 +7,7 @@ import com.ss.dto.request.OrderItemSubmittedRequest;
 import com.ss.dto.request.OrderItemToolRequest;
 import com.ss.dto.request.OrderRequest;
 import com.ss.dto.response.OrderResponse;
+import com.ss.dto.response.OrderStatisticResponse;
 import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
@@ -20,11 +21,15 @@ public interface OrderService {
 
     OrderModel updateOrder(UUID orderId, OrderRequest request);
 
-    PageResponse<OrderResponse> searchOrder(String code, OrderStatus status, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria);
+    PageResponse<OrderResponse> searchOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria);
 
     PageResponse<OrderItemModel> searchOrderItem(OrderItemQuery orderItemQuery, PageCriteria pageCriteria);
 
     List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request);
 
     OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemToolRequest request);
+
+    List<OrderResponse> searchListOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
+
+    OrderStatisticResponse getStatistic(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
 }

@@ -9,6 +9,8 @@ import com.ss.dto.request.OrderItemSubmittedRequest;
 import com.ss.dto.request.OrderItemToolRequest;
 import com.ss.dto.request.OrderRequest;
 import com.ss.dto.response.OrderResponse;
+import com.ss.dto.response.OrderStatisticResponse;
+import com.ss.dto.response.ServiceResponse;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.exception.ExceptionResponse;
@@ -19,6 +21,7 @@ import com.ss.model.UserModel;
 import com.ss.repository.OrderItemRepository;
 import com.ss.repository.OrderRepository;
 import com.ss.repository.query.OrderItemQuery;
+import com.ss.repository.query.OrderQuery;
 import com.ss.repository.query.UserQuery;
 import com.ss.service.*;
 import com.ss.util.StringUtil;
@@ -155,8 +158,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public PageResponse<OrderResponse> searchOrder(String code, OrderStatus status, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria) {
-        code = StringUtil.convertSqlSearchText(code);
+    public PageResponse<OrderResponse> searchOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria) {
         List<String> createdUsers = null;
         List<UserModel> users = new ArrayList<>();
         if (StringUtils.hasText(createdUser)) {
@@ -168,9 +170,27 @@ public class OrderServiceImpl implements OrderService {
                     .map(UserModel::getUsername)
                     .collect(Collectors.toList());
         }
-        Page<OrderModel> orderPage = orderRepository.search(code, status, fromDate, toDate, createdUsers, pageCriteriaPageableMapper.toPageable(pageCriteria));
+        OrderQuery query = OrderQuery.builder()
+                .ids(ids)
+                .code(StringUtil.convertSqlSearchText(code))
+                .statuses(statuses)
+                .fromDate(fromDate)
+                .toDate(toDate)
+                .createdUsers(createdUsers)
+                .build();
+        Page<OrderModel> orderPage = orderRepository.search(query, pageCriteriaPageableMapper.toPageable(pageCriteria));
         List<OrderModel> orders = orderPage.getContent();
+        List<OrderResponse> responses = enrichOrderResponse(orders, users);
+        return PageResponse.<OrderResponse>builder()
+                .paging(Paging.builder().totalCount(orderPage.getTotalElements())
+                        .pageIndex(pageCriteria.getPageIndex())
+                        .pageSize(pageCriteria.getPageSize())
+                        .build())
+                .data(responses)
+                .build();
+    }
 
+    private List<OrderResponse> enrichOrderResponse(List<OrderModel> orders, List<UserModel> users) {
         List<OrderResponse> responses = new ArrayList<>();
         if (users.isEmpty()) {
             Set<String> userNames = orders.stream()
@@ -191,14 +211,7 @@ public class OrderServiceImpl implements OrderService {
             OrderResponse response = new OrderResponse(order, user);
             responses.add(response);
         }
-
-        return PageResponse.<OrderResponse>builder()
-                .paging(Paging.builder().totalCount(orderPage.getTotalElements())
-                        .pageIndex(pageCriteria.getPageIndex())
-                        .pageSize(pageCriteria.getPageSize())
-                        .build())
-                .data(responses)
-                .build();
+        return responses;
     }
 
     @Override
@@ -223,6 +236,50 @@ public class OrderServiceImpl implements OrderService {
         orderItem.updateByTool(request);
         orderItem = orderItemRepository.save(orderItem);
         return orderItem;
+    }
+
+    @Override
+    public List<OrderResponse> searchListOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser) {
+        List<String> createdUsers = null;
+        List<UserModel> users = new ArrayList<>();
+        if (StringUtils.hasText(createdUser)) {
+            UserQuery userQuery = UserQuery.builder()
+                    .keyword(createdUser)
+                    .build();
+            users = userService.searchList(userQuery);
+            createdUsers = users.stream()
+                    .map(UserModel::getUsername)
+                    .collect(Collectors.toList());
+        }
+        OrderQuery query = OrderQuery.builder()
+                .ids(ids)
+                .code(StringUtil.convertSqlSearchText(code))
+                .statuses(statuses)
+                .fromDate(fromDate)
+                .toDate(toDate)
+                .createdUsers(createdUsers)
+                .build();
+        List<OrderModel> orders = orderRepository.searchList(query);
+        return enrichOrderResponse(orders, users);
+    }
+
+    @Override
+    public OrderStatisticResponse getStatistic(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser) {
+        List<OrderResponse> orders = searchListOrder(ids, code, statuses, fromDate, toDate, createdUser);
+        int allCnt = 0;
+        int newCnt = 0;
+        int pendingCnt = 0;
+        int doneCnt = 0;
+        for (int i = 0; i < orders.size(); i++) {
+            allCnt++;
+            OrderResponse order = orders.get(i);
+            if (order.getStatus() != null) {
+                if (order.getStatus().equals(OrderStatus.NEW)) newCnt++;
+                if (order.getStatus().equals(OrderStatus.PENDING)) pendingCnt++;
+                if (order.getStatus().equals(OrderStatus.DONE)) doneCnt++;
+            }
+        }
+        return new OrderStatisticResponse(allCnt, newCnt, pendingCnt, doneCnt);
     }
 
     @Override
