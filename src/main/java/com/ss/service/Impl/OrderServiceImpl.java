@@ -4,10 +4,7 @@ import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
-import com.ss.dto.request.OrderItemRequest;
-import com.ss.dto.request.OrderItemSubmittedRequest;
-import com.ss.dto.request.OrderItemToolRequest;
-import com.ss.dto.request.OrderRequest;
+import com.ss.dto.request.*;
 import com.ss.dto.response.OrderResponse;
 import com.ss.dto.response.OrderStatisticResponse;
 import com.ss.dto.response.ServiceResponse;
@@ -280,6 +277,17 @@ public class OrderServiceImpl implements OrderService {
             }
         }
         return new OrderStatisticResponse(allCnt, newCnt, pendingCnt, doneCnt);
+    }
+
+    @Override
+    public OrderItemModel receiveItem(UUID orderItemId, OrderItemReceivedRequest request) {
+        Optional<OrderItemModel> itemOptional = orderItemRepository.findById(orderItemId);
+        if (itemOptional.isEmpty())
+            throw new ExceptionResponse("order item is not existed!!!");
+        OrderItemModel item = itemOptional.get();
+        item.updateByReceive(request);
+        item = orderItemRepository.save(item);
+        return item;
     }
 
     @Override

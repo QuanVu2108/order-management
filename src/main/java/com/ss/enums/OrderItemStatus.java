@@ -7,5 +7,6 @@ public enum OrderItemStatus {
     UPDATE,
     SENT,
     IN_CART,
-    CANCEL
+    CANCEL,
+    DONE
 }

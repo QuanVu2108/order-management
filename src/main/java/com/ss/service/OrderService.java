@@ -2,10 +2,7 @@ package com.ss.service;
 
 import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
-import com.ss.dto.request.OrderItemRequest;
-import com.ss.dto.request.OrderItemSubmittedRequest;
-import com.ss.dto.request.OrderItemToolRequest;
-import com.ss.dto.request.OrderRequest;
+import com.ss.dto.request.*;
 import com.ss.dto.response.OrderResponse;
 import com.ss.dto.response.OrderStatisticResponse;
 import com.ss.enums.OrderStatus;
@@ -32,4 +29,6 @@ public interface OrderService {
     List<OrderResponse> searchListOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
 
     OrderStatisticResponse getStatistic(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
+
+    OrderItemModel receiveItem(UUID orderItemId, OrderItemReceivedRequest request);
 }

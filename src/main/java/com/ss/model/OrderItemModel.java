@@ -2,6 +2,7 @@ package com.ss.model;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.ss.dto.request.OrderItemReceivedRequest;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemToolRequest;
 import com.ss.enums.OrderItemStatus;
@@ -38,6 +39,9 @@ public class OrderItemModel extends AuditModel {
 
     @Column(name = "quantity_reality")
     private Long quantityReality;
+
+    @Column(name = "quantity_received")
+    private Long quantityReceived;
 
     @Column(name = "cost")
     private Double cost;
@@ -86,5 +90,12 @@ public class OrderItemModel extends AuditModel {
         this.costReality = request.getCostReality();
         this.delayDay = request.getDelayDay();
         this.status = request.getStatus();
+    }
+
+    public void updateByReceive(OrderItemReceivedRequest request) {
+        this.quantityReceived = request.getReceivedQuantity();
+        if (request.getReceivedQuantity() >= this.quantityOrder)
+            this.status = OrderItemStatus.DONE;
+        this.note = request.getNote();
     }
 }
