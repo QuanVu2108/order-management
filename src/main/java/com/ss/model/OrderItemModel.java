@@ -76,13 +76,15 @@ public class OrderItemModel extends AuditModel {
         this.orderModel = order;
     }
 
-    public void update(OrderItemRequest itemRequest, StoreModel store) {
+    public void update(OrderItemRequest itemRequest, StoreModel store, ProductModel product) {
         this.note = itemRequest.getNote();
         this.quantityOrder = itemRequest.getQuantity();
         this.cost = itemRequest.getCost();
         this.costTotal = itemRequest.getCostTotal();
         if (store != null)
             this.store = store;
+        if (product != null)
+            this.product = product;
     }
 
     public void updateByTool(OrderItemToolRequest request) {

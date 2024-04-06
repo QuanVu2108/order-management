@@ -30,7 +30,10 @@ public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID>
             " AND (:#{#query.store} is null or (upper(store.name) like :#{#query.store})) " +
             " AND (:#{#query.storeIds} is null or store.id in :#{#query.storeIds}) " +
             " AND (:#{#query.statuses} is null or orderItem.status in :#{#query.statuses}) " +
+            " AND (:#{#query.orderStatus} is null or orderModel.status = :#{#query.orderStatus}) " +
             ""
     )
     Page<OrderItemModel> search(OrderItemQuery query, Pageable pageable);
+
+    List<OrderItemModel> findByStatusIn(List<OrderItemStatus> statuses);
 }

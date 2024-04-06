@@ -5,6 +5,7 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemSubmittedRequest;
 import com.ss.dto.request.OrderItemToolRequest;
+import com.ss.dto.response.OrderItemByStoreResponse;
 import com.ss.dto.response.OrderResponse;
 import com.ss.dto.response.OrderToolResponse;
 import com.ss.dto.response.ServiceResponse;
@@ -61,8 +62,14 @@ public class ToolController {
                 .store(store)
                 .storeIds(storeIds)
                 .statuses(statuses)
+                .orderStatus(OrderStatus.PENDING)
                 .build();
         return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderItemQuery, pageCriteria));
+    }
+
+    @GetMapping("/order-by-store")
+    ServiceResponse<List<OrderItemByStoreResponse>> getOrderByStore(@RequestParam(name = "statuses", required = false) List<OrderItemStatus> statuses) {
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.getOrderByStore(statuses));
     }
 
     @PutMapping("/order-item/{orderItemId}")

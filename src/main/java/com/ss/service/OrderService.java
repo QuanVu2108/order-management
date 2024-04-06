@@ -3,9 +3,11 @@ package com.ss.service;
 import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.*;
+import com.ss.dto.response.OrderItemByStoreResponse;
 import com.ss.dto.response.OrderResponse;
 import com.ss.dto.response.OrderStatisticResponse;
 import com.ss.dto.response.OrderToolResponse;
+import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
@@ -32,4 +34,6 @@ public interface OrderService {
     OrderStatisticResponse getStatistic(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
 
     OrderItemModel receiveItem(UUID orderItemId, OrderItemReceivedRequest request);
+
+    List<OrderItemByStoreResponse> getOrderByStore(List<OrderItemStatus> statuses);
 }
