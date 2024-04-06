@@ -19,6 +19,8 @@ public class OrderItemRequest {
     @NotNull
     private Long quantity;
 
+    private Long receivedQuantity;
+
     @NotNull
     private Double cost;
 

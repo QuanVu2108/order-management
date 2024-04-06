@@ -2,9 +2,12 @@ package com.ss.controller;
 
 import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
+import com.ss.dto.request.OrderItemReceivedRequest;
 import com.ss.dto.request.OrderItemRequest;
+import com.ss.dto.request.OrderItemToolRequest;
 import com.ss.dto.request.OrderRequest;
 import com.ss.dto.response.OrderResponse;
+import com.ss.dto.response.OrderStatisticResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
@@ -40,18 +43,31 @@ public class OrderController {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrder(orderId, request));
     }
 
+    @GetMapping("/statistic")
+    ServiceResponse<OrderStatisticResponse> getStatistic(
+            @RequestParam(name = "ids", required = false) List<UUID> ids,
+            @RequestParam(name = "code", required = false) String code,
+            @RequestParam(name = "statuses", required = false) List<OrderStatus> statuses,
+            @RequestParam(name = "fromDate", required = false) Long fromDate,
+            @RequestParam(name = "toDate", required = false) Long toDate,
+            @RequestParam(name = "createdUser", required = false) String createdUser) {
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.getStatistic(ids, code, statuses, fromDate, toDate, createdUser));
+    }
+
+
     @GetMapping
     PageResponse<OrderResponse> searchOrder(
+            @RequestParam(name = "ids", required = false) List<UUID> ids,
             @RequestParam(name = "code", required = false) String code,
-            @RequestParam(name = "status", required = false) OrderStatus status,
+            @RequestParam(name = "statuses", required = false) List<OrderStatus> statuses,
             @RequestParam(name = "fromDate", required = false) Long fromDate,
             @RequestParam(name = "toDate", required = false) Long toDate,
             @RequestParam(name = "createdUser", required = false) String createdUser,
             @Valid PageCriteria pageCriteria) {
-        return PageResponse.succeed(HttpStatus.OK, orderService.searchOrder(code, status, fromDate, toDate, createdUser, pageCriteria));
+        return PageResponse.succeed(HttpStatus.OK, orderService.searchOrder(ids, code, statuses, fromDate, toDate, createdUser, pageCriteria));
     }
 
-    @GetMapping("/item")
+    @GetMapping("/order-item")
     PageResponse<OrderItemModel> searchOrderItem(
             @RequestParam(name = "ids", required = false) List<UUID> ids,
             @RequestParam(name = "orderIds", required = false) List<UUID> orderIds,
@@ -62,7 +78,6 @@ public class OrderController {
             @RequestParam(name = "store", required = false) String store,
             @RequestParam(name = "statuses", required = false) List<OrderItemStatus> statuses,
             @Valid PageCriteria pageCriteria) {
-
         OrderItemQuery orderItemQuery = OrderItemQuery.builder()
                 .ids(ids)
                 .orderIds(orderIds)
@@ -74,6 +89,13 @@ public class OrderController {
                 .statuses(statuses)
                 .build();
         return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderItemQuery, pageCriteria));
+    }
+
+    @PutMapping("/order-item/receive/{orderItemId}")
+    ServiceResponse<OrderItemModel> updateOrderItem(
+            @PathVariable @Valid UUID orderItemId,
+            @RequestBody @Valid OrderItemReceivedRequest request) {
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.receiveItem(orderItemId, request));
     }
 
 }
