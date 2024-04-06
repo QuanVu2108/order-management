@@ -20,4 +20,6 @@ public interface ProductService {
     PageResponse<ProductModel> search(String code, String number, String name, String category, String brand, String color, String size, PageCriteria pageCriteria);
 
     ProductModel uploadImage(long id, MultipartFile[] fileRequests);
+
+    List<ProductModel> findByIds(List<Long> productIds);
 }

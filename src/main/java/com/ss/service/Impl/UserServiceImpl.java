@@ -16,6 +16,7 @@ import com.ss.model.RefreshToken;
 import com.ss.model.StoreModel;
 import com.ss.model.UserModel;
 import com.ss.repository.UserRepository;
+import com.ss.repository.query.UserQuery;
 import com.ss.security.JwtTokenProvider;
 import com.ss.service.PermissionService;
 import com.ss.service.RefreshTokenService;
@@ -32,11 +33,9 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.ss.util.StringUtil.convertSqlSearchText;
@@ -127,13 +126,15 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public PageResponse<UserResponse> search(String username, String store, String permissionGroup, String position, String email, String fullName, PageCriteria pageCriteria) {
-        username = convertSqlSearchText(username);
-        store = convertSqlSearchText(store);
-        permissionGroup = convertSqlSearchText(permissionGroup);
-        position = convertSqlSearchText(position);
-        email = convertSqlSearchText(email);
-        fullName = convertSqlSearchText(fullName);
-        Page<UserModel> page = userRepository.search(username, store, permissionGroup, position, email, fullName, pageCriteriaPageableMapper.toPageable(pageCriteria));
+        UserQuery userQuery = UserQuery.builder()
+                .userNames(Arrays.asList(convertSqlSearchText(username)))
+                .store(convertSqlSearchText(store))
+                .permissionGroup(convertSqlSearchText(permissionGroup))
+                .position(convertSqlSearchText(position))
+                .email(convertSqlSearchText(email))
+                .fullName(convertSqlSearchText(fullName))
+                .build();
+        Page<UserModel> page = userRepository.search(userQuery, pageCriteriaPageableMapper.toPageable(pageCriteria));
         List<UserModel> users = page.getContent();
         List<UserResponse> responses = users.stream()
                 .map(item -> new UserResponse(item, item.getPermissionGroup(), item.getStores()))
@@ -163,5 +164,28 @@ public class UserServiceImpl implements UserService {
         User auth = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         UserModel user = userRepository.findByUsername(auth.getUsername());
         refreshTokenService.deleteByUser(user);
+    }
+
+    @Override
+    public UserModel getUserInfo() {
+        User auth = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserModel user = userRepository.findByUsername(auth.getUsername());
+        return user;
+    }
+
+    @Override
+    @Transactional
+    public List<UserModel> searchList(UserQuery userQuery) {
+        List<UserModel> list = userRepository.searchList(userQuery);
+        return list;
+    }
+
+    @Override
+    public List<UserModel> findUsersByKeyword(String createdUser) {
+        if (!StringUtils.hasText(createdUser))
+            return new ArrayList<>();
+        createdUser = convertSqlSearchText(createdUser);
+        List<UserModel> users = userRepository.findByUsernameLikeOrFullNameLike(createdUser, createdUser);
+        return users;
     }
 }

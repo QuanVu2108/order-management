@@ -9,24 +9,15 @@ import java.util.UUID;
 
 @Data
 @Builder
-public class OrderItemRequest {
+public class OrderItemToolRequest {
 
     private UUID id;
 
-    @NotNull
-    private Long productId;
+    private Long delayDay;
 
-    @NotNull
-    private Long quantity;
+    private Long quantityReality;
 
-    @NotNull
-    private Double cost;
-
-    @NotNull
-    private Double costTotal;
-
-    @NotNull
-    private UUID storeId;
+    private Double costReality;
 
     @NotNull
     private OrderItemStatus status;

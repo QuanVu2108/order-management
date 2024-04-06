@@ -3,15 +3,12 @@ package com.ss.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.ss.dto.request.OrderItemRequest;
+import com.ss.dto.request.OrderItemToolRequest;
 import com.ss.enums.OrderItemStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
-import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -21,15 +18,20 @@ import java.util.UUID;
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class OrderItemModel extends AuditModel {
     @Id
     private UUID id;
 
-    @Column(name = "name")
-    private String name;
+    @Column(name = "code")
+    private String code;
 
-    @Column(name = "content", columnDefinition = "text")
-    private String content;
+    @OneToOne
+    @JoinColumn(name = "product_id", referencedColumnName = "id")
+    private ProductModel product;
+
+    @Column(name = "note", columnDefinition = "text")
+    private String note;
 
     @Column(name = "quantity_order")
     private Long quantityOrder;
@@ -37,14 +39,19 @@ public class OrderItemModel extends AuditModel {
     @Column(name = "quantity_reality")
     private Long quantityReality;
 
-    @Column(name = "price_order")
-    private Double priceOrder;
+    @Column(name = "cost")
+    private Double cost;
 
-    @Column(name = "price_reality")
-    private Double priceReality;
+    @Column(name = "cost_reality")
+    private Double costReality;
 
-    @Column(name = "store_id")
-    private UUID storeId;
+    @Column(name = "cost_total")
+    private Double costTotal;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "store_id")
+    @JsonBackReference
+    private StoreModel store;
 
     @Column(name = "delay_day")
     private Long delayDay;
@@ -53,40 +60,31 @@ public class OrderItemModel extends AuditModel {
     @Enumerated(EnumType.STRING)
     private OrderItemStatus status;
 
-    @OneToOne
-    @JoinColumn(name = "product_id", referencedColumnName = "id")
-    private ProductModel product;
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
     @JsonBackReference
     private OrderModel orderModel;
 
-    public OrderItemModel() {
+    public OrderItemModel(OrderModel order, int index) {
         this.id = UUID.randomUUID();
+        this.code = order.getCode() + "." + index;
         this.status = OrderItemStatus.PENDING;
+        this.orderModel = order;
     }
 
-    public void update(OrderItemRequest request) {
-        this.name = request.getName();
-        this.content = request.getContent();
-        this.quantityOrder = request.getQuantityOrder();
-        this.quantityReality = request.getQuantityReality();
-        this.priceOrder = request.getPriceOrder();
-        this.priceReality = request.getPriceReality();
-        this.status = request.getStatus();
-        this.storeId = request.getStoreId();
-        this.delayDay = request.getDelayDay();
-        setUpdatedAt(Instant.now());
+    public void update(OrderItemRequest itemRequest, StoreModel store) {
+        this.note = itemRequest.getNote();
+        this.quantityOrder = itemRequest.getQuantity();
+        this.cost = itemRequest.getCost();
+        this.costTotal = itemRequest.getCostTotal();
+        if (store != null)
+            this.store = store;
     }
 
-    public void updateByTool(OrderItemRequest request) {
-        this.quantityOrder = request.getQuantityOrder();
+    public void updateByTool(OrderItemToolRequest request) {
         this.quantityReality = request.getQuantityReality();
-        this.priceOrder = request.getPriceOrder();
-        this.priceReality = request.getPriceReality();
+        this.costReality = request.getCostReality();
         this.delayDay = request.getDelayDay();
         this.status = request.getStatus();
-        setUpdatedAt(Instant.now());
     }
 }

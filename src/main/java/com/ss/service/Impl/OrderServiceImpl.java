@@ -6,30 +6,33 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemSubmittedRequest;
-import com.ss.dto.response.OrderItemResponse;
+import com.ss.dto.request.OrderItemToolRequest;
+import com.ss.dto.request.OrderRequest;
+import com.ss.dto.response.OrderResponse;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.exception.ExceptionResponse;
-import com.ss.model.FileModel;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
 import com.ss.model.StoreModel;
-import com.ss.repository.FileRepository;
+import com.ss.model.UserModel;
 import com.ss.repository.OrderItemRepository;
 import com.ss.repository.OrderRepository;
-import com.ss.service.AsyncService;
-import com.ss.service.OrderService;
-import com.ss.service.StoreService;
-import com.ss.util.StorageUtil;
+import com.ss.repository.query.OrderItemQuery;
+import com.ss.repository.query.UserQuery;
+import com.ss.service.*;
 import com.ss.util.StringUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,118 +51,148 @@ public class OrderServiceImpl implements OrderService {
 
     private final StoreService storeService;
 
+    private final ProductService productService;
+
+    private final UserService userService;
+
     @Override
     @Transactional
-    public OrderModel createOrder(String title, String content) {
-        long orderCnt = orderRepository.count();
-        String code = String.valueOf(orderCnt + 1);
-        OrderModel order = OrderModel.builder()
-                .id(UUID.randomUUID())
-                .title(title)
-                .content(content)
-                .code(code)
-                .build();
+    public OrderModel createOrder(OrderRequest request) {
+        String orderCode = genOrderCode();
+        OrderModel order = new OrderModel(orderCode);
+        order.update(request);
         order = orderRepository.save(order);
+        createOrderItem(request.getItems(), order);
         return order;
+    }
+
+    private String genOrderCode() {
+        LocalDate currentDate = LocalDate.now();
+        // Define date format
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        // Format date as string
+        String dateString = currentDate.format(formatter);
+        long orderCnt = orderRepository.countByDate(currentDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()) + 1;
+        return dateString + "_" + orderCnt;
     }
 
     @Override
     @Transactional
-    public OrderModel updateOrder(UUID orderId, String title, String content) {
+    public OrderModel updateOrder(UUID orderId, OrderRequest request) {
         Optional<OrderModel> orderModelOptional = orderRepository.findById(orderId);
         if (orderModelOptional.isEmpty())
             throw new ExceptionResponse("order is not existed!!!");
         OrderModel order = orderModelOptional.get();
-        order.setTitle(title);
-        order.setContent(content);
-        order.setUpdatedAt(Instant.now());
+        List<OrderItemRequest> itemRequests = request.getItems();
+        List<OrderItemRequest> newItems = new ArrayList<>();
+        List<OrderItemRequest> updatingItems = new ArrayList<>();
+        List<UUID> updatingItemIds = new ArrayList<>();
+        itemRequests.forEach(itemRequest -> {
+            if (itemRequest.getId() == null) newItems.add(itemRequest);
+            else {
+                updatingItems.add(itemRequest);
+                updatingItemIds.add(itemRequest.getId());
+            }
+        });
+        // create new order item
+        List<OrderItemModel> orderItems = createOrderItem(newItems, order);
+
+        // update order item
+        List<UUID> storeIds = updatingItems.stream()
+                .filter(item -> item.getStoreId() != null)
+                .map(OrderItemRequest::getStoreId)
+                .collect(Collectors.toList());
+        Set<StoreModel> stores = storeService.findByIds(storeIds);
+
+        List<OrderItemModel> existedItems = orderItemRepository.findAllById(updatingItemIds);
+        existedItems.forEach(existedItem -> {
+            OrderItemRequest itemRequest = updatingItems.stream()
+                    .filter(item -> item.getId().equals(existedItem.getId()))
+                    .findFirst().orElse(null);
+            if (itemRequest != null) {
+                StoreModel store = stores.stream()
+                        .filter(item -> itemRequest.getStoreId() != null && item.getId().equals(itemRequest.getStoreId()))
+                        .findFirst().orElse(null);
+                if (store == null)
+                    throw new ExceptionResponse("store is invalid by product " + itemRequest.getProductId());
+                existedItem.update(itemRequest, store);
+                orderItems.add(existedItem);
+            }
+        });
+
+        // delete order item
+
+
+        orderItemRepository.saveAll(orderItems);
+        order.update(request);
         order = orderRepository.save(order);
         return order;
     }
 
-    @Override
-    public OrderItemModel createOrderItem(OrderItemRequest request) {
-        OrderModel order = null;
-        if (request.getOrderId() == null) {
-            order = createOrder(null, null);
-            orderRepository.save(order);
-        } else {
-            Optional<OrderModel> orderModelOptional = orderRepository.findById(request.getOrderId());
-            if (orderModelOptional.isEmpty())
-                throw new ExceptionResponse("order is not existed!!!");
-            order = orderModelOptional.get();
-        }
-        if (request.getStoreId() != null) {
-            StoreModel store = storeService.findById(request.getStoreId());
-            if (store == null)
-                throw new ExceptionResponse("store is not existed!!!");
-        }
-        OrderItemModel orderItem = new OrderItemModel();
-        orderItem.update(request);
-        orderItem.setOrderModel(order);
-        orderItem = orderItemRepository.save(orderItem);
-        return orderItem;
-    }
-
-    @Override
-    public OrderItemModel updateOrderItem(UUID orderItemId, OrderItemRequest request) {
-        Optional<OrderItemModel> orderItemModelOptional = orderItemRepository.findById(orderItemId);
-        if (orderItemModelOptional.isEmpty())
-            throw new ExceptionResponse("order item is not existed!!!");
-        OrderItemModel orderItem = orderItemModelOptional.get();
-        if (request.getStoreId() != orderItem.getStoreId() && request.getStoreId() != null) {
-            StoreModel store = storeService.findById(request.getStoreId());
-            if (store == null)
-                throw new ExceptionResponse("store is not existed!!!");
-        }
-
-        orderItem.update(request);
-        orderItem = orderItemRepository.save(orderItem);
-        return orderItem;
-    }
-
-    @Override
-    public PageResponse<OrderModel> searchOrder(String keyword, OrderStatus status, PageCriteria pageCriteria) {
-        keyword = StringUtil.convertSqlSearchText(keyword);
-        Page<OrderModel> orderPage = orderRepository.search(keyword, status, pageCriteriaPageableMapper.toPageable(pageCriteria));
-
-        return PageResponse.<OrderModel>builder()
-                .paging(Paging.builder().totalCount(orderPage.getTotalElements())
-                        .pageIndex(pageCriteria.getPageIndex())
-                        .pageSize(pageCriteria.getPageSize())
-                        .build())
-                .data(orderPage.getContent())
-                .build();
-    }
-
-    @Override
-    @Transactional
-    public PageResponse<OrderItemResponse> searchOrderItem(UUID orderId, UUID storeId, String keyword, OrderItemStatus status, PageCriteria pageCriteria) {
-        keyword = StringUtil.convertSqlSearchText(keyword);
-        List<UUID> itemIds = null;
-        if (orderId != null) {
-            Optional<OrderModel> orderModel = orderRepository.findById(orderId);
-            if (orderModel.isEmpty())
-                throw new ExceptionResponse("order is not existed!!!");
-            List<OrderItemModel> orderItems = orderItemRepository.findByOrderModel(orderModel.get());
-            itemIds = orderItems.stream().map(OrderItemModel::getId).collect(Collectors.toList());
-        }
-        Page<OrderItemModel> orderPage = orderItemRepository.searchItem(itemIds, storeId, keyword, status, pageCriteriaPageableMapper.toPageable(pageCriteria));
-        List<OrderItemModel> orderItemModels = orderPage.getContent();
-        List<UUID> storeIds = orderItemModels.stream()
+    public List<OrderItemModel> createOrderItem(List<OrderItemRequest> itemRequests, OrderModel order) {
+        List<UUID> storeIds = itemRequests.stream()
                 .filter(item -> item.getStoreId() != null)
-                .map(OrderItemModel::getStoreId)
+                .map(OrderItemRequest::getStoreId)
                 .collect(Collectors.toList());
         Set<StoreModel> stores = storeService.findByIds(storeIds);
-        List<OrderItemResponse> responses = new ArrayList<>();
-        orderItemModels.forEach(orderItemModel -> {
-            StoreModel store = stores.stream()
-                    .filter(item -> orderItemModel.getStoreId() != null && orderItemModel.getStoreId().equals(item.getId()))
-                    .findFirst().orElse(null);
-            responses.add(new OrderItemResponse(orderItemModel, store));
-        });
 
-        return PageResponse.<OrderItemResponse>builder()
+        List<OrderItemModel> orderItems = new ArrayList<>();
+        int index = 1;
+        for (int i = 0; i < itemRequests.size(); i++) {
+            OrderItemRequest itemRequest = itemRequests.get(i);
+            OrderItemModel orderItem = new OrderItemModel(order, index);
+            StoreModel store = stores.stream()
+                    .filter(item -> itemRequest.getStoreId() != null && item.getId().equals(itemRequest.getStoreId()))
+                    .findFirst().orElse(null);
+            if (store == null)
+                throw new ExceptionResponse("store is invalid at row " + i);
+            orderItem.update(itemRequest, store);
+            orderItems.add(orderItem);
+            index++;
+        }
+        orderItems = orderItemRepository.saveAll(orderItems);
+        return orderItems;
+    }
+
+    @Override
+    public PageResponse<OrderResponse> searchOrder(String code, OrderStatus status, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria) {
+        code = StringUtil.convertSqlSearchText(code);
+        List<String> createdUsers = null;
+        List<UserModel> users = new ArrayList<>();
+        if (StringUtils.hasText(createdUser)) {
+            UserQuery userQuery = UserQuery.builder()
+                    .keyword(createdUser)
+                    .build();
+            users = userService.searchList(userQuery);
+            createdUsers = users.stream()
+                    .map(UserModel::getUsername)
+                    .collect(Collectors.toList());
+        }
+        Page<OrderModel> orderPage = orderRepository.search(code, status, fromDate, toDate, createdUsers, pageCriteriaPageableMapper.toPageable(pageCriteria));
+        List<OrderModel> orders = orderPage.getContent();
+
+        List<OrderResponse> responses = new ArrayList<>();
+        if (users.isEmpty()) {
+            Set<String> userNames = orders.stream()
+                    .filter(item -> StringUtils.hasText(item.getCreatedBy()))
+                    .map(OrderModel::getCreatedBy)
+                    .collect(Collectors.toSet());
+            UserQuery userQuery = UserQuery.builder()
+                    .userNames(userNames)
+                    .build();
+            users = userService.searchList(userQuery);
+        }
+
+        for (int i = 0; i < orders.size(); i++) {
+            OrderModel order = orders.get(i);
+            UserModel user = users.stream()
+                    .filter(item -> StringUtils.hasText(item.getCreatedBy()) && item.getCreatedBy().equals(order.getCreatedBy()))
+                    .findFirst().orElse(null);
+            OrderResponse response = new OrderResponse(order, user);
+            responses.add(response);
+        }
+
+        return PageResponse.<OrderResponse>builder()
                 .paging(Paging.builder().totalCount(orderPage.getTotalElements())
                         .pageIndex(pageCriteria.getPageIndex())
                         .pageSize(pageCriteria.getPageSize())
@@ -169,33 +202,38 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemRequest request) {
+    @Transactional
+    public PageResponse<OrderItemModel> searchOrderItem(OrderItemQuery orderItemQuery, PageCriteria pageCriteria) {
+        Page<OrderItemModel> orderPage = orderItemRepository.search(orderItemQuery, pageCriteriaPageableMapper.toPageable(pageCriteria));
+        return PageResponse.<OrderItemModel>builder()
+                .paging(Paging.builder().totalCount(orderPage.getTotalElements())
+                        .pageIndex(pageCriteria.getPageIndex())
+                        .pageSize(pageCriteria.getPageSize())
+                        .build())
+                .data(orderPage.getContent())
+                .build();
+    }
+
+    @Override
+    public OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemToolRequest request) {
         Optional<OrderItemModel> orderItemModelOptional = orderItemRepository.findById(orderItemId);
         if (orderItemModelOptional.isEmpty())
             throw new ExceptionResponse("order item is not existed!!!");
         OrderItemModel orderItem = orderItemModelOptional.get();
-
         orderItem.updateByTool(request);
         orderItem = orderItemRepository.save(orderItem);
-
         return orderItem;
     }
 
     @Override
     public List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request) {
         List<OrderItemModel> orderItems = orderItemRepository.findAllById(request.getIds());
-        Set<UUID> orderIds = new HashSet<>();
+        OrderItemStatus status = request.getStatus();
         orderItems.forEach(item -> {
-            item.setStatus(OrderItemStatus.OK);
+            item.setStatus(status);
             item.setUpdatedAt(Instant.now());
-            orderIds.add(item.getOrderModel().getId());
         });
         orderItems = orderItemRepository.saveAll(orderItems);
-
-        List<OrderModel> orders = orderRepository.findAllById(orderIds);
-        orders.forEach(order -> asyncService.updateStatusOrders(order, request.getIds()));
-
         return orderItems;
     }
-
 }

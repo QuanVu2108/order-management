@@ -3,6 +3,7 @@ package com.ss.repository;
 import com.ss.enums.OrderItemStatus;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
+import com.ss.repository.query.OrderItemQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,12 +17,20 @@ import java.util.UUID;
 public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID> {
     List<OrderItemModel> findByOrderModel(OrderModel orderModel);
 
-    @Query("SELECT e FROM OrderItemModel e " +
+    @Query("SELECT DISTINCT orderItem FROM OrderItemModel orderItem " +
+            " LEFT JOIN orderItem.orderModel orderModel " +
+            " LEFT JOIN orderItem.product product " +
+            " LEFT JOIN orderItem.store store " +
             " WHERE 1=1 " +
-            " AND ( (COALESCE(:ids, NULL) IS NULL) or e.id in :ids) " +
-            " AND ( (COALESCE(:storeId, NULL) IS NULL) or e.storeId = :storeId) " +
-            " AND (:status is null or e.status = :status) " +
-            " AND (:keyword is null or UPPER(e.name) like :keyword or UPPER(e.content) like :keyword)"
+            " AND (:#{#query.ids} is null or orderItem.id in :#{#query.ids}) " +
+            " AND (:#{#query.productCode} is null or (upper(product.code) like :#{#query.productCode})) " +
+            " AND (:#{#query.productIds} is null or product.id in :#{#query.productIds}) " +
+            " AND (:#{#query.orderCode} is null or (upper(orderModel.code) like :#{#query.orderCode})) " +
+            " AND (:#{#query.orderIds} is null or orderModel.id in :#{#query.orderIds}) " +
+            " AND (:#{#query.store} is null or (upper(store.name) like :#{#query.store})) " +
+            " AND (:#{#query.storeIds} is null or store.id in :#{#query.storeIds}) " +
+            " AND (:#{#query.statuses} is null or orderItem.status in :#{#query.statuses}) " +
+            ""
     )
-    Page<OrderItemModel> searchItem(List<UUID> ids, UUID storeId, String keyword, OrderItemStatus status, Pageable pageable);
+    Page<OrderItemModel> search(OrderItemQuery query, Pageable pageable);
 }

@@ -129,4 +129,11 @@ public class ProductServiceImpl implements ProductService {
         product.setImages(existedImages);
         return product;
     }
+
+    @Override
+    public List<ProductModel> findByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty())
+            return new ArrayList<>();
+        return repository.findAllById(ids);
+    }
 }
