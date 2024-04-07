@@ -3,10 +3,7 @@ package com.ss.service;
 import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.*;
-import com.ss.dto.response.OrderItemByStoreResponse;
-import com.ss.dto.response.OrderResponse;
-import com.ss.dto.response.OrderStatisticResponse;
-import com.ss.dto.response.OrderToolResponse;
+import com.ss.dto.response.*;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
@@ -23,7 +20,7 @@ public interface OrderService {
 
     PageResponse<OrderResponse> searchOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria);
 
-    PageResponse<OrderItemModel> searchOrderItem(OrderItemQuery orderItemQuery, PageCriteria pageCriteria);
+    PageResponse<OrderItemResponse> searchOrderItem(OrderItemQuery orderItemQuery, PageCriteria pageCriteria);
 
     List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request);
 
@@ -36,4 +33,6 @@ public interface OrderService {
     OrderItemModel receiveItem(UUID orderItemId, OrderItemReceivedRequest request);
 
     List<OrderItemByStoreResponse> getOrderByStore(List<OrderItemStatus> statuses);
+
+    OrderItemModel cancelItem(UUID orderItemId);
 }

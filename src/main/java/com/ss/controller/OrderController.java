@@ -6,6 +6,7 @@ import com.ss.dto.request.OrderItemReceivedRequest;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemToolRequest;
 import com.ss.dto.request.OrderRequest;
+import com.ss.dto.response.OrderItemResponse;
 import com.ss.dto.response.OrderResponse;
 import com.ss.dto.response.OrderStatisticResponse;
 import com.ss.dto.response.ServiceResponse;
@@ -68,7 +69,7 @@ public class OrderController {
     }
 
     @GetMapping("/order-item")
-    PageResponse<OrderItemModel> searchOrderItem(
+    PageResponse<OrderItemResponse> searchOrderItem(
             @RequestParam(name = "ids", required = false) List<UUID> ids,
             @RequestParam(name = "orderIds", required = false) List<UUID> orderIds,
             @RequestParam(name = "orderCode", required = false) String orderCode,
@@ -96,6 +97,11 @@ public class OrderController {
             @PathVariable @Valid UUID orderItemId,
             @RequestBody @Valid OrderItemReceivedRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.receiveItem(orderItemId, request));
+    }
+
+    @PutMapping("/order-item/cancel/{orderItemId}")
+    ServiceResponse<OrderItemModel> cancelOrderItem(@PathVariable @Valid UUID orderItemId) {
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.cancelItem(orderItemId));
     }
 
 }
