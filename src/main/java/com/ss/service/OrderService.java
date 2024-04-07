@@ -35,4 +35,6 @@ public interface OrderService {
     List<OrderItemByStoreResponse> getOrderByStore(List<OrderItemStatus> statuses);
 
     OrderItemModel cancelItem(UUID orderItemId);
+
+    OrderItemStatisticResponse getOrderItemStatistic(OrderItemQuery orderItemQuery);
 }
