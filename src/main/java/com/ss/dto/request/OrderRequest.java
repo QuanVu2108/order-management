@@ -1,5 +1,6 @@
 package com.ss.dto.request;
 
+import com.ss.enums.OrderStatus;
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
@@ -18,4 +19,6 @@ public class OrderRequest {
 
     @NotEmpty
     private List<OrderItemRequest> items;
+
+    private OrderStatus status;
 }

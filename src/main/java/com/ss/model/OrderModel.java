@@ -67,5 +67,6 @@ public class OrderModel extends AuditModel {
         this.totalCost = request.getTotalCost();
         this.incentive = request.getIncentive();
         this.actualCost = request.getActualCost();
+        this.status = request.getStatus();
     }
 }
