@@ -59,8 +59,10 @@ public class OrderServiceImpl implements OrderService {
         String orderCode = genOrderCode();
         OrderModel order = new OrderModel(orderCode);
         order.update(request);
+        order.setStatus(OrderStatus.NEW);
         order = orderRepository.save(order);
-        createOrderItem(request.getItems(), order);
+        List<OrderItemModel> orderItems = createOrderItem(request.getItems(), order);
+        order.setItems(orderItems);
         return order;
     }
 
@@ -131,16 +133,18 @@ public class OrderServiceImpl implements OrderService {
                     throw new ExceptionResponse("product is invalid at row " + itemRequest.getProductId());
 
                 existedItem.update(itemRequest, store, product);
-                orderItems.add(existedItem);
+            } else {
+                existedItem.setDeleted(true);
             }
+            orderItems.add(existedItem);
         });
-
-        // delete order item
-
 
         orderItemRepository.saveAll(orderItems);
         order.update(request);
         order = orderRepository.save(order);
+        order.setItems(orderItems.stream()
+                .filter(item -> !item.isDeleted())
+                .collect(Collectors.toList()));
         return order;
     }
 
@@ -444,6 +448,12 @@ public class OrderServiceImpl implements OrderService {
         item = orderItemRepository.save(item);
         updateOrderByItem(item);
         return item;
+    }
+
+    @Override
+    public OrderItemStatisticResponse getOrderItemStatistic(OrderItemQuery orderItemQuery) {
+        List<OrderItemModel> orderItems = orderItemRepository.searchList(orderItemQuery);
+        return enrichItemStatistic(orderItems);
     }
 
     private void updateOrderByItem(OrderItemModel item) {

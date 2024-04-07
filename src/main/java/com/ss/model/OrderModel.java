@@ -59,7 +59,6 @@ public class OrderModel extends AuditModel {
         this.id = UUID.randomUUID();
         this.code = code;
         this.date = System.currentTimeMillis();
-        this.status = OrderStatus.NEW;
     }
 
     public void update(OrderRequest request) {

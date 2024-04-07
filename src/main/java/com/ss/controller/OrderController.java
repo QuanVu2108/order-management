@@ -6,10 +6,7 @@ import com.ss.dto.request.OrderItemReceivedRequest;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemToolRequest;
 import com.ss.dto.request.OrderRequest;
-import com.ss.dto.response.OrderItemResponse;
-import com.ss.dto.response.OrderResponse;
-import com.ss.dto.response.OrderStatisticResponse;
-import com.ss.dto.response.ServiceResponse;
+import com.ss.dto.response.*;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
@@ -54,7 +51,6 @@ public class OrderController {
             @RequestParam(name = "createdUser", required = false) String createdUser) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.getStatistic(ids, code, statuses, fromDate, toDate, createdUser));
     }
-
 
     @GetMapping
     PageResponse<OrderResponse> searchOrder(
@@ -102,6 +98,29 @@ public class OrderController {
     @PutMapping("/order-item/cancel/{orderItemId}")
     ServiceResponse<OrderItemModel> cancelOrderItem(@PathVariable @Valid UUID orderItemId) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.cancelItem(orderItemId));
+    }
+
+    @GetMapping("/order-item/statistic")
+    ServiceResponse<OrderItemStatisticResponse> getOrderItemStatistic(
+            @RequestParam(name = "ids", required = false) List<UUID> ids,
+            @RequestParam(name = "orderIds", required = false) List<UUID> orderIds,
+            @RequestParam(name = "orderCode", required = false) String orderCode,
+            @RequestParam(name = "productIds", required = false) List<Long> productIds,
+            @RequestParam(name = "productCode", required = false) String productCode,
+            @RequestParam(name = "storeIds", required = false) List<UUID> storeIds,
+            @RequestParam(name = "store", required = false) String store,
+            @RequestParam(name = "statuses", required = false) List<OrderItemStatus> statuses) {
+        OrderItemQuery orderItemQuery = OrderItemQuery.builder()
+                .ids(ids)
+                .orderIds(orderIds)
+                .orderCode(orderCode)
+                .productCode(productCode)
+                .productIds(productIds)
+                .store(store)
+                .storeIds(storeIds)
+                .statuses(statuses)
+                .build();
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.getOrderItemStatistic(orderItemQuery));
     }
 
 }
