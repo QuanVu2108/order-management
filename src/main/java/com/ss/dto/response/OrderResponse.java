@@ -1,10 +1,12 @@
 package com.ss.dto.response;
 
 import com.ss.enums.OrderStatus;
+import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
 import com.ss.model.UserModel;
 import lombok.Data;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -31,6 +33,8 @@ public class OrderResponse {
 
     private BasicModelResponse createdBy;
 
+    private List<OrderItemModel> items;
+
     public OrderResponse(OrderModel order, UserModel user) {
         this.id = order.getId();
         this.code = order.getCode();
@@ -42,6 +46,7 @@ public class OrderResponse {
         this.note = order.getNote();
         this.receivedQuantity = order.getReceivedQuantity();
         this.status = order.getStatus();
+        this.items = order.getItems();
         if (user != null)
             this.createdBy = new BasicModelResponse(user.getId(), user.getUsername(), user.getFullName(), null);
     }
