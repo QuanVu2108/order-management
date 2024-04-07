@@ -52,9 +52,8 @@ public class OrderItemModel extends AuditModel {
     @Column(name = "cost_total")
     private Double costTotal;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "store_id")
-    @JsonBackReference
+    @OneToOne
+    @JoinColumn(name = "store_id", referencedColumnName = "id")
     private StoreModel store;
 
     @Column(name = "delay_day")
