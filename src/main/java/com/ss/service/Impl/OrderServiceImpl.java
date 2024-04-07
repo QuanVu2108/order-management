@@ -16,8 +16,8 @@ import com.ss.repository.query.OrderItemQuery;
 import com.ss.repository.query.OrderQuery;
 import com.ss.repository.query.UserQuery;
 import com.ss.service.*;
+import com.ss.service.mapper.OrderItemMapper;
 import com.ss.util.StringUtil;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -50,6 +50,8 @@ public class OrderServiceImpl implements OrderService {
     private final ProductService productService;
 
     private final UserService userService;
+
+    private final OrderItemMapper orderItemMapper;
 
     @Override
     @Transactional
@@ -84,7 +86,11 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItemRequest> updatingItems = new ArrayList<>();
         List<UUID> updatingItemIds = new ArrayList<>();
         itemRequests.forEach(itemRequest -> {
-            if (itemRequest.getId() == null) newItems.add(itemRequest);
+            if (request.getStatus().equals(OrderStatus.CANCEL))
+                itemRequest.setStatus(OrderItemStatus.CANCEL);
+
+            if (itemRequest.getId() == null)
+                newItems.add(itemRequest);
             else {
                 updatingItems.add(itemRequest);
                 updatingItemIds.add(itemRequest.getId());
@@ -235,14 +241,21 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public PageResponse<OrderItemModel> searchOrderItem(OrderItemQuery orderItemQuery, PageCriteria pageCriteria) {
+    public PageResponse<OrderItemResponse> searchOrderItem(OrderItemQuery orderItemQuery, PageCriteria pageCriteria) {
         Page<OrderItemModel> orderPage = orderItemRepository.search(orderItemQuery, pageCriteriaPageableMapper.toPageable(pageCriteria));
-        return PageResponse.<OrderItemModel>builder()
+        List<OrderItemModel> orderItems = orderPage.getContent();
+        List<OrderItemResponse> responses = new ArrayList<>();
+        orderItems.forEach(orderItem -> {
+            OrderItemResponse response = orderItemMapper.toTarget(orderItem);
+            response.setOrder(new OrderResponse(orderItem.getOrderModel(), null));
+            responses.add(response);
+        });
+        return PageResponse.<OrderItemResponse>builder()
                 .paging(Paging.builder().totalCount(orderPage.getTotalElements())
                         .pageIndex(pageCriteria.getPageIndex())
                         .pageSize(pageCriteria.getPageSize())
                         .build())
-                .data(orderPage.getContent())
+                .data(responses)
                 .build();
     }
 
@@ -419,6 +432,37 @@ public class OrderServiceImpl implements OrderService {
             }
         });
         return new ArrayList<>(responses);
+    }
+
+    @Override
+    public OrderItemModel cancelItem(UUID orderItemId) {
+        Optional<OrderItemModel> itemOptional = orderItemRepository.findById(orderItemId);
+        if (itemOptional.isEmpty())
+            throw new ExceptionResponse("order item is not existed!!!");
+        OrderItemModel item = itemOptional.get();
+        item.setStatus(OrderItemStatus.CANCEL);
+        item = orderItemRepository.save(item);
+        updateOrderByItem(item);
+        return item;
+    }
+
+    private void updateOrderByItem(OrderItemModel item) {
+        OrderModel order = item.getOrderModel();
+        List<OrderItemModel> orderItems = orderItemRepository.findByOrderModel(order);
+        Long totalQuantity = Long.valueOf(0);
+        Double totalCost = Double.valueOf(0);
+        for (int i = 0; i < orderItems.size(); i++) {
+            OrderItemModel orderItem = orderItems.get(i);
+            if (!orderItem.getStatus().equals(OrderItemStatus.CANCEL)) {
+                totalQuantity += orderItem.getQuantityOrder();
+                totalCost = orderItem.getCostTotal();
+            }
+        }
+        order.setTotalQuantity(totalQuantity);
+        order.setTotalCost(totalCost);
+        Double incentive = order.getIncentive() == null ? 0 : order.getIncentive();
+        order.setActualCost(totalCost - incentive);
+        orderRepository.save(order);
     }
 
     private boolean checkFinishOrder(OrderModel orderModel) {
