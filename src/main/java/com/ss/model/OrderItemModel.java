@@ -43,6 +43,15 @@ public class OrderItemModel extends AuditModel {
     @Column(name = "quantity_received")
     private Long quantityReceived;
 
+    @Column(name = "quantity_sent")
+    private Long quantitySent;
+
+    @Column(name = "quantity_incart")
+    private Long quantityInCart;
+
+    @Column(name = "quantity_checked")
+    private Long quantityChecked;
+
     @Column(name = "cost")
     private Double cost;
 
@@ -73,6 +82,10 @@ public class OrderItemModel extends AuditModel {
         this.code = order.getCode() + "." + index;
         this.status = OrderItemStatus.PENDING;
         this.orderModel = order;
+        this.quantityReceived = Long.valueOf(0);
+        this.quantitySent = Long.valueOf(0);
+        this.quantityInCart = Long.valueOf(0);
+        this.quantityChecked = Long.valueOf(0);
     }
 
     public void update(OrderItemRequest itemRequest, StoreModel store, ProductModel product) {
@@ -90,12 +103,15 @@ public class OrderItemModel extends AuditModel {
         this.quantityReality = request.getQuantityReality();
         this.costReality = request.getCostReality();
         this.delayDay = request.getDelayDay();
+        this.quantitySent = (this.quantitySent == null ? 0 : this.quantitySent) + request.getQuantitySent();
+        this.quantityInCart = (this.quantityInCart == null ? 0 : this.quantityInCart) + request.getQuantityInCart();
+        this.quantityChecked = (this.quantityChecked == null ? 0 : this.quantityChecked) + request.getQuantityChecked();
         this.status = request.getStatus();
     }
 
     public void updateByReceive(OrderItemReceivedRequest request) {
-        this.quantityReceived = request.getReceivedQuantity();
-        if (request.getReceivedQuantity() >= this.quantityOrder)
+        this.quantityReceived = (this.quantityReceived == null ? 0 : this.quantityReceived) + request.getReceivedQuantity();
+        if (this.quantityReceived >= this.quantityOrder)
             this.status = OrderItemStatus.DONE;
         this.note = request.getNote();
     }

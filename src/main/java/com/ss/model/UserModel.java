@@ -25,8 +25,11 @@ public class UserModel extends AuditModel {
     @Column(name = "user_name", unique = true, nullable = false)
     private String username;
 
-    @Column(name = "full_name", unique = true, nullable = false)
+    @Column(name = "full_name", nullable = false)
     private String fullName;
+
+    @Column(name = "user_code")
+    private String userCode;
 
     @Column(name = "email")
     private String email;
@@ -68,6 +71,7 @@ public class UserModel extends AuditModel {
     }
 
     public void update(UserRequest request, String password, PermissionGroupModel permissionGroupModel, Set<StoreModel> stores) {
+        this.userCode = request.getUserCode();
         this.fullName = request.getFullName();
         this.password = password;
         this.position = request.getPosition();

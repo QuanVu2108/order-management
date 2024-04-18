@@ -25,6 +25,9 @@ public class ProductModel extends AuditModel {
     @Column(name = "code")
     private String code;
 
+    @Column(name = "product_number")
+    private String productNumber;
+
     @Column(name = "name")
     private String name;
 
@@ -60,6 +63,7 @@ public class ProductModel extends AuditModel {
 
     public void update(ProductRequest request, ProductPropertyModel category, ProductPropertyModel brand) {
         this.code = request.getCode();
+        this.productNumber = request.getProductNumber();
         this.name = request.getName();
         this.costPrice = request.getCostPrice();
         this.soldPrice = request.getSoldPrice();

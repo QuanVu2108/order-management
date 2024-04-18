@@ -30,4 +30,8 @@ public interface ProductRepository extends JpaRepository<ProductModel, Long> {
     Page<ProductModel> search(@Param("query") ProductQuery query, Pageable pageable);
 
     List<ProductModel> findByBrandOrCategory(ProductPropertyModel brand, ProductPropertyModel category);
+
+    long countByCode(String code);
+
+    long countByProductNumber(String productNumber);
 }

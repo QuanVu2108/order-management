@@ -35,6 +35,5 @@ public interface OrderRepository extends JpaRepository<OrderModel, UUID> {
     )
     List<OrderModel> searchList(OrderQuery query);
 
-    @Query(value = "SELECT count(*) FROM order_tbl o where o.date >= :date", nativeQuery = true)
-    long countByDate(Long date);
+    long countByMonthAndYear(int monthValue, int year);
 }

@@ -8,6 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +29,12 @@ public class OrderModel extends AuditModel {
 
     @Column(name = "date")
     private Long date;
+
+    @Column(name = "year")
+    private Integer year;
+
+    @Column(name = "month")
+    private Integer month;
 
     @Column(name = "total_quantity")
     private Long totalQuantity;
@@ -59,6 +66,9 @@ public class OrderModel extends AuditModel {
         this.id = UUID.randomUUID();
         this.code = code;
         this.date = System.currentTimeMillis();
+        LocalDate now = LocalDate.now();
+        this.year = now.getYear();
+        this.month = now.getMonthValue();
     }
 
     public void update(OrderRequest request) {

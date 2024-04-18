@@ -2,10 +2,7 @@ package com.ss.controller;
 
 import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
-import com.ss.dto.request.OrderItemReceivedRequest;
-import com.ss.dto.request.OrderItemRequest;
-import com.ss.dto.request.OrderItemToolRequest;
-import com.ss.dto.request.OrderRequest;
+import com.ss.dto.request.*;
 import com.ss.dto.response.*;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
@@ -62,6 +59,14 @@ public class OrderController {
             @RequestParam(name = "createdUser", required = false) String createdUser,
             @Valid PageCriteria pageCriteria) {
         return PageResponse.succeed(HttpStatus.OK, orderService.searchOrder(ids, code, statuses, fromDate, toDate, createdUser, pageCriteria));
+    }
+
+    @PutMapping("/receive-items/{orderId}")
+    ServiceResponse<Void> receiveItems(
+            @PathVariable @Valid UUID orderId,
+            @RequestBody @Valid List<OrderItemReceivedMultiRequest> request) {
+        orderService.receiveItemMulti(orderId, request);
+        return ServiceResponse.succeed(HttpStatus.OK, null);
     }
 
     @GetMapping("/order-item")

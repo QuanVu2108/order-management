@@ -5,15 +5,12 @@ import java.util.List;
 
 public enum OrderItemStatus {
     PENDING,
-    CHECKED,
     DELAY,
-    UPDATE,
-    SENT,
-    IN_CART,
+    UPDATING,
     CANCEL,
     DONE;
 
     public static List<OrderItemStatus> getPendingStatus() {
-        return Arrays.asList(PENDING, CHECKED, DELAY, UPDATE, SENT, IN_CART);
+        return Arrays.asList(PENDING, DELAY, UPDATING);
     }
 }

@@ -45,4 +45,6 @@ public interface UserRepository extends JpaRepository<UserModel, UUID> {
             " AND (:#{#query.permissionGroup} is null or UPPER(permissionGroup.name) like :#{#query.permissionGroup} )"
     )
     List<UserModel> searchList(UserQuery query);
+
+    long countByUserCode(String userCode);
 }
