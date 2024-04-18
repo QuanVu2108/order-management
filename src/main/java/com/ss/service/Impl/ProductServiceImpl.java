@@ -6,6 +6,7 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.ProductRequest;
 import com.ss.exception.ExceptionResponse;
+import com.ss.exception.http.DuplicatedError;
 import com.ss.model.FileModel;
 import com.ss.model.ProductModel;
 import com.ss.model.ProductPropertyModel;
@@ -42,6 +43,14 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductModel create(ProductRequest request) {
+        long invalidProductCodeCnt = repository.countByCode(request.getCode());
+        if (invalidProductCodeCnt > 0)
+            throw new ExceptionResponse(DuplicatedError.PRODUCT_CODE_DUPLICATED.getMessage(), DuplicatedError.PRODUCT_CODE_DUPLICATED);
+
+        long invalidProductNumberCnt = repository.countByProductNumber(request.getProductNumber());
+        if (invalidProductNumberCnt > 0)
+            throw new ExceptionResponse(DuplicatedError.PRODUCT_NUMBER_DUPLICATED.getMessage(), DuplicatedError.PRODUCT_NUMBER_DUPLICATED);
+
         ProductModel product = new ProductModel();
         List<UUID> propertyIds = new ArrayList<>();
         if (request.getCategoryId() != null) propertyIds.add(request.getCategoryId());
@@ -64,6 +73,17 @@ public class ProductServiceImpl implements ProductService {
         if (productOptional.isEmpty())
             throw new ExceptionResponse("product is not existed!!!");
         ProductModel product = productOptional.get();
+        if (!product.getCode().equals(request.getCode())) {
+            long invalidProductCodeCnt = repository.countByCode(request.getCode());
+            if (invalidProductCodeCnt > 0)
+                throw new ExceptionResponse(DuplicatedError.PRODUCT_CODE_DUPLICATED.getMessage(), DuplicatedError.PRODUCT_CODE_DUPLICATED);
+        }
+        if (!product.getProductNumber().equals(request.getProductNumber())) {
+            long invalidProductNumberCnt = repository.countByProductNumber(request.getProductNumber());
+            if (invalidProductNumberCnt > 0)
+                throw new ExceptionResponse(DuplicatedError.PRODUCT_NUMBER_DUPLICATED.getMessage(), DuplicatedError.PRODUCT_NUMBER_DUPLICATED);
+        }
+
         List<UUID> propertyIds = new ArrayList<>();
         if (request.getCategoryId() != null) propertyIds.add(request.getCategoryId());
         if (request.getBrandId() != null) propertyIds.add(request.getBrandId());

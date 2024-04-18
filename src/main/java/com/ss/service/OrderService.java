@@ -20,6 +20,8 @@ public interface OrderService {
 
     PageResponse<OrderResponse> searchOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria);
 
+    void receiveItemMulti(UUID orderId, List<OrderItemReceivedMultiRequest> request);
+
     PageResponse<OrderItemResponse> searchOrderItem(OrderItemQuery orderItemQuery, PageCriteria pageCriteria);
 
     List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request);

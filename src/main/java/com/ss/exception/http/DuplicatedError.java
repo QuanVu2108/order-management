@@ -6,6 +6,9 @@ import lombok.Getter;
 @Getter
 public enum DuplicatedError implements ResponseError {
     USERNAME_DUPLICATED(4090001, "username is duplicated"),
+    USER_CODE_DUPLICATED(4090002, "user code is duplicated"),
+    PRODUCT_CODE_DUPLICATED(4090100, "product code is duplicated"),
+    PRODUCT_NUMBER_DUPLICATED(4090101, "product number is duplicated"),
     ;
 
     private Integer code;

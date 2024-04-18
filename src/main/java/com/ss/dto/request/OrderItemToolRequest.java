@@ -19,6 +19,12 @@ public class OrderItemToolRequest {
 
     private Double costReality;
 
+    private Long quantitySent;
+
+    private Long quantityInCart;
+
+    private Long quantityChecked;
+
     @NotNull
     private OrderItemStatus status;
 

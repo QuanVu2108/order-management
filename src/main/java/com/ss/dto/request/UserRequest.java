@@ -11,6 +11,9 @@ import java.util.UUID;
 @Data
 public class UserRequest {
 	@NotBlank
+	private String userCode;
+
+	@NotBlank
 	private String userName;
 
 	@NotBlank

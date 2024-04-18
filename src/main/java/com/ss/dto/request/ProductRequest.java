@@ -12,6 +12,9 @@ public class ProductRequest {
     private String code;
 
     @NotBlank
+    private String productNumber;
+
+    @NotBlank
     private String name;
 
     private UUID categoryId;

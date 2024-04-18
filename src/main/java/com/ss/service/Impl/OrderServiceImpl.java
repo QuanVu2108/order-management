@@ -27,8 +27,6 @@ import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,13 +65,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private String genOrderCode() {
-        LocalDate currentDate = LocalDate.now();
-        // Define date format
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        // Format date as string
-        String dateString = currentDate.format(formatter);
-        long orderCnt = orderRepository.countByDate(currentDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()) + 1;
-        return dateString + "_" + orderCnt;
+        UserModel user = userService.getUserInfo();
+        LocalDate now = LocalDate.now();
+        long orderCnt = orderRepository.countByMonthAndYear(now.getMonthValue(), now.getYear()) + 1;
+        return user.getUsername() + "_" + orderCnt;
     }
 
     @Override
@@ -245,6 +240,31 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
+    public void receiveItemMulti(UUID orderId, List<OrderItemReceivedMultiRequest> request) {
+        Optional<OrderModel> orderModelOptional = orderRepository.findById(orderId);
+        if (orderModelOptional.isEmpty())
+            throw new ExceptionResponse("order is not existed!!!");
+        OrderModel order = orderModelOptional.get();
+        List<OrderItemModel> orderItems = order.getItems();
+        orderItems.forEach(item -> {
+            OrderItemReceivedMultiRequest receivedItemRequest = request.stream()
+                    .filter(itemRequest -> itemRequest.getId().equals(item.getId()))
+                    .findFirst().orElse(null);
+            if (receivedItemRequest != null)
+                item.updateByReceive(receivedItemRequest);
+        });
+
+        OrderItemStatus pendingStatus = orderItems.stream()
+                .map(OrderItemModel::getStatus)
+                .filter(item -> OrderItemStatus.getPendingStatus().contains(item))
+                .findFirst().orElse(null);
+        if (pendingStatus == null)
+            order.setStatus(OrderStatus.DONE);
+        orderItemRepository.saveAll(orderItems);
+    }
+
+    @Override
+    @Transactional
     public PageResponse<OrderItemResponse> searchOrderItem(OrderItemQuery orderItemQuery, PageCriteria pageCriteria) {
         Page<OrderItemModel> orderPage = orderItemRepository.search(orderItemQuery, pageCriteriaPageableMapper.toPageable(pageCriteria));
         List<OrderItemModel> orderItems = orderPage.getContent();
@@ -340,13 +360,13 @@ public class OrderServiceImpl implements OrderService {
             OrderItemModel item = items.get(i);
             if (item.getStatus() != null) {
                 if (item.getStatus().equals(OrderItemStatus.PENDING)) pendingCnt++;
-                if (item.getStatus().equals(OrderItemStatus.CHECKED)) checkedCnt++;
                 if (item.getStatus().equals(OrderItemStatus.DELAY)) delayCnt++;
-                if (item.getStatus().equals(OrderItemStatus.UPDATE)) updateCnt++;
-                if (item.getStatus().equals(OrderItemStatus.SENT)) sentCnt++;
-                if (item.getStatus().equals(OrderItemStatus.IN_CART)) inCartCnt++;
+                if (item.getStatus().equals(OrderItemStatus.UPDATING)) updateCnt++;
                 if (item.getStatus().equals(OrderItemStatus.CANCEL)) cancelCnt++;
                 if (item.getStatus().equals(OrderItemStatus.DONE)) doneCnt++;
+                if (item.getQuantityChecked() != null) checkedCnt += item.getQuantityChecked();
+                if (item.getQuantitySent() != null) sentCnt += item.getQuantitySent();
+                if (item.getQuantityInCart() != null) inCartCnt += item.getQuantityInCart();
             }
         }
         return OrderItemStatisticResponse.builder()
@@ -388,6 +408,7 @@ public class OrderServiceImpl implements OrderService {
         int newCnt = 0;
         int pendingCnt = 0;
         int doneCnt = 0;
+        int cancelCnt = 0;
         for (int i = 0; i < orders.size(); i++) {
             allCnt++;
             OrderModel order = orders.get(i);
@@ -395,9 +416,10 @@ public class OrderServiceImpl implements OrderService {
                 if (order.getStatus().equals(OrderStatus.NEW)) newCnt++;
                 if (order.getStatus().equals(OrderStatus.PENDING)) pendingCnt++;
                 if (order.getStatus().equals(OrderStatus.DONE)) doneCnt++;
+                if (order.getStatus().equals(OrderStatus.CANCEL)) cancelCnt++;
             }
         }
-        return new OrderStatisticResponse(allCnt, newCnt, pendingCnt, doneCnt);
+        return new OrderStatisticResponse(allCnt, newCnt, pendingCnt, doneCnt, cancelCnt);
     }
 
     @Override

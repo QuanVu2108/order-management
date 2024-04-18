@@ -61,7 +61,7 @@ security:
   jwt:
     token:
       secret-key: secret-key
-      expire-length: 604800000 # 1 week duration by default: 7 days * 24h * 60 minutes * 60 seconds * 1000 miliseconds
+      expire-length: 3600000 # 1 week duration by default: 1h * 60 minutes * 60 seconds * 1000 miliseconds
 
 management:
   health:

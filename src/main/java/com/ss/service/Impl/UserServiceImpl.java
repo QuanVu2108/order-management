@@ -87,6 +87,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse create(UserRequest request) {
         UserModel checkedUser = userRepository.findByUsername(request.getUserName());
+        long invalidUserByCode = userRepository.countByUserCode(request.getUserCode());
+        if (invalidUserByCode > 0)
+            throw new ExceptionResponse(DuplicatedError.USER_CODE_DUPLICATED.getMessage(), DuplicatedError.USER_CODE_DUPLICATED);
+
         if (checkedUser != null)
             throw new ExceptionResponse(DuplicatedError.USERNAME_DUPLICATED.getMessage(), DuplicatedError.USERNAME_DUPLICATED);
 
@@ -117,6 +121,12 @@ public class UserServiceImpl implements UserService {
         Set<StoreModel> stores = storeService.findByIds(request.getStoreIds());
 
         UserModel user = userOptional.get();
+        if (!user.getUserCode().equals(request.getUserCode())) {
+            long invalidUserByCode = userRepository.countByUserCode(request.getUserCode());
+            if (invalidUserByCode > 0)
+                throw new ExceptionResponse(DuplicatedError.USER_CODE_DUPLICATED.getMessage(), DuplicatedError.USER_CODE_DUPLICATED);
+        }
+
         String password = passwordEncoder.encode(request.getPassword());
         user.update(request, password, permissionGroup, stores);
         user = userRepository.save(user);

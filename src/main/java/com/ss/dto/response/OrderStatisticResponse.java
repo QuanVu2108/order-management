@@ -13,4 +13,5 @@ public class OrderStatisticResponse {
     private int newCnt;
     private int pendingCnt;
     private int doneCnt;
+    private int cancelCnt;
 }
