@@ -5,10 +5,7 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemSubmittedRequest;
 import com.ss.dto.request.OrderItemToolRequest;
-import com.ss.dto.response.OrderItemByStoreResponse;
-import com.ss.dto.response.OrderResponse;
-import com.ss.dto.response.OrderToolResponse;
-import com.ss.dto.response.ServiceResponse;
+import com.ss.dto.response.*;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
@@ -42,7 +39,7 @@ public class ToolController {
     }
 
     @GetMapping("/order-item")
-    PageResponse<OrderItemModel> getOrderItem(
+    PageResponse<OrderItemResponse> getOrderItem(
             @RequestParam(name = "ids", required = false) List<UUID> ids,
             @RequestParam(name = "orderIds", required = false) List<UUID> orderIds,
             @RequestParam(name = "orderCode", required = false) String orderCode,
