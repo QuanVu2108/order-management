@@ -2,7 +2,6 @@
 package com.ss.dto.response;
 
 import com.ss.enums.OrderItemStatus;
-import com.ss.model.OrderModel;
 import com.ss.model.ProductModel;
 import com.ss.model.StoreModel;
 import lombok.Builder;
@@ -26,6 +25,12 @@ public class OrderItemResponse {
     private Long quantityReality;
 
     private Long quantityReceived;
+
+    private Long quantitySent;
+
+    private Long quantityInCart;
+
+    private Long quantityChecked;
 
     private Double cost;
 
