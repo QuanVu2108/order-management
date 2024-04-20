@@ -480,7 +480,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderItemByStoreResponse> getStoreOrderByInCart() {
-        List<OrderItemModel> orderItems = orderItemRepository.findByStatusIn(Arrays.asList(OrderItemStatus.PENDING));
+        List<OrderItemModel> orderItems = orderItemRepository.findByStatusInAndQuantityInCartGreaterThan(Arrays.asList(OrderItemStatus.PENDING), Long.valueOf(0));
         Set<OrderItemByStoreResponse> responses = orderItems.stream()
                 .map(item -> new OrderItemByStoreResponse(item.getStore()))
                 .collect(Collectors.toSet());

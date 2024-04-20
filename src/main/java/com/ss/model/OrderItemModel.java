@@ -91,7 +91,9 @@ public class OrderItemModel extends AuditModel {
     public void update(OrderItemRequest itemRequest, StoreModel store, ProductModel product) {
         this.note = itemRequest.getNote();
         this.quantityOrder = itemRequest.getQuantity();
+        this.quantityReality = itemRequest.getQuantity();
         this.cost = itemRequest.getCost();
+        this.costReality = itemRequest.getCost();
         this.costTotal = itemRequest.getCostTotal();
         if (store != null)
             this.store = store;
