@@ -5,26 +5,35 @@ import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.ProductRequest;
+import com.ss.dto.response.ProductCheckImportResponse;
+import com.ss.enums.excel.ProductCheckImportExcelTemplate;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.DuplicatedError;
 import com.ss.model.FileModel;
 import com.ss.model.ProductModel;
 import com.ss.model.ProductPropertyModel;
+import com.ss.model.StoreModel;
 import com.ss.repository.FileRepository;
 import com.ss.repository.ProductPropertyRepository;
 import com.ss.repository.ProductRepository;
 import com.ss.repository.query.ProductQuery;
 import com.ss.service.ProductService;
+import com.ss.service.StoreService;
 import com.ss.util.StorageUtil;
+import com.ss.util.excel.ExcelTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.ss.util.StringUtil.convertSqlSearchText;
+import static com.ss.util.excel.ExcelUtil.readUploadFileData;
 
 @Service
 @Slf4j
@@ -34,6 +43,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository repository;
 
     private final ProductPropertyRepository propertyRepository;
+
+    private final StoreService storeService;
 
     private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
 
@@ -155,5 +166,91 @@ public class ProductServiceImpl implements ProductService {
         if (ids == null || ids.isEmpty())
             return new ArrayList<>();
         return repository.findAllById(ids);
+    }
+
+
+    @Override
+    public List<ProductCheckImportResponse> checkImportFile(MultipartFile file) {
+        String fileName = file.getOriginalFilename();
+        List<ProductCheckImportExcelTemplate> template = ProductCheckImportExcelTemplate.getColumns();
+        List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
+
+        List<ProductCheckImportResponse> responses = new ArrayList<>();
+        Set<String> productNumbers = new HashSet<>();
+        Set<String> productCodes = new HashSet<>();
+        Set<String> storeNames = new HashSet<>();
+        try {
+            InputStream inputStream = file.getInputStream();
+            List<Map<String, String>> assets = readUploadFileData(inputStream, fileName, columns, 1, 0, new ArrayList<>());
+            int idx = 1;
+            for (Map<String, String> asset : assets) {
+                String productNumber = asset.get(ProductCheckImportExcelTemplate.NUMBER.getKey());
+                String productCode = asset.get(ProductCheckImportExcelTemplate.CODE.getKey());
+                String storeName = asset.get(ProductCheckImportExcelTemplate.STORE.getKey());
+                boolean isValidNumber = true;
+                Long quantity = null;
+                Double cost = null;
+                Double incentive = null;
+                try {
+                    quantity = Long.parseLong(asset.get(ProductCheckImportExcelTemplate.QUANTITY.getKey()));
+                    cost = Double.parseDouble(asset.get(ProductCheckImportExcelTemplate.COST.getKey()));
+                    incentive = Double.parseDouble(asset.get(ProductCheckImportExcelTemplate.INCENTIVE.getKey()));
+                } catch (Exception ex) {
+                    log.error("************ can not compare number!!!");
+                    isValidNumber = false;
+                }
+                if (isValidNumber) {
+                    boolean isValidProduct = true;
+                    if (!StringUtils.hasText(productNumber) && !StringUtils.hasText(productCode))
+                        isValidProduct = false;
+                    if (isValidProduct) {
+                        if (StringUtils.hasText(productNumber))
+                            productNumbers.add(productNumber);
+                        if (StringUtils.hasText(productCode))
+                            productCodes.add(productCode);
+                        storeNames.add(storeName);
+                        ProductCheckImportResponse response = new ProductCheckImportResponse(idx++, productCode, productNumber, storeName, quantity, cost, incentive);
+                        responses.add(response);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new ExceptionResponse("import file unsuccessfully!!! ");
+        }
+        List<ProductModel> products = repository.findByCodeInOrProductNumberIn(new ArrayList<>(productCodes), new ArrayList<>(productNumbers));
+        List<StoreModel> stores = storeService.findByNameIn(storeNames);
+        for (int i = 0; i < responses.size(); i++) {
+            ProductCheckImportResponse response = responses.get(i);
+            ProductModel product = null;
+            if (StringUtils.hasText(response.getNumber())) {
+                product = products.stream()
+                        .filter(item -> item.getProductNumber() != null && item.getProductNumber().equals(response.getNumber()))
+                        .findFirst().orElse(null);
+            }
+            if (product == null) {
+                product = products.stream()
+                        .filter(item -> item.getCode() != null && item.getCode().equals(response.getCode()))
+                        .findFirst().orElse(null);
+            }
+            if (product == null)
+                continue;
+            response.setProduct(product);
+            StoreModel store = stores.stream()
+                    .filter(item -> item.getName().equals(response.getStoreName()))
+                    .findFirst().orElse(null);
+            response.setStore(store);
+        }
+        return responses;
+    }
+
+    @Override
+    public ProductModel getByNumber(String number) {
+        if (!StringUtils.hasText(number))
+            return null;
+        Optional<ProductModel> product = repository.findByProductNumber(number);
+        if (product.isEmpty())
+            throw new ExceptionResponse("product is not existed!!!");
+        return product.get();
     }
 }

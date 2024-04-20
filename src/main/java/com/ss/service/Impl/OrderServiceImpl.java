@@ -453,7 +453,7 @@ public class OrderServiceImpl implements OrderService {
                     .filter(item -> item.getStore() != null && item.getStore().equals(orderItem.getStore()))
                     .findFirst().orElse(null);
             if (response != null) {
-                response.updateOrderCnt();
+                response.addOrder(orderItem.getOrderModel());
                 response.updateProductCnt(orderItem.getQuantityOrder());
             }
         });
@@ -489,7 +489,7 @@ public class OrderServiceImpl implements OrderService {
                     .filter(item -> item.getStore() != null && item.getStore().equals(orderItem.getStore()))
                     .findFirst().orElse(null);
             if (response != null) {
-                response.updateOrderCnt();
+                response.addOrder(orderItem.getOrderModel());
                 response.updateProductCnt(orderItem.getQuantityInCart());
             }
         });
@@ -529,9 +529,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request) {
         List<OrderItemModel> orderItems = orderItemRepository.findAllById(request.getIds());
-        OrderItemStatus status = request.getStatus();
         orderItems.forEach(item -> {
-            item.setStatus(status);
+            item.submitByTool();
             item.setUpdatedAt(Instant.now());
         });
         orderItems = orderItemRepository.saveAll(orderItems);

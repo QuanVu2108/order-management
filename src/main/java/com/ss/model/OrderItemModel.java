@@ -61,6 +61,9 @@ public class OrderItemModel extends AuditModel {
     @Column(name = "cost_total")
     private Double costTotal;
 
+    @Column(name = "incentive")
+    private Double incentive;
+
     @OneToOne
     @JoinColumn(name = "store_id", referencedColumnName = "id")
     private StoreModel store;
@@ -95,6 +98,7 @@ public class OrderItemModel extends AuditModel {
         this.cost = itemRequest.getCost();
         this.costReality = itemRequest.getCost();
         this.costTotal = itemRequest.getCostTotal();
+        this.incentive = itemRequest.getIncentive();
         if (store != null)
             this.store = store;
         if (product != null)
@@ -116,5 +120,9 @@ public class OrderItemModel extends AuditModel {
         if (this.quantityReceived >= this.quantityOrder)
             this.status = OrderItemStatus.DONE;
         this.note = request.getNote();
+    }
+
+    public void submitByTool() {
+        this.quantitySent = this.quantityInCart;
     }
 }

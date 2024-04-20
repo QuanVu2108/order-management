@@ -27,6 +27,8 @@ public class OrderItemRequest {
     @NotNull
     private Double costTotal;
 
+    private Double incentive;
+
     @NotNull
     private UUID storeId;
 

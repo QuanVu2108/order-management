@@ -90,4 +90,11 @@ public class StoreServiceImpl implements StoreService {
             return new HashSet<>();
         return new HashSet<>(storeRepository.findAllById(ids));
     }
+
+    @Override
+    public List<StoreModel> findByNameIn(Collection<String> storeNames) {
+        if (storeNames == null || storeNames.isEmpty())
+            return new ArrayList<>();
+        return storeRepository.findByNameIn(new ArrayList<>(storeNames));
+    }
 }
