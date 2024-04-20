@@ -478,6 +478,24 @@ public class OrderServiceImpl implements OrderService {
         return enrichItemStatistic(orderItems);
     }
 
+    @Override
+    public List<OrderItemByStoreResponse> getStoreOrderByInCart() {
+        List<OrderItemModel> orderItems = orderItemRepository.findByStatusIn(Arrays.asList(OrderItemStatus.PENDING));
+        Set<OrderItemByStoreResponse> responses = orderItems.stream()
+                .map(item -> new OrderItemByStoreResponse(item.getStore()))
+                .collect(Collectors.toSet());
+        orderItems.forEach(orderItem -> {
+            OrderItemByStoreResponse response = responses.stream()
+                    .filter(item -> item.getStore() != null && item.getStore().equals(orderItem.getStore()))
+                    .findFirst().orElse(null);
+            if (response != null) {
+                response.updateOrderCnt();
+                response.updateProductCnt(orderItem.getQuantityInCart());
+            }
+        });
+        return new ArrayList<>(responses);
+    }
+
     private void updateOrderByItem(OrderItemModel item) {
         OrderModel order = item.getOrderModel();
         List<OrderItemModel> orderItems = orderItemRepository.findByOrderModel(order);

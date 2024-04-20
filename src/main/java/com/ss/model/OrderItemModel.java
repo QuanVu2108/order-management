@@ -103,9 +103,9 @@ public class OrderItemModel extends AuditModel {
         this.quantityReality = request.getQuantityReality();
         this.costReality = request.getCostReality();
         this.delayDay = request.getDelayDay();
-        this.quantitySent = (this.quantitySent == null ? 0 : this.quantitySent) + request.getQuantitySent();
-        this.quantityInCart = (this.quantityInCart == null ? 0 : this.quantityInCart) + request.getQuantityInCart();
-        this.quantityChecked = (this.quantityChecked == null ? 0 : this.quantityChecked) + request.getQuantityChecked();
+        this.quantitySent = request.getQuantitySent();
+        this.quantityInCart = request.getQuantityInCart();
+        this.quantityChecked = request.getQuantityChecked();
         this.status = request.getStatus();
     }
 
