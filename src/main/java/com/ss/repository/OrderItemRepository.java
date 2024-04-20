@@ -54,4 +54,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID>
             ""
     )
     List<OrderItemModel> searchList(OrderItemQuery query);
+
+    List<OrderItemModel> findByStatusInAndQuantityInCartGreaterThan(List<OrderItemStatus> list, Long quantityInCart);
 }

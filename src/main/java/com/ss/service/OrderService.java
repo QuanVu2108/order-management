@@ -39,4 +39,6 @@ public interface OrderService {
     OrderItemModel cancelItem(UUID orderItemId);
 
     OrderItemStatisticResponse getOrderItemStatistic(OrderItemQuery orderItemQuery);
+
+    List<OrderItemByStoreResponse> getStoreOrderByInCart();
 }

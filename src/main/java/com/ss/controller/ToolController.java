@@ -82,4 +82,9 @@ public class ToolController {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.submitByTool(request));
     }
 
+    @GetMapping("/store-order/in-cart")
+    ServiceResponse<List<OrderItemByStoreResponse>> getStoreOrderByInCart() {
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.getStoreOrderByInCart());
+    }
+
 }

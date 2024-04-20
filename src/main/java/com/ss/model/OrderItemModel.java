@@ -91,7 +91,9 @@ public class OrderItemModel extends AuditModel {
     public void update(OrderItemRequest itemRequest, StoreModel store, ProductModel product) {
         this.note = itemRequest.getNote();
         this.quantityOrder = itemRequest.getQuantity();
+        this.quantityReality = itemRequest.getQuantity();
         this.cost = itemRequest.getCost();
+        this.costReality = itemRequest.getCost();
         this.costTotal = itemRequest.getCostTotal();
         if (store != null)
             this.store = store;
@@ -103,9 +105,9 @@ public class OrderItemModel extends AuditModel {
         this.quantityReality = request.getQuantityReality();
         this.costReality = request.getCostReality();
         this.delayDay = request.getDelayDay();
-        this.quantitySent = (this.quantitySent == null ? 0 : this.quantitySent) + request.getQuantitySent();
-        this.quantityInCart = (this.quantityInCart == null ? 0 : this.quantityInCart) + request.getQuantityInCart();
-        this.quantityChecked = (this.quantityChecked == null ? 0 : this.quantityChecked) + request.getQuantityChecked();
+        this.quantitySent = request.getQuantitySent();
+        this.quantityInCart = request.getQuantityInCart();
+        this.quantityChecked = request.getQuantityChecked();
         this.status = request.getStatus();
     }
 
