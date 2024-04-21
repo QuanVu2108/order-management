@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 public class UserResponse {
     private UUID id;
 
+    private String userCode;
+
     private String userName;
 
     private String fullName;
@@ -30,6 +32,7 @@ public class UserResponse {
 
     public UserResponse(UserModel user, PermissionGroupModel permissionGroup, Set<StoreModel> stores) {
         this.id = user.getId();
+        this.userCode = user.getUserCode();
         this.userName = user.getUsername();
         this.fullName = user.getFullName();
         this.position = user.getPosition();
