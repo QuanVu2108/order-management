@@ -89,7 +89,7 @@ public class ProductServiceImpl implements ProductService {
             if (invalidProductCodeCnt > 0)
                 throw new ExceptionResponse(DuplicatedError.PRODUCT_CODE_DUPLICATED.getMessage(), DuplicatedError.PRODUCT_CODE_DUPLICATED);
         }
-        if (!product.getProductNumber().equals(request.getProductNumber())) {
+        if (product.getProductNumber() != null && !product.getProductNumber().equals(request.getProductNumber())) {
             long invalidProductNumberCnt = repository.countByProductNumber(request.getProductNumber());
             if (invalidProductNumberCnt > 0)
                 throw new ExceptionResponse(DuplicatedError.PRODUCT_NUMBER_DUPLICATED.getMessage(), DuplicatedError.PRODUCT_NUMBER_DUPLICATED);
