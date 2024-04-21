@@ -83,7 +83,7 @@ public class JwtTokenProvider {
             }
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            throw new ExceptionResponse("Expired or invalid JWT token");
+            throw new ExceptionResponse(InvalidInputError.TOKEN_EXPIRED.getMessage(),  InvalidInputError.TOKEN_EXPIRED);
         }
     }
 

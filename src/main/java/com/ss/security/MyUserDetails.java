@@ -1,5 +1,8 @@
 package com.ss.security;
 
+import com.ss.exception.ExceptionResponse;
+import com.ss.exception.http.InvalidInputError;
+import com.ss.exception.http.NotFoundError;
 import com.ss.model.UserModel;
 import com.ss.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +22,7 @@ public class MyUserDetails implements UserDetailsService {
         final UserModel user = userRepository.findByUsername(username);
 
         if (user == null) {
-            throw new UsernameNotFoundException("User '" + username + "' not found");
+            throw new ExceptionResponse(NotFoundError.USER_NOT_FOUND.getMessage(),  NotFoundError.USER_NOT_FOUND);
         }
 
         return org.springframework.security.core.userdetails.User//
