@@ -6,6 +6,7 @@ import com.ss.model.OrderModel;
 import com.ss.model.UserModel;
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +34,8 @@ public class OrderResponse {
 
     private BasicModelResponse createdBy;
 
+    private Instant updatedAt;
+
     private List<OrderItemModel> items;
 
     public OrderResponse(OrderModel order, UserModel user) {
@@ -47,6 +50,7 @@ public class OrderResponse {
         this.receivedQuantity = order.getReceivedQuantity();
         this.status = order.getStatus();
         this.items = order.getItems();
+        this.updatedAt = order.getUpdatedAt();
         if (user != null)
             this.createdBy = new BasicModelResponse(user.getId(), user.getUsername(), user.getFullName(), null);
     }

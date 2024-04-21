@@ -106,6 +106,26 @@ public class ProductServiceImpl implements ProductService {
                 .filter(item -> request.getBrandId() != null && request.getBrandId().equals(item.getId()))
                 .findFirst().orElse(null);
         product.update(request, category, brand);
+
+        if (request.getImageIds() != null) {
+            List<UUID> deletedImageIds = new ArrayList<>();
+            Set<FileModel> existedImages = product.getImages();
+            List<UUID> existedImageIds = existedImages.stream().map(FileModel::getId).collect(Collectors.toList());
+            existedImageIds.forEach(existedImageId -> {
+                if (!request.getImageIds().contains(existedImageId))
+                    deletedImageIds.add(existedImageId);
+            });
+            if (!deletedImageIds.isEmpty()) {
+                fileRepository.deleteAllById(deletedImageIds);
+                Set<FileModel> newImages = new HashSet<>();
+                existedImages.forEach(image -> {
+                    if (!deletedImageIds.contains(image.getId()))
+                        newImages.add(image);
+                });
+                product.setImages(newImages);
+            }
+        }
+
         product = repository.save(product);
         return product;
     }
@@ -187,31 +207,35 @@ public class ProductServiceImpl implements ProductService {
                 String productNumber = asset.get(ProductCheckImportExcelTemplate.NUMBER.getKey());
                 String productCode = asset.get(ProductCheckImportExcelTemplate.CODE.getKey());
                 String storeName = asset.get(ProductCheckImportExcelTemplate.STORE.getKey());
-                boolean isValidNumber = true;
-                Long quantity = null;
-                Double cost = null;
-                Double incentive = null;
+                Long quantity = Long.valueOf(0);
+                Double cost = Double.valueOf(0);
+                Double incentive = Double.valueOf(0);
                 try {
                     quantity = Long.parseLong(asset.get(ProductCheckImportExcelTemplate.QUANTITY.getKey()));
+                } catch (Exception ex) {
+                    log.error("************ can not parse quantity in row " + idx);
+                }
+                try {
                     cost = Double.parseDouble(asset.get(ProductCheckImportExcelTemplate.COST.getKey()));
+                } catch (Exception ex) {
+                    log.error("************ can not parse cost in row " + idx);
+                }
+                try {
                     incentive = Double.parseDouble(asset.get(ProductCheckImportExcelTemplate.INCENTIVE.getKey()));
                 } catch (Exception ex) {
-                    log.error("************ can not compare number!!!");
-                    isValidNumber = false;
+                    log.error("************ can not parse incentive in row " + idx);
                 }
-                if (isValidNumber) {
-                    boolean isValidProduct = true;
-                    if (!StringUtils.hasText(productNumber) && !StringUtils.hasText(productCode))
-                        isValidProduct = false;
-                    if (isValidProduct) {
-                        if (StringUtils.hasText(productNumber))
-                            productNumbers.add(productNumber);
-                        if (StringUtils.hasText(productCode))
-                            productCodes.add(productCode);
-                        storeNames.add(storeName);
-                        ProductCheckImportResponse response = new ProductCheckImportResponse(idx++, productCode, productNumber, storeName, quantity, cost, incentive);
-                        responses.add(response);
-                    }
+                boolean isValidProduct = true;
+                if (!StringUtils.hasText(productNumber) && !StringUtils.hasText(productCode))
+                    isValidProduct = false;
+                if (isValidProduct) {
+                    if (StringUtils.hasText(productNumber))
+                        productNumbers.add(productNumber);
+                    if (StringUtils.hasText(productCode))
+                        productCodes.add(productCode);
+                    storeNames.add(storeName);
+                    ProductCheckImportResponse response = new ProductCheckImportResponse(idx++, productCode, productNumber, storeName, quantity, cost, incentive);
+                    responses.add(response);
                 }
             }
         } catch (Exception e) {

@@ -1,8 +1,10 @@
 package com.ss.dto.request;
 
+import com.ss.model.FileModel;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -28,4 +30,6 @@ public class ProductRequest {
     private String color;
 
     private String size;
+
+    private Set<UUID> imageIds;
 }
