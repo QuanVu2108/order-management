@@ -21,4 +21,6 @@ public interface StoreRepository extends JpaRepository<StoreModel, UUID> {
     Page<StoreModel> search(String keyword, Pageable pageable);
 
     List<StoreModel> findByName(String name);
+
+    List<StoreModel> findByNameIn(List<String> storeNames);
 }

@@ -4,6 +4,7 @@ import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.ProductPropertyRequest;
 import com.ss.dto.request.ProductRequest;
+import com.ss.dto.response.ProductCheckImportResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.enums.ProductPropertyType;
 import com.ss.model.ProductModel;
@@ -25,10 +26,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ProductController {
 
-    @Autowired
     private final ProductPropertyService productPropertyService;
 
-    @Autowired
     private final ProductService productService;
 
     @PostMapping
@@ -52,6 +51,11 @@ public class ProductController {
     ServiceResponse<Void> delete(@PathVariable @Valid long id) {
         productService.delete(id);
         return ServiceResponse.succeed(HttpStatus.OK, null);
+    }
+
+    @GetMapping("/number/{number}")
+    ServiceResponse<ProductModel> getByNumber(@PathVariable @Valid String number) {
+        return ServiceResponse.succeed(HttpStatus.OK, productService.getByNumber(number));
     }
 
     @GetMapping
@@ -93,4 +97,11 @@ public class ProductController {
             @Valid PageCriteria pageCriteria) {
         return PageResponse.succeed(HttpStatus.OK, productPropertyService.search(code, name, type, pageCriteria));
     }
+
+
+    @PostMapping("/check-import-file")
+    ServiceResponse<List<ProductCheckImportResponse>> checkImportFile(MultipartFile file) throws Exception {
+        return ServiceResponse.succeed(HttpStatus.OK, productService.checkImportFile(file));
+    };
+
 }
