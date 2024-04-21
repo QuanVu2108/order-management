@@ -1,6 +1,7 @@
 package com.ss.security;
 
 import com.ss.exception.ExceptionResponse;
+import com.ss.exception.http.InvalidInputError;
 import com.ss.model.RoleModel;
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,11 +79,11 @@ public class JwtTokenProvider {
             Jws<Claims> claimsJws = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
 
             if (claimsJws.getBody().getExpiration().compareTo(new Date()) < 0) {
-                throw new ExceptionResponse("Refresh token was expired. Please make a new signin request");
+                throw new ExceptionResponse(InvalidInputError.TOKEN_EXPIRED.getMessage(),  InvalidInputError.TOKEN_EXPIRED);
             }
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            throw new ExceptionResponse("Expired or invalid JWT token");
+            throw new ExceptionResponse(InvalidInputError.TOKEN_EXPIRED.getMessage(),  InvalidInputError.TOKEN_EXPIRED);
         }
     }
 

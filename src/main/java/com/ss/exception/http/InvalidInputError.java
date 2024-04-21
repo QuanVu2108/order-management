@@ -8,6 +8,7 @@ public enum InvalidInputError implements ResponseError {
 
     PERMISSION_GROUP_INVALID(4010000, "permission group is not existed"),
     USER_PASSWORD_INVALID(4010001, "Invalid username/password supplied"),
+    TOKEN_EXPIRED(4010001, "Token was expired. Please make a new signin request"),
 
     ;
 
