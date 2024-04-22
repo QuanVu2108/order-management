@@ -24,7 +24,8 @@ public interface UserRepository extends JpaRepository<UserModel, UUID> {
             " AND (:#{#query.position} is null or UPPER(user.position) like :#{#query.position} ) " +
             " AND (:#{#query.email} is null or UPPER(user.email) like :#{#query.email} ) " +
             " AND (:#{#query.store} is null or store.name = :#{#query.store}) " +
-            " AND (:#{#query.permissionGroup} is null or UPPER(permissionGroup.name) like :#{#query.permissionGroup} )"
+            " AND (:#{#query.permissionGroup} is null or UPPER(permissionGroup.name) like :#{#query.permissionGroup} )" +
+            " ORDER BY user.username "
     )
     Page<UserModel> search(UserQuery query, Pageable pageable);
 
@@ -42,7 +43,8 @@ public interface UserRepository extends JpaRepository<UserModel, UUID> {
             " AND (:#{#query.position} is null or UPPER(user.position) like :#{#query.position} ) " +
             " AND (:#{#query.email} is null or UPPER(user.email) like :#{#query.email} ) " +
             " AND (:#{#query.store} is null or store.name = :#{#query.store}) " +
-            " AND (:#{#query.permissionGroup} is null or UPPER(permissionGroup.name) like :#{#query.permissionGroup} )"
+            " AND (:#{#query.permissionGroup} is null or UPPER(permissionGroup.name) like :#{#query.permissionGroup} )" +
+            " ORDER BY user.username "
     )
     List<UserModel> searchList(UserQuery query);
 

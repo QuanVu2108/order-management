@@ -31,6 +31,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID>
             " AND (:#{#query.storeIds} is null or store.id in :#{#query.storeIds}) " +
             " AND (:#{#query.statuses} is null or orderItem.status in :#{#query.statuses}) " +
             " AND (:#{#query.orderStatus} is null or orderModel.status = :#{#query.orderStatus}) " +
+            " ORDER BY orderItem.updatedAt DESC " +
             ""
     )
     Page<OrderItemModel> search(OrderItemQuery query, Pageable pageable);
@@ -51,6 +52,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID>
             " AND (:#{#query.storeIds} is null or store.id in :#{#query.storeIds}) " +
             " AND (:#{#query.statuses} is null or orderItem.status in :#{#query.statuses}) " +
             " AND (:#{#query.orderStatus} is null or orderModel.status = :#{#query.orderStatus}) " +
+            " ORDER BY orderItem.updatedAt DESC " +
             ""
     )
     List<OrderItemModel> searchList(OrderItemQuery query);

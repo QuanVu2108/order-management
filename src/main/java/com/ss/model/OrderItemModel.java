@@ -2,9 +2,7 @@ package com.ss.model;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.ss.dto.request.OrderItemReceivedRequest;
-import com.ss.dto.request.OrderItemRequest;
-import com.ss.dto.request.OrderItemToolRequest;
+import com.ss.dto.request.*;
 import com.ss.enums.OrderItemStatus;
 import lombok.*;
 import org.hibernate.annotations.Where;
@@ -124,5 +122,14 @@ public class OrderItemModel extends AuditModel {
 
     public void submitByTool() {
         this.quantitySent = this.quantityInCart;
+        this.quantityInCart = Long.valueOf(0);
+    }
+
+    public void updateItemByUpdating(OrderItemUpdatedDetailRequest itemRequest) {
+        this.quantityOrder = this.quantityReceived + itemRequest.getQuantity();
+        this.quantityReality = this.quantityOrder;
+        this.cost = itemRequest.getCost();
+        this.costReality = this.cost;
+        this.status = OrderItemStatus.PENDING;
     }
 }
