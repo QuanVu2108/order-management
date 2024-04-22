@@ -9,7 +9,6 @@ import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
 import com.ss.repository.query.OrderItemQuery;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -42,4 +41,6 @@ public interface OrderService {
     OrderItemStatisticResponse getOrderItemStatistic(OrderItemQuery orderItemQuery);
 
     List<OrderItemByStoreResponse> getStoreOrderByInCart();
+
+    List<OrderItemModel> updateItemByUpdating(OrderItemUpdatedRequest request);
 }

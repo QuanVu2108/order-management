@@ -26,6 +26,7 @@ public interface ProductRepository extends JpaRepository<ProductModel, Long> {
             " AND ((:#{#query.color} is null) or (upper(e.color) like :#{#query.color}))" +
             " AND ((:#{#query.brand} is null) or (upper(e.brand.name) like :#{#query.brand}))" +
             " AND ((:#{#query.category} is null) or (upper(e.category.name) like :#{#query.category}))" +
+            " ORDER BY e.updatedAt DESC " +
             ""
     )
     Page<ProductModel> search(@Param("query") ProductQuery query, Pageable pageable);

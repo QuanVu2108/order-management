@@ -20,7 +20,8 @@ public interface OrderRepository extends JpaRepository<OrderModel, UUID> {
             " AND (:#{#query.statuses} is null or e.status in :#{#query.statuses}) " +
             " AND (:#{#query.fromDate} is null or e.date >= :#{#query.fromDate}) " +
             " AND (:#{#query.toDate} is null or e.date <= :#{#query.toDate}) " +
-            " AND (:#{#query.createdUsers} is null or e.createdBy in :#{#query.createdUsers}) "
+            " AND (:#{#query.createdUsers} is null or e.createdBy in :#{#query.createdUsers}) " +
+            " ORDER BY e.updatedAt DESC "
     )
     Page<OrderModel> search(OrderQuery query, Pageable pageable);
 
@@ -31,7 +32,8 @@ public interface OrderRepository extends JpaRepository<OrderModel, UUID> {
             " AND (:#{#query.statuses} is null or e.status in :#{#query.statuses}) " +
             " AND (:#{#query.fromDate} is null or e.date >= :#{#query.fromDate}) " +
             " AND (:#{#query.toDate} is null or e.date <= :#{#query.toDate}) " +
-            " AND (:#{#query.createdUsers} is null or e.createdBy in :#{#query.createdUsers}) "
+            " AND (:#{#query.createdUsers} is null or e.createdBy in :#{#query.createdUsers}) " +
+            " ORDER BY e.updatedAt DESC "
     )
     List<OrderModel> searchList(OrderQuery query);
 

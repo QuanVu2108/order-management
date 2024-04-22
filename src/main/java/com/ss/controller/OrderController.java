@@ -4,6 +4,7 @@ import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.OrderItemReceivedMultiRequest;
 import com.ss.dto.request.OrderItemReceivedRequest;
+import com.ss.dto.request.OrderItemUpdatedRequest;
 import com.ss.dto.request.OrderRequest;
 import com.ss.dto.response.*;
 import com.ss.enums.OrderItemStatus;
@@ -94,8 +95,14 @@ public class OrderController {
         return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderItemQuery, pageCriteria));
     }
 
+    @PutMapping("/order-item/update")
+    ServiceResponse<List<OrderItemModel>> updateOrderItem(
+            @RequestBody @Valid OrderItemUpdatedRequest request) {
+        return ServiceResponse.succeed(HttpStatus.OK, orderService.updateItemByUpdating(request));
+    }
+
     @PutMapping("/order-item/receive/{orderItemId}")
-    ServiceResponse<OrderItemModel> updateOrderItem(
+    ServiceResponse<OrderItemModel> receiveOrderItem(
             @PathVariable @Valid UUID orderItemId,
             @RequestBody @Valid OrderItemReceivedRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.receiveItem(orderItemId, request));

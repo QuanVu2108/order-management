@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,8 +39,6 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemRepository orderItemRepository;
 
     private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
-
-    private final AsyncService asyncService;
 
     private final StoreService storeService;
 
@@ -65,10 +62,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private String genOrderCode() {
-        UserModel user = userService.getUserInfo();
         LocalDate now = LocalDate.now();
+        String monthVal = now.getMonthValue() < 10 ? ("0" + now.getMonthValue()) : String.valueOf(now.getMonthValue());
         long orderCnt = orderRepository.countByMonthAndYear(now.getMonthValue(), now.getYear()) + 1;
-        return user.getUsername() + "_" + orderCnt;
+        return "PO" + "_" + monthVal + "_" + orderCnt;
     }
 
     @Override
@@ -496,6 +493,24 @@ public class OrderServiceImpl implements OrderService {
         return new ArrayList<>(responses);
     }
 
+    @Override
+    public List<OrderItemModel> updateItemByUpdating(OrderItemUpdatedRequest request) {
+        boolean isApproved = request.isApproved();
+        List<UUID> ids = request.getDetails().stream().map(OrderItemUpdatedDetailRequest::getId).collect(Collectors.toList());
+        List<OrderItemModel> orderItems = orderItemRepository.findAllById(ids);
+        if (isApproved) {
+            request.getDetails().forEach(itemRequest -> {
+                OrderItemModel orderItem = orderItems.stream()
+                        .filter(item -> item.getId().equals(itemRequest.getId()))
+                        .findFirst().orElse(null);
+                orderItem.updateItemByUpdating(itemRequest);
+            });
+        } else
+            orderItems.forEach(item -> item.setStatus(OrderItemStatus.CANCEL));
+        List<OrderItemModel> updatedOrderItems = orderItemRepository.saveAll(orderItems);
+        return updatedOrderItems;
+    }
+
     private void updateOrderByItem(OrderItemModel item) {
         OrderModel order = item.getOrderModel();
         List<OrderItemModel> orderItems = orderItemRepository.findByOrderModel(order);
@@ -531,7 +546,6 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItemModel> orderItems = orderItemRepository.findAllById(request.getIds());
         orderItems.forEach(item -> {
             item.submitByTool();
-            item.setUpdatedAt(Instant.now());
         });
         orderItems = orderItemRepository.saveAll(orderItems);
         return orderItems;
