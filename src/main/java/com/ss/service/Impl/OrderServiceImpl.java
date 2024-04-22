@@ -64,9 +64,8 @@ public class OrderServiceImpl implements OrderService {
     private String genOrderCode() {
         LocalDate now = LocalDate.now();
         String monthVal = now.getMonthValue() < 10 ? ("0" + now.getMonthValue()) : String.valueOf(now.getMonthValue());
-        String yearVal = String.valueOf(now.getYear());
         long orderCnt = orderRepository.countByMonthAndYear(now.getMonthValue(), now.getYear()) + 1;
-        return "PO" + "_" + yearVal + "_" + monthVal + "_" + orderCnt;
+        return "PO" + "_" + monthVal + "_" + orderCnt;
     }
 
     @Override
