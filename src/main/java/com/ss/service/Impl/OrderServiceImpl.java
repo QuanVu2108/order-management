@@ -48,6 +48,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderItemMapper orderItemMapper;
 
+    private final TelegramBotService telegramBotService;
+
     @Override
     @Transactional
     public OrderModel createOrder(OrderRequest request) {
@@ -69,7 +71,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
     public OrderModel updateOrder(UUID orderId, OrderRequest request) {
         Optional<OrderModel> orderModelOptional = orderRepository.findById(orderId);
         if (orderModelOptional.isEmpty())
@@ -137,6 +138,8 @@ public class OrderServiceImpl implements OrderService {
         order.setItems(orderItems.stream()
                 .filter(item -> !item.isDeleted())
                 .collect(Collectors.toList()));
+        if (order.getStatus().equals(OrderStatus.PENDING))
+            telegramBotService.sendOrder(order);
         return order;
     }
 
