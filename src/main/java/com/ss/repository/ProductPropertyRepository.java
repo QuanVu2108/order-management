@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,4 +26,7 @@ public interface ProductPropertyRepository extends JpaRepository<ProductProperty
             " AND (:name is null or UPPER(e.name) like :name) "
     )
     Page<ProductPropertyModel> search(String code, String name, ProductPropertyType type, Pageable pageable);
+
+    @Query(value = "SELECT p FROM ProductPropertyModel p WHERE p.type = :type and UPPER(p.name) IN :names")
+    List<ProductPropertyModel> findByTypeAndNames(ProductPropertyType type, List<String> names);
 }

@@ -18,6 +18,8 @@ public interface ProductService {
 
     void delete(long id);
 
+    List<ProductModel> importFile(MultipartFile file);
+
     PageResponse<ProductModel> search(String code, String number, String name, String category, String brand, String color, String size, PageCriteria pageCriteria);
 
     ProductModel uploadImage(long id, MultipartFile[] fileRequests);

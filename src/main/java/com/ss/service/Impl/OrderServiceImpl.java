@@ -132,10 +132,10 @@ public class OrderServiceImpl implements OrderService {
             orderItems.add(existedItem);
         });
 
-        orderItemRepository.saveAll(orderItems);
         order.update(request);
         order = orderRepository.save(order);
-        order.setItems(orderItems.stream()
+        List<OrderItemModel> updatedOrderItems = orderItemRepository.saveAll(orderItems);
+        order.setItems(updatedOrderItems.stream()
                 .filter(item -> !item.isDeleted())
                 .collect(Collectors.toList()));
         if (order.getStatus().equals(OrderStatus.PENDING))

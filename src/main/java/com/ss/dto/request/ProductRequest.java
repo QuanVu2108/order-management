@@ -1,6 +1,5 @@
 package com.ss.dto.request;
 
-import com.ss.model.FileModel;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;

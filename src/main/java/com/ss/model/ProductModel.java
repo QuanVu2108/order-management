@@ -48,6 +48,9 @@ public class ProductModel extends AuditModel {
     @Column(name = "cost_price")
     private Long costPrice;
 
+    @Column(name = "incentive")
+    private Long incentive;
+
     @Column(name = "color")
     private String color;
 

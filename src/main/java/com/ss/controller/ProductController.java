@@ -53,6 +53,11 @@ public class ProductController {
         return ServiceResponse.succeed(HttpStatus.OK, null);
     }
 
+    @PostMapping("/import")
+    ServiceResponse<List<ProductModel>> importFile(MultipartFile file) throws Exception {
+        return ServiceResponse.succeed(HttpStatus.OK, productService.importFile(file));
+    };
+
     @GetMapping("/number/{number}")
     ServiceResponse<ProductModel> getByNumber(@PathVariable @Valid String number) {
         return ServiceResponse.succeed(HttpStatus.OK, productService.getByNumber(number));
@@ -97,7 +102,6 @@ public class ProductController {
             @Valid PageCriteria pageCriteria) {
         return PageResponse.succeed(HttpStatus.OK, productPropertyService.search(code, name, type, pageCriteria));
     }
-
 
     @PostMapping("/check-import-file")
     ServiceResponse<List<ProductCheckImportResponse>> checkImportFile(MultipartFile file) throws Exception {
