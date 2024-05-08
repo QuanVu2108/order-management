@@ -188,65 +188,70 @@ public class ProductServiceImpl implements ProductService {
             InputStream inputStream = fileRequest.getInputStream();
             List<Map<String, String>> assets = readUploadFileData(inputStream, fileName, columns, 1, 0, new ArrayList<>());
             for (Map<String, String> asset : assets) {
-                ProductImport productImport = new ProductImport();
+                boolean isValid = true;
                 String productNumber = asset.get(ProductExcelTemplate.PRODUCT_NUMBER.getKey());
                 if (!StringUtils.hasText(productNumber))
-                    throw new ExceptionResponse(InvalidInputError.PRODUCT_NUMBER.getMessage(),  InvalidInputError.PRODUCT_NUMBER);
-                productNumbers.add(productNumber);
-                productImport.setProductNumber(productNumber);
+                    isValid = false;
 
                 String code = asset.get(ProductExcelTemplate.CODE.getKey());
                 if (!StringUtils.hasText(code))
-                    throw new ExceptionResponse(InvalidInputError.PRODUCT_CODE.getMessage(),  InvalidInputError.PRODUCT_CODE);
-                productCodes.add(code);
-                productImport.setCode(code);
+                    isValid = false;
 
                 String name = asset.get(ProductExcelTemplate.NAME.getKey());
                 if (!StringUtils.hasText(name))
-                    throw new ExceptionResponse(InvalidInputError.PRODUCT_NAME.getMessage(),  InvalidInputError.PRODUCT_NAME);
-                productImport.setName(name);
+                    isValid = false;
 
                 String categoryName = asset.get(ProductExcelTemplate.CATEGORY.getKey());
                 if (!StringUtils.hasText(categoryName))
-                    throw new ExceptionResponse(InvalidInputError.PRODUCT_CATEGORY.getMessage(),  InvalidInputError.PRODUCT_NAME);
-                productImport.setCategoryName(categoryName);
-                categoryNames.add(categoryName);
+                    isValid = false;
 
                 String brandName = asset.get(ProductExcelTemplate.BRAND.getKey());
                 if (!StringUtils.hasText(brandName))
-                    throw new ExceptionResponse(InvalidInputError.PRODUCT_BRAND.getMessage(),  InvalidInputError.PRODUCT_NAME);
-                productImport.setBrandName(brandName);
-                brandNames.add(brandName);
+                    isValid = false;
 
                 String color = asset.get(ProductExcelTemplate.COLOR.getKey());
                 if (!StringUtils.hasText(color))
-                    throw new ExceptionResponse(InvalidInputError.PRODUCT_COLOR.getMessage(),  InvalidInputError.PRODUCT_NAME);
-                productImport.setColor(color);
+                    isValid = false;
 
                 String size = asset.get(ProductExcelTemplate.SIZE.getKey());
                 if (!StringUtils.hasText(size))
-                    throw new ExceptionResponse(InvalidInputError.PRODUCT_SIZE.getMessage(),  InvalidInputError.PRODUCT_NAME);
-                productImport.setSize(size);
+                    isValid = false;
 
-                Long soldPrice = Long.valueOf(0);
-                try {
-                    soldPrice = Long.parseLong(asset.get(ProductExcelTemplate.SOLD_PRICE.getKey()));
-                } catch (Exception ex) {
-                }
-                productImport.setSoldPrice(soldPrice);
+                if (isValid) {
+                    productNumbers.add(productNumber);
+                    productCodes.add(code);
+                    categoryNames.add(categoryName);
+                    brandNames.add(brandName);
 
-                Long costPrice = Long.valueOf(0);
-                try {
-                    costPrice = Long.parseLong(asset.get(ProductExcelTemplate.COST_PRICE.getKey()));
-                } catch (Exception ex) {
-                }
-                productImport.setCostPrice(costPrice);
-                productImports.add(productImport);
+                    ProductImport productImport = new ProductImport();
+                    productImport.setProductNumber(productNumber);
+                    productImport.setCode(code);
+                    productImport.setName(name);
+                    productImport.setCategoryName(categoryName);
+                    productImport.setBrandName(brandName);
+                    productImport.setColor(color);
+                    productImport.setSize(size);
 
-                String productUrls = asset.get(ProductExcelTemplate.IMAGE_URL.getKey());
-                if (StringUtils.hasText(productUrls)) {
-                    List<String> fileUrls = List.of(productUrls.split(","));
-                    fileImports.add(new FileImport(productNumber, fileUrls));
+                    Long soldPrice = Long.valueOf(0);
+                    try {
+                        soldPrice = Long.parseLong(asset.get(ProductExcelTemplate.SOLD_PRICE.getKey()));
+                    } catch (Exception ex) {
+                    }
+                    productImport.setSoldPrice(soldPrice);
+
+                    Long costPrice = Long.valueOf(0);
+                    try {
+                        costPrice = Long.parseLong(asset.get(ProductExcelTemplate.COST_PRICE.getKey()));
+                    } catch (Exception ex) {
+                    }
+                    productImport.setCostPrice(costPrice);
+                    productImports.add(productImport);
+
+                    String productUrls = asset.get(ProductExcelTemplate.IMAGE_URL.getKey());
+                    if (StringUtils.hasText(productUrls)) {
+                        List<String> fileUrls = List.of(productUrls.split(","));
+                        fileImports.add(new FileImport(productNumber, fileUrls));
+                    }
                 }
             }
         } catch (Exception e) {

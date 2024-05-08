@@ -75,4 +75,11 @@ public class ProductModel extends AuditModel {
         this.category = category;
         this.brand = brand;
     }
+
+    public String getInfo() {
+        StringBuilder info = new StringBuilder();
+        info.append(this.name);
+        info.append("(").append(this.productNumber).append(")");
+        return info.toString();
+    }
 }
