@@ -48,6 +48,9 @@ public class ProductModel extends AuditModel {
     @Column(name = "cost_price")
     private Long costPrice;
 
+    @Column(name = "incentive")
+    private Long incentive;
+
     @Column(name = "color")
     private String color;
 
@@ -71,5 +74,12 @@ public class ProductModel extends AuditModel {
         this.size = request.getSize();
         this.category = category;
         this.brand = brand;
+    }
+
+    public String getInfo() {
+        StringBuilder info = new StringBuilder();
+        info.append(this.name);
+        info.append("(").append(this.productNumber).append(")");
+        return info.toString();
     }
 }

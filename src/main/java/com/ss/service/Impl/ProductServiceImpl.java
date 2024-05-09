@@ -6,9 +6,12 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.ProductRequest;
 import com.ss.dto.response.ProductCheckImportResponse;
+import com.ss.enums.ProductPropertyType;
 import com.ss.enums.excel.ProductCheckImportExcelTemplate;
+import com.ss.enums.excel.ProductExcelTemplate;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.DuplicatedError;
+import com.ss.exception.http.InvalidInputError;
 import com.ss.model.FileModel;
 import com.ss.model.ProductModel;
 import com.ss.model.ProductPropertyModel;
@@ -21,6 +24,7 @@ import com.ss.service.ProductService;
 import com.ss.service.StoreService;
 import com.ss.util.StorageUtil;
 import com.ss.util.excel.ExcelTemplate;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -51,6 +55,33 @@ public class ProductServiceImpl implements ProductService {
     private final StorageUtil storageUtil;
 
     private final FileRepository fileRepository;
+
+    @Data
+    private static class ProductImport {
+        String productNumber;
+        String code;
+        String name;
+        String categoryName;
+        String brandName;
+        String color;
+        String size;
+        Long soldPrice;
+        Long costPrice;
+        Long incentive;
+        ProductPropertyModel category;
+        ProductPropertyModel brand;
+    }
+
+    @Data
+    private static class FileImport {
+        String productNumber;
+        List<String> fileUrls;
+
+        private FileImport(String productNumber, List<String> fileUrls) {
+            this.productNumber = productNumber;
+            this.fileUrls = fileUrls;
+        }
+    }
 
     @Override
     public ProductModel create(ProductRequest request) {
@@ -138,6 +169,179 @@ public class ProductServiceImpl implements ProductService {
         ProductModel product = productOptional.get();
         product.setDeleted(true);
         repository.save(product);
+    }
+
+    @Override
+    public List<ProductModel> importFile(MultipartFile fileRequest) {
+        String fileName = fileRequest.getOriginalFilename();
+        List<ProductExcelTemplate> template = ProductExcelTemplate.getColumns();
+        List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
+
+        List<ProductImport> productImports = new ArrayList<>();
+        Set<String> productNumbers = new HashSet<>();
+        Set<String> productCodes = new HashSet<>();
+        Set<String> categoryNames = new HashSet<>();
+        Set<String> brandNames = new HashSet<>();
+
+        List<FileImport> fileImports = new ArrayList<>();
+        try {
+            InputStream inputStream = fileRequest.getInputStream();
+            List<Map<String, String>> assets = readUploadFileData(inputStream, fileName, columns, 1, 0, new ArrayList<>());
+            for (Map<String, String> asset : assets) {
+                boolean isValid = true;
+                String productNumber = asset.get(ProductExcelTemplate.PRODUCT_NUMBER.getKey());
+                if (!StringUtils.hasText(productNumber))
+                    isValid = false;
+
+                String code = asset.get(ProductExcelTemplate.CODE.getKey());
+                if (!StringUtils.hasText(code))
+                    isValid = false;
+
+                String name = asset.get(ProductExcelTemplate.NAME.getKey());
+                if (!StringUtils.hasText(name))
+                    isValid = false;
+
+                String categoryName = asset.get(ProductExcelTemplate.CATEGORY.getKey());
+                if (!StringUtils.hasText(categoryName))
+                    isValid = false;
+
+                String brandName = asset.get(ProductExcelTemplate.BRAND.getKey());
+                if (!StringUtils.hasText(brandName))
+                    isValid = false;
+
+                String color = asset.get(ProductExcelTemplate.COLOR.getKey());
+                if (!StringUtils.hasText(color))
+                    isValid = false;
+
+                String size = asset.get(ProductExcelTemplate.SIZE.getKey());
+                if (!StringUtils.hasText(size))
+                    isValid = false;
+
+                if (isValid) {
+                    productNumbers.add(productNumber);
+                    productCodes.add(code);
+                    categoryNames.add(categoryName);
+                    brandNames.add(brandName);
+
+                    ProductImport productImport = new ProductImport();
+                    productImport.setProductNumber(productNumber);
+                    productImport.setCode(code);
+                    productImport.setName(name);
+                    productImport.setCategoryName(categoryName);
+                    productImport.setBrandName(brandName);
+                    productImport.setColor(color);
+                    productImport.setSize(size);
+
+                    Long soldPrice = Long.valueOf(0);
+                    try {
+                        soldPrice = Long.parseLong(asset.get(ProductExcelTemplate.SOLD_PRICE.getKey()));
+                    } catch (Exception ex) {
+                    }
+                    productImport.setSoldPrice(soldPrice);
+
+                    Long costPrice = Long.valueOf(0);
+                    try {
+                        costPrice = Long.parseLong(asset.get(ProductExcelTemplate.COST_PRICE.getKey()));
+                    } catch (Exception ex) {
+                    }
+                    productImport.setCostPrice(costPrice);
+                    productImports.add(productImport);
+
+                    String productUrls = asset.get(ProductExcelTemplate.IMAGE_URL.getKey());
+                    if (StringUtils.hasText(productUrls)) {
+                        List<String> fileUrls = List.of(productUrls.split(","));
+                        fileImports.add(new FileImport(productNumber, fileUrls));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new ExceptionResponse("import fileRequest unsuccessfully!!! ");
+        }
+
+        // category
+        List<ProductPropertyModel> existedCategories = propertyRepository.findByTypeAndNames(ProductPropertyType.CATEGORY, categoryNames.stream().map(item -> item.toUpperCase()).collect(Collectors.toList()));
+        List<String> existedCategoryNames = existedCategories.stream().map(item -> item.getName().toUpperCase()).collect(Collectors.toList());
+        List<String> newCategoryNames = categoryNames.stream()
+                .filter(item -> !existedCategoryNames.contains(item.toUpperCase()))
+                .collect(Collectors.toList());
+        long countCategory = propertyRepository.countAllByType(ProductPropertyType.CATEGORY.toString());
+        List<ProductPropertyModel> newCategories = new ArrayList<>();
+        for (int i = 0; i < newCategoryNames.size(); i++) {
+            ProductPropertyModel newCategory = new ProductPropertyModel(String.valueOf(countCategory), ProductPropertyType.CATEGORY);
+            newCategory.setName(newCategoryNames.get(i));
+            newCategories.add(newCategory);
+            countCategory++;
+        }
+        newCategories = propertyRepository.saveAll(newCategories);
+        existedCategories.addAll(newCategories);
+
+        // category
+        List<ProductPropertyModel> existedBrands = propertyRepository.findByTypeAndNames(ProductPropertyType.BRAND, categoryNames.stream().map(item -> item.toUpperCase()).collect(Collectors.toList()));
+        List<String> existedBrandNames = existedBrands.stream().map(item -> item.getName().toUpperCase()).collect(Collectors.toList());
+        List<String> newBrandNames = brandNames.stream()
+                .filter(item -> !existedBrandNames.contains(item.toUpperCase()))
+                .collect(Collectors.toList());
+        long countBrand = propertyRepository.countAllByType(ProductPropertyType.BRAND.toString());
+        List<ProductPropertyModel> newBrands = new ArrayList<>();
+        for (int i = 0; i < newBrandNames.size(); i++) {
+            ProductPropertyModel newBrand = new ProductPropertyModel(String.valueOf(countBrand), ProductPropertyType.BRAND);
+            newBrand.setName(newBrandNames.get(i));
+            newBrands.add(newBrand);
+            countBrand++;
+        }
+        newBrands = propertyRepository.saveAll(newBrands);
+        existedBrands.addAll(newBrands);
+
+        List<ProductModel> existedProducts = repository.findByCodeInOrProductNumberIn(new ArrayList<>(productCodes), new ArrayList<>(productNumbers));
+        List<ProductModel> products = new ArrayList<>();
+        productImports.forEach(productImport -> {
+            ProductModel product = existedProducts.stream()
+                    .filter(item -> item.getProductNumber().toUpperCase().equals(productImport.getCode().toUpperCase())
+                            || item.getCode().toUpperCase().equals(productImport.getCode().toUpperCase()))
+                    .findFirst().orElse(new ProductModel());
+            product.setProductNumber(productImport.getProductNumber());
+            product.setCode(productImport.getCode());
+            product.setName(productImport.getName());
+            product.setColor(productImport.getColor());
+            product.setSize(productImport.getSize());
+            product.setSoldPrice(productImport.getSoldPrice());
+            product.setCostPrice(productImport.getCostPrice());
+            product.setIncentive(productImport.getIncentive());
+
+            ProductPropertyModel category = existedCategories.stream()
+                    .filter(item -> item.getName().toUpperCase().equals(productImport.getCategoryName().toUpperCase()))
+                    .findFirst().orElse(null);
+            product.setCategory(category);
+
+            ProductPropertyModel brand = existedBrands.stream()
+                    .filter(item -> item.getName().toUpperCase().equals(productImport.getBrandName().toUpperCase()))
+                    .findFirst().orElse(null);
+            product.setBrand(brand);
+            products.add(product);
+        });
+        List<ProductModel> updatedProducts = repository.saveAll(products);
+
+        List<FileModel> files = new ArrayList<>();
+        fileImports.forEach(fileImport -> {
+            ProductModel product = updatedProducts.stream()
+                    .filter(item -> item.getProductNumber().equals(fileImport.getProductNumber()))
+                    .findFirst().orElse(null);
+            if (product != null) {
+                fileImport.getFileUrls().forEach(fileUrl -> {
+                    FileModel file = FileModel.builder()
+                            .id(UUID.randomUUID())
+                            .product(product)
+                            .name(product.getName())
+                            .url(fileUrl)
+                            .build();
+                    files.add(file);
+                });
+            }
+        });
+        fileRepository.saveAll(files);
+
+        return updatedProducts;
     }
 
     @Override

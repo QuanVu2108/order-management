@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class StringUtil<T> {
+public final class StringUtil<T> {
 
     public static List<String> uuidGetNotContainedList(List<UUID> childList, List<UUID> parentList) {
         List<String> childStrList = childList == null ? new ArrayList<>() : childList.stream().map(item -> item.toString()).collect(Collectors.toList());

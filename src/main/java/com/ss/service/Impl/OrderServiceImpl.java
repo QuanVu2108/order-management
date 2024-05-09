@@ -132,10 +132,10 @@ public class OrderServiceImpl implements OrderService {
             orderItems.add(existedItem);
         });
 
-        orderItemRepository.saveAll(orderItems);
         order.update(request);
         order = orderRepository.save(order);
-        order.setItems(orderItems.stream()
+        List<OrderItemModel> updatedOrderItems = orderItemRepository.saveAll(orderItems);
+        order.setItems(updatedOrderItems.stream()
                 .filter(item -> !item.isDeleted())
                 .collect(Collectors.toList()));
         if (order.getStatus().equals(OrderStatus.PENDING))
@@ -290,6 +290,10 @@ public class OrderServiceImpl implements OrderService {
             throw new ExceptionResponse("order item is not existed!!!");
         OrderItemModel orderItem = orderItemModelOptional.get();
         orderItem.updateByTool(request);
+
+        if (request.getStatus() != null && (request.getStatus().equals(OrderItemStatus.DELAY) || request.getStatus().equals(OrderItemStatus.UPDATING)))
+            telegramBotService.sendOrderItem(orderItem, request.getStatus());
+
         orderItem = orderItemRepository.save(orderItem);
         return orderItem;
     }
@@ -549,6 +553,7 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItemModel> orderItems = orderItemRepository.findAllById(request.getIds());
         orderItems.forEach(item -> {
             item.submitByTool();
+            telegramBotService.sendOrderItem(item, null);
         });
         orderItems = orderItemRepository.saveAll(orderItems);
         return orderItems;
