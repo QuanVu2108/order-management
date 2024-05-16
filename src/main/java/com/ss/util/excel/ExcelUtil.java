@@ -192,7 +192,7 @@ public class ExcelUtil {
     }
 
 
-    public static void makeContent(Workbook workbook, Sheet sheet, int rowHeaderIndex, List<Map<String, String>> content, ExcelTemplate[] columns) {
+    public static void makeContent(Workbook workbook, Sheet sheet, int rowHeaderIndex, List<Map<String, String>> content, ExportTemplate[] columns) {
         var contentStyle = workbook.createCellStyle();
         contentStyle.setBorderTop(BorderStyle.THIN);
         contentStyle.setBorderBottom(BorderStyle.THIN);
@@ -223,7 +223,7 @@ public class ExcelUtil {
         }
     }
 
-    public static void makeHeader(Workbook workbook, Sheet sheet, int rowHeaderIndex, ExcelTemplate[] columns) {
+    public static void makeHeader(Workbook workbook, Sheet sheet, int rowHeaderIndex, ExportTemplate[] columns) {
         Row rowHeader = sheet.createRow(rowHeaderIndex);
         CellStyle headerStyle = workbook.createCellStyle();
         headerStyle.setWrapText(true);

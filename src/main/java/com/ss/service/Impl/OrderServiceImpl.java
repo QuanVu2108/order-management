@@ -6,9 +6,13 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.*;
 import com.ss.dto.response.*;
+import com.ss.enums.Const;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
+import com.ss.enums.excel.OrderExportExcel;
+import com.ss.enums.excel.OrderItemExportExcel;
 import com.ss.exception.ExceptionResponse;
+import com.ss.exception.http.InvalidInputError;
 import com.ss.model.*;
 import com.ss.repository.OrderItemRepository;
 import com.ss.repository.OrderRepository;
@@ -20,14 +24,27 @@ import com.ss.service.mapper.OrderItemMapper;
 import com.ss.util.StringUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.ss.enums.Const.*;
+import static com.ss.util.DateUtils.instantToString;
+import static com.ss.util.DateUtils.timestampToString;
+import static com.ss.util.StringUtil.convertToString;
+import static com.ss.util.excel.ExcelUtil.*;
 
 @Service
 @Slf4j
@@ -239,6 +256,75 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public Resource exportOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser) {
+        PageCriteria pageCriteria = PageCriteria.builder()
+                .pageIndex(1)
+                .pageSize(MAX_EXPORT_SIZE)
+                .build();
+        PageResponse<OrderResponse> orderPage = searchOrder(ids, code, statuses, fromDate, toDate, createdUser, pageCriteria);
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        Workbook workbook = null;
+        try {
+            workbook = getWorkbook(null, "order.xlsx");
+            CellStyle style = workbook.createCellStyle();
+            style.setWrapText(true);
+            Sheet sheet = workbook.createSheet("order");
+            int rowHeaderIndex = 0;
+            makeHeader(workbook, sheet, rowHeaderIndex, OrderExportExcel.values());
+
+            List<Map<String, String>> areaAssets = getOrderAssets(orderPage.getData());
+            makeContent(workbook, sheet, rowHeaderIndex, areaAssets, OrderExportExcel.values());
+            autoSizeColumns(sheet, OrderExportExcel.values().length);
+
+            workbook.write(byteArrayOutputStream);
+            byte[] bytes = byteArrayOutputStream.toByteArray().clone();
+            return new ByteArrayResource(bytes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ExceptionResponse(InvalidInputError.EXPORT_FILE_FAILED.getMessage(), InvalidInputError.EXPORT_FILE_FAILED);
+        } finally {
+            try {
+                if (workbook != null) {
+                    workbook.close();
+                }
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+
+            try {
+                byteArrayOutputStream.close();
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    private List<Map<String, String>> getOrderAssets(List<OrderResponse> data) {
+        List<Map<String, String>> result = new ArrayList<>();
+        int count = 1;
+        for (OrderResponse order : data) {
+            Map<String, String> map = new HashMap<>();
+            map.put(OrderExportExcel.STT.getKey(), String.valueOf(count++));
+            map.put(OrderExportExcel.CODE.getKey(), order.getCode());
+            map.put(OrderExportExcel.DATE.getKey(), timestampToString(Const.DATE_FORMATTER, order.getDate()));
+            map.put(OrderExportExcel.STATUS.getKey(), order.getStatus() == null ? "" : order.getStatus().name());
+            String productCodes = order.getItems().stream().map(item -> item.getProduct().getCode()).collect(Collectors.joining(","));
+            String productNumbers = order.getItems().stream().map(item -> item.getProduct().getProductNumber()).collect(Collectors.joining(","));
+            map.put(OrderExportExcel.PRODUCT_CODE.getKey(), productCodes);
+            map.put(OrderExportExcel.PRODUCT_NUMBER.getKey(), productNumbers);
+            map.put(OrderExportExcel.TOTAL_QUANTITY.getKey(), convertToString(order.getTotalQuantity()));
+            map.put(OrderExportExcel.TOTAL_COST.getKey(), convertToString(order.getTotalCost()));
+            map.put(OrderExportExcel.INCENTIVE.getKey(), convertToString(order.getIncentive()));
+            map.put(OrderExportExcel.UPDATED_TIME.getKey(), instantToString(DATE_TIME_DETAIL_FORMATTER, order.getUpdatedAt()));
+            map.put(OrderExportExcel.NOTE.getKey(), order.getNote());
+            result.add(map);
+        }
+        return result;
+    }
+
+    @Override
     @Transactional
     public void receiveItemMulti(UUID orderId, List<OrderItemReceivedMultiRequest> request) {
         Optional<OrderModel> orderModelOptional = orderRepository.findById(orderId);
@@ -281,6 +367,80 @@ public class OrderServiceImpl implements OrderService {
                         .build())
                 .data(responses)
                 .build();
+    }
+
+    @Override
+    public Resource exportOrderItem(OrderItemQuery orderItemQuery) {
+        PageCriteria pageCriteria = PageCriteria.builder()
+                .pageIndex(1)
+                .pageSize(MAX_EXPORT_SIZE)
+                .build();
+        PageResponse<OrderItemResponse> orderItem = searchOrderItem(orderItemQuery, pageCriteria);
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        Workbook workbook = null;
+        try {
+            workbook = getWorkbook(null, "order_item.xlsx");
+            CellStyle style = workbook.createCellStyle();
+            style.setWrapText(true);
+            Sheet sheet = workbook.createSheet("order item");
+            int rowHeaderIndex = 0;
+            makeHeader(workbook, sheet, rowHeaderIndex, OrderItemExportExcel.values());
+
+            List<Map<String, String>> areaAssets = getOrderItemAssets(orderItem.getData());
+            makeContent(workbook, sheet, rowHeaderIndex, areaAssets, OrderItemExportExcel.values());
+            autoSizeColumns(sheet, OrderItemExportExcel.values().length);
+
+            workbook.write(byteArrayOutputStream);
+            byte[] bytes = byteArrayOutputStream.toByteArray().clone();
+            return new ByteArrayResource(bytes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ExceptionResponse(InvalidInputError.EXPORT_FILE_FAILED.getMessage(), InvalidInputError.EXPORT_FILE_FAILED);
+        } finally {
+            try {
+                if (workbook != null) {
+                    workbook.close();
+                }
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+
+            try {
+                byteArrayOutputStream.close();
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    private List<Map<String, String>> getOrderItemAssets(List<OrderItemResponse> data) {
+        List<Map<String, String>> result = new ArrayList<>();
+        int count = 1;
+        for (OrderItemResponse orderItem : data) {
+            Map<String, String> map = new HashMap<>();
+            map.put(OrderItemExportExcel.STT.getKey(), String.valueOf(count++));
+            map.put(OrderItemExportExcel.ORDER_CODE.getKey(), orderItem.getOrder().getCode());
+            map.put(OrderItemExportExcel.PRODUCT_CODE.getKey(), orderItem.getProduct().getCode());
+            map.put(OrderItemExportExcel.PRODUCT_NUMBER.getKey(), orderItem.getProduct().getProductNumber());
+            String imageUrl = orderItem.getProduct().getImages().stream().map(FileModel::getUrl).collect(Collectors.joining(","));
+            map.put(OrderItemExportExcel.IMAGE_URL.getKey(), imageUrl);
+            map.put(OrderItemExportExcel.STATUS.getKey(), orderItem.getStatus() == null ? "" : orderItem.getStatus().name());
+            map.put(OrderItemExportExcel.DATE.getKey(), instantToString(DATE_FORMATTER, orderItem.getUpdatedAt()));
+            map.put(OrderItemExportExcel.QUANTITY.getKey(), convertToString(orderItem.getQuantityOrder()));
+            map.put(OrderItemExportExcel.COST.getKey(), convertToString(orderItem.getCost()));
+            map.put(OrderItemExportExcel.TOTAL_COST.getKey(), convertToString(orderItem.getCostTotal()));
+            map.put(OrderItemExportExcel.DELAY.getKey(), timestampToString(DATE_FORMATTER, orderItem.getDelayDay()));
+            map.put(OrderItemExportExcel.NOTE.getKey(), orderItem.getNote());
+            map.put(OrderItemExportExcel.CHECKED.getKey(), convertToString(orderItem.getQuantityChecked()));
+            map.put(OrderItemExportExcel.IN_CART.getKey(), convertToString(orderItem.getQuantityChecked()));
+            map.put(OrderItemExportExcel.RECEIVED.getKey(), convertToString(orderItem.getQuantityReceived()));
+            map.put(OrderItemExportExcel.SENT.getKey(), convertToString(orderItem.getQuantitySent()));
+
+            result.add(map);
+        }
+        return result;
     }
 
     @Override

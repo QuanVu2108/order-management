@@ -9,6 +9,7 @@ import com.ss.dto.response.ProductCheckImportResponse;
 import com.ss.enums.ProductPropertyType;
 import com.ss.enums.excel.ProductCheckImportExcelTemplate;
 import com.ss.enums.excel.ProductExcelTemplate;
+import com.ss.enums.excel.ProductExportExcel;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.DuplicatedError;
 import com.ss.exception.http.InvalidInputError;
@@ -27,17 +28,28 @@ import com.ss.util.excel.ExcelTemplate;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.ss.enums.Const.DATE_TIME_DETAIL_FORMATTER;
+import static com.ss.enums.Const.MAX_EXPORT_SIZE;
+import static com.ss.util.DateUtils.instantToString;
 import static com.ss.util.StringUtil.convertSqlSearchText;
-import static com.ss.util.excel.ExcelUtil.readUploadFileData;
+import static com.ss.util.StringUtil.convertToString;
+import static com.ss.util.excel.ExcelUtil.*;
 
 @Service
 @Slf4j
@@ -363,6 +375,78 @@ public class ProductServiceImpl implements ProductService {
                         .build())
                 .data(pages.getContent())
                 .build();
+    }
+
+    @Override
+    public Resource export(String code, String number, String name, String category, String brand, String color, String size) {
+        PageCriteria pageCriteria = PageCriteria.builder()
+                .pageIndex(1)
+                .pageSize(MAX_EXPORT_SIZE)
+                .build();
+        PageResponse<ProductModel> productPage = search(code, number, name, category, brand, color, size, pageCriteria);
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        Workbook workbook = null;
+        try {
+            workbook = getWorkbook(null, "product.xlsx");
+            CellStyle style = workbook.createCellStyle();
+            style.setWrapText(true);
+            Sheet sheet = workbook.createSheet("product");
+            int rowHeaderIndex = 0;
+            makeHeader(workbook, sheet, rowHeaderIndex, ProductExportExcel.values());
+
+            List<Map<String, String>> areaAssets = getAssets(productPage.getData());
+            makeContent(workbook, sheet, rowHeaderIndex, areaAssets, ProductExportExcel.values());
+            autoSizeColumns(sheet, ProductExcelTemplate.values().length);
+
+            workbook.write(byteArrayOutputStream);
+            byte[] bytes = byteArrayOutputStream.toByteArray().clone();
+            return new ByteArrayResource(bytes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ExceptionResponse(InvalidInputError.EXPORT_FILE_FAILED.getMessage(), InvalidInputError.EXPORT_FILE_FAILED);
+        } finally {
+            try {
+                if (workbook != null) {
+                    workbook.close();
+                }
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+
+            try {
+                byteArrayOutputStream.close();
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    private List<Map<String, String>> getAssets(List<ProductModel> data) {
+        List<Map<String, String>> result = new ArrayList<>();
+        int count = 1;
+        for (ProductModel product : data) {
+            Map<String, String> map = new HashMap<>();
+            map.put(ProductExportExcel.STT.getKey(), String.valueOf(count++));
+            map.put(ProductExportExcel.PRODUCT_NUMBER.getKey(), product.getProductNumber());
+            String imageUrl = "";
+            if (product.getImages() != null && !product.getImages().isEmpty())
+                imageUrl = product.getImages().stream().map(FileModel::getUrl).collect(Collectors.joining(","));
+            map.put(ProductExportExcel.IMAGE_URL.getKey(), imageUrl);
+            map.put(ProductExportExcel.CODE.getKey(), product.getCode());
+            map.put(ProductExportExcel.NAME.getKey(), product.getName());
+            map.put(ProductExportExcel.CATEGORY.getKey(), product.getCategory().getName());
+            map.put(ProductExportExcel.BRAND.getKey(), product.getBrand().getName());
+            map.put(ProductExportExcel.COLOR.getKey(), product.getColor());
+            map.put(ProductExportExcel.SIZE.getKey(), product.getSize());
+            map.put(ProductExportExcel.SOLD_PRICE.getKey(), convertToString(product.getSoldPrice()));
+            map.put(ProductExportExcel.COST_PRICE.getKey(), convertToString(product.getCostPrice()));
+            map.put(ProductExportExcel.INCENTIVE.getKey(), convertToString(product.getIncentive()));
+            map.put(ProductExportExcel.UPDATED_TIME.getKey(), instantToString(DATE_TIME_DETAIL_FORMATTER, product.getUpdatedAt()));
+            result.add(map);
+        }
+        return result;
     }
 
     @Override

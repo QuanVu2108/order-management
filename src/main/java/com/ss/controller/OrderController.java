@@ -7,6 +7,7 @@ import com.ss.dto.request.OrderItemReceivedRequest;
 import com.ss.dto.request.OrderItemUpdatedRequest;
 import com.ss.dto.request.OrderRequest;
 import com.ss.dto.response.*;
+import com.ss.enums.ExportFormat;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
@@ -14,10 +15,13 @@ import com.ss.model.OrderModel;
 import com.ss.repository.query.OrderItemQuery;
 import com.ss.service.OrderService;
 import lombok.AllArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -63,6 +67,29 @@ public class OrderController {
         return PageResponse.succeed(HttpStatus.OK, orderService.searchOrder(ids, code, statuses, fromDate, toDate, createdUser, pageCriteria));
     }
 
+    @PostMapping("/export")
+    ResponseEntity<Resource> export(
+            @RequestParam(name = "ids", required = false) List<UUID> ids,
+            @RequestParam(name = "code", required = false) String code,
+            @RequestParam(name = "statuses", required = false) List<OrderStatus> statuses,
+            @RequestParam(name = "fromDate", required = false) Long fromDate,
+            @RequestParam(name = "toDate", required = false) Long toDate,
+            @RequestParam(name = "createdUser", required = false) String createdUser) {
+        ExportFormat format = ExportFormat.EXCEL;
+        Resource resource = orderService.exportOrder(ids, code, statuses, fromDate, toDate, createdUser);
+        String fileName = "order";
+        try {
+            return ResponseEntity
+                    .ok()
+                    .contentLength(resource.contentLength())
+                    .header("Content-type", "application/octet-stream")
+                    .header("Content-disposition", "attachment; filename=" + fileName + format.getExtension())
+                    .body(resource);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @PutMapping("/receive-items/{orderId}")
     ServiceResponse<Void> receiveItems(
             @PathVariable @Valid UUID orderId,
@@ -93,6 +120,41 @@ public class OrderController {
                 .statuses(statuses)
                 .build();
         return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderItemQuery, pageCriteria));
+    }
+
+    @PostMapping("/order-item/export")
+    ResponseEntity<Resource> exportOrderItem(
+            @RequestParam(name = "ids", required = false) List<UUID> ids,
+            @RequestParam(name = "orderIds", required = false) List<UUID> orderIds,
+            @RequestParam(name = "orderCode", required = false) String orderCode,
+            @RequestParam(name = "productIds", required = false) List<Long> productIds,
+            @RequestParam(name = "productCode", required = false) String productCode,
+            @RequestParam(name = "storeIds", required = false) List<UUID> storeIds,
+            @RequestParam(name = "store", required = false) String store,
+            @RequestParam(name = "statuses", required = false) List<OrderItemStatus> statuses) {
+        ExportFormat format = ExportFormat.EXCEL;
+        OrderItemQuery orderItemQuery = OrderItemQuery.builder()
+                .ids(ids)
+                .orderIds(orderIds)
+                .orderCode(orderCode)
+                .productCode(productCode)
+                .productIds(productIds)
+                .store(store)
+                .storeIds(storeIds)
+                .statuses(statuses)
+                .build();
+        Resource resource = orderService.exportOrderItem(orderItemQuery);
+        String fileName = "order item";
+        try {
+            return ResponseEntity
+                    .ok()
+                    .contentLength(resource.contentLength())
+                    .header("Content-type", "application/octet-stream")
+                    .header("Content-disposition", "attachment; filename=" + fileName + format.getExtension())
+                    .body(resource);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @PutMapping("/order-item/update")

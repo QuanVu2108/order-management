@@ -16,6 +16,7 @@ public enum InvalidInputError implements ResponseError {
     PRODUCT_BRAND(4010104, "brand can not be null"),
     PRODUCT_COLOR(4010105, "color can not be null"),
     PRODUCT_SIZE(4010106, "size can not be null"),
+    EXPORT_FILE_FAILED(4010110,"export file failed!!!"),
 
     ;
 

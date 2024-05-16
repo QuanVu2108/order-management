@@ -27,4 +27,10 @@ public final class StringUtil<T> {
             return null;
         return "%" +  keyword.toUpperCase() + "%";
     }
+
+    public static <T> String convertToString(T value) {
+        if (value == null)
+            return "";
+        return value.toString();
+    }
 }

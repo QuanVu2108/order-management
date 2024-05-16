@@ -10,6 +10,8 @@ public interface Const {
     String ADMIN = "admin";
     String DEFAULT_PASSWORD = "abc13579";
 
+    int MAX_EXPORT_SIZE = 100000;
+
     int REFRESH_TOKEN = 5400000;
 }
 

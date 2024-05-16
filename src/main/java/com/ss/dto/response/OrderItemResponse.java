@@ -7,6 +7,7 @@ import com.ss.model.StoreModel;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -45,4 +46,6 @@ public class OrderItemResponse {
     private OrderItemStatus status;
 
     private OrderResponse order;
+
+    private Instant updatedAt;
 }
