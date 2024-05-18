@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 public class UserQuery {
     private String keyword;
-    private Collection<String> userNames;
+    private String username;
     private String fullName;
     private String store;
     private String permissionGroup;

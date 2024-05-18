@@ -8,6 +8,7 @@ import com.ss.dto.response.UserResponse;
 import com.ss.model.UserModel;
 import com.ss.repository.query.UserQuery;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +29,8 @@ public interface UserService {
     void logout();
 
     List<UserModel> searchList(UserQuery query);
+
+    List<UserModel> findByUsernames(Collection<String> usernames);
 
     List<UserModel> findUsersByKeyword(String keyword);
 }

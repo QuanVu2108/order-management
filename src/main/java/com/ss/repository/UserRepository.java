@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,7 +39,7 @@ public interface UserRepository extends JpaRepository<UserModel, UUID> {
             " LEFT JOIN user.stores store " +
             " WHERE 1=1 " +
             " AND ((:#{#query.keyword} is null) or (upper(user.username) like :#{#query.keyword}) or (upper(user.fullName) like :#{#query.keyword}))" +
-            " AND (:#{#query.userNames} is null or user.username in :#{#query.userNames} ) " +
+            " AND (:#{#query.userNames} is null or user.username like :#{#query.userNames}) " +
             " AND (:#{#query.fullName} is null or UPPER(user.fullName) like :#{#query.fullName} ) " +
             " AND (:#{#query.position} is null or UPPER(user.position) like :#{#query.position} ) " +
             " AND (:#{#query.email} is null or UPPER(user.email) like :#{#query.email} ) " +
@@ -49,4 +50,6 @@ public interface UserRepository extends JpaRepository<UserModel, UUID> {
     List<UserModel> searchList(UserQuery query);
 
     long countByUserCode(String userCode);
+
+    List<UserModel> findByUsernameIn(Collection<String> usernames);
 }

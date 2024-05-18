@@ -241,10 +241,7 @@ public class OrderServiceImpl implements OrderService {
                     .filter(item -> StringUtils.hasText(item.getCreatedBy()))
                     .map(OrderModel::getCreatedBy)
                     .collect(Collectors.toSet());
-            UserQuery userQuery = UserQuery.builder()
-                    .userNames(userNames)
-                    .build();
-            users = userService.searchList(userQuery);
+            users = userService.findByUsernames(userNames);
         }
 
         for (int i = 0; i < orders.size(); i++) {
@@ -489,10 +486,7 @@ public class OrderServiceImpl implements OrderService {
                     .filter(item -> StringUtils.hasText(item.getCreatedBy()))
                     .map(OrderModel::getCreatedBy)
                     .collect(Collectors.toSet());
-            UserQuery userQuery = UserQuery.builder()
-                    .userNames(userNames)
-                    .build();
-            users = userService.searchList(userQuery);
+            users = userService.findByUsernames(userNames);
         }
 
         List<OrderToolResponse> responses = new ArrayList<>();
