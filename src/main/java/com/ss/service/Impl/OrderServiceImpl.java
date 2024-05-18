@@ -9,6 +9,7 @@ import com.ss.dto.response.*;
 import com.ss.enums.Const;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
+import com.ss.enums.StoreItemType;
 import com.ss.enums.excel.OrderExportExcel;
 import com.ss.enums.excel.OrderItemExportExcel;
 import com.ss.exception.ExceptionResponse;
@@ -62,6 +63,8 @@ public class OrderServiceImpl implements OrderService {
     private final ProductService productService;
 
     private final UserService userService;
+
+    private final StoreItemService storeItemService;
 
     private final OrderItemMapper orderItemMapper;
 
@@ -602,6 +605,18 @@ public class OrderServiceImpl implements OrderService {
                 orderRepository.save(order);
             }
         }
+        StoreItemDetailRequest storeItemDetail = StoreItemDetailRequest.builder()
+                .productId(item.getProduct().getId())
+                .quantity(request.getReceivedQuantity())
+                .cost(item.getCost())
+                .build();
+        StoreItemRequest storeItemRequest = StoreItemRequest.builder()
+                .storeId(item.getStore().getId())
+                .type(StoreItemType.IMPORT)
+                .orderId(item.getOrderModel().getId())
+                .items(Arrays.asList(storeItemDetail))
+                .build();
+        storeItemService.create(storeItemRequest);
         return item;
     }
 
