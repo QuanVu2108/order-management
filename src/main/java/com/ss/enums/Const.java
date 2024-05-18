@@ -13,6 +13,10 @@ public interface Const {
     int MAX_EXPORT_SIZE = 100000;
 
     int REFRESH_TOKEN = 5400000;
+
+    int QR_CODE_WITH = 200;
+
+    int QR_CODE_HEIGHT = 200;
 }
 
 

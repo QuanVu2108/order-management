@@ -9,6 +9,7 @@ import com.ss.dto.response.MessageResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.dto.response.TokenResponse;
 import com.ss.dto.response.UserResponse;
+import com.ss.model.UserModel;
 import com.ss.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,11 @@ public class UserController {
             @PathVariable @Valid UUID id,
             @Valid @RequestBody UserRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, userService.update(id, request));
+    }
+
+    @GetMapping("/get-me")
+    public ServiceResponse<UserModel> getUserInfo() {
+        return ServiceResponse.succeed(HttpStatus.OK, userService.getUserInfo());
     }
 
     @GetMapping

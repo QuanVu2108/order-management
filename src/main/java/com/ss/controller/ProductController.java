@@ -137,4 +137,9 @@ public class ProductController {
         return ServiceResponse.succeed(HttpStatus.OK, productService.checkImportFile(file));
     };
 
+    @PostMapping("/generate-qr-code")
+    ServiceResponse<Void> generateQRCode() {
+        productService.generateQRCode();
+        return ServiceResponse.succeed(HttpStatus.OK, null);
+    };
 }

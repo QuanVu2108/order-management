@@ -6,6 +6,7 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.ProductRequest;
 import com.ss.dto.response.ProductCheckImportResponse;
+import com.ss.dto.response.ProductSaleResponse;
 import com.ss.enums.ProductPropertyType;
 import com.ss.enums.excel.ProductCheckImportExcelTemplate;
 import com.ss.enums.excel.ProductExcelTemplate;
@@ -13,16 +14,12 @@ import com.ss.enums.excel.ProductExportExcel;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.DuplicatedError;
 import com.ss.exception.http.InvalidInputError;
-import com.ss.model.FileModel;
-import com.ss.model.ProductModel;
-import com.ss.model.ProductPropertyModel;
-import com.ss.model.StoreModel;
+import com.ss.model.*;
 import com.ss.repository.FileRepository;
 import com.ss.repository.ProductPropertyRepository;
 import com.ss.repository.ProductRepository;
 import com.ss.repository.query.ProductQuery;
-import com.ss.service.ProductService;
-import com.ss.service.StoreService;
+import com.ss.service.*;
 import com.ss.util.StorageUtil;
 import com.ss.util.excel.ExcelTemplate;
 import lombok.Data;
@@ -35,6 +32,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -47,6 +45,7 @@ import java.util.stream.Collectors;
 import static com.ss.enums.Const.DATE_TIME_DETAIL_FORMATTER;
 import static com.ss.enums.Const.MAX_EXPORT_SIZE;
 import static com.ss.util.DateUtils.instantToString;
+import static com.ss.util.QRCodeUtil.generateQRCodeImage;
 import static com.ss.util.StringUtil.convertSqlSearchText;
 import static com.ss.util.StringUtil.convertToString;
 import static com.ss.util.excel.ExcelUtil.*;
@@ -61,6 +60,12 @@ public class ProductServiceImpl implements ProductService {
     private final ProductPropertyRepository propertyRepository;
 
     private final StoreService storeService;
+
+    private final UserService userService;
+
+    private final AsyncService asyncService;
+
+    private final StoreItemService storeItemService;
 
     private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
 
@@ -118,8 +123,11 @@ public class ProductServiceImpl implements ProductService {
                 .findFirst().orElse(null);
         product.update(request, category, brand);
         product = repository.save(product);
+        product.setQrCode(generateQRCodeImage(String.valueOf(product.getId())));
+        product = repository.save(product);
         return product;
     }
+
 
     @Override
     public ProductModel update(long id, ProductRequest request) {
@@ -333,6 +341,8 @@ public class ProductServiceImpl implements ProductService {
             products.add(product);
         });
         List<ProductModel> updatedProducts = repository.saveAll(products);
+        asyncService.generateQRCodeProduct(updatedProducts);
+
 
         List<FileModel> files = new ArrayList<>();
         fileImports.forEach(fileImport -> {
@@ -564,5 +574,27 @@ public class ProductServiceImpl implements ProductService {
         if (product.isEmpty())
             throw new ExceptionResponse("product is not existed!!!");
         return product.get();
+    }
+
+    @Override
+    public void generateQRCode() {
+        List<ProductModel> products = repository.findAll();
+        asyncService.generateQRCodeProduct(products);
+    }
+
+    @Override
+    @Transactional
+    public ProductSaleResponse getProductInfoBySale(long id) {
+        Optional<ProductModel> productOptional = repository.findById(id);
+        if (productOptional.isEmpty())
+            throw new ExceptionResponse("product is not existed!!!");
+        ProductSaleResponse response = new ProductSaleResponse();
+        ProductModel product = productOptional.get();
+        response.setProduct(product);
+        List<StoreItemModel> storeItems = storeItemService.findByProduct(product);
+        UserModel user = userService.getUserInfo();
+        Set<StoreModel> ownerStores = user.getStores();
+        response.setStoreInfo(ownerStores, storeItems);
+        return response;
     }
 }

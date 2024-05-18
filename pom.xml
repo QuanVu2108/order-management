@@ -187,7 +187,16 @@
 			<artifactId>telegrambots-abilities</artifactId>
 			<version>6.9.7.1</version>
 		</dependency>
-
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>core</artifactId>
+			<version>3.4.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>javase</artifactId>
+			<version>3.4.1</version>
+		</dependency>
 
 	</dependencies>
 

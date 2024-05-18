@@ -32,4 +32,6 @@ public interface StoreItemRepository extends JpaRepository<StoreItemModel, UUID>
             " ORDER BY e.updatedAt DESC "
     )
     Page<StoreItemModel> search(StoreItemQuery query, Pageable pageable);
+
+    List<StoreItemModel> findByProductAndType(ProductModel product, StoreItemType type);
 }

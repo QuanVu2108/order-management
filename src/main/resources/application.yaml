@@ -96,3 +96,7 @@ telegram-bot:
   username: "lux_bot"
   group-id: -1002006995047
 
+qr-code:
+  with: 200
+  height: 200
+

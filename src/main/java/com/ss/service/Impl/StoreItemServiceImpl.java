@@ -169,4 +169,10 @@ public class StoreItemServiceImpl implements StoreItemService {
                 .data(storeItemPage.getContent())
                 .build();
     }
+
+    @Override
+    public List<StoreItemModel> findByProduct(ProductModel product) {
+        List<StoreItemModel> storeItems = storeItemRepository.findByProductAndType(product, StoreItemType.INVENTORY);
+        return storeItems;
+    }
 }

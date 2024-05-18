@@ -19,13 +19,13 @@ public interface UserService {
 
     UserResponse update(UUID id, UserRequest request);
 
+    UserModel getUserInfo();
+
     PageResponse<UserResponse> search(String username, String store, String permissionGroup, String position, String email, String fullName, PageCriteria pageCriteria);
 
     TokenResponse refreshToken(String requestRefreshToken);
 
     void logout();
-
-    UserModel getUserInfo();
 
     List<UserModel> searchList(UserQuery query);
 

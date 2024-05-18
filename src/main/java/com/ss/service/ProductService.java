@@ -4,13 +4,12 @@ import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.ProductRequest;
 import com.ss.dto.response.ProductCheckImportResponse;
+import com.ss.dto.response.ProductSaleResponse;
 import com.ss.model.ProductModel;
-import com.ss.model.ProductPropertyModel;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface ProductService {
     ProductModel create(ProductRequest request);
@@ -34,4 +33,7 @@ public interface ProductService {
 
     ProductModel getByNumber(String number);
 
+    void generateQRCode();
+
+    ProductSaleResponse getProductInfoBySale(long id);
 }

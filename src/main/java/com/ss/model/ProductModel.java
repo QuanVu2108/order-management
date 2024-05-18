@@ -64,6 +64,9 @@ public class ProductModel extends AuditModel {
     @JsonManagedReference
     private Set<FileModel> images;
 
+    @Column(name = "qr_code")
+    private byte[] qrCode;
+
     public void update(ProductRequest request, ProductPropertyModel category, ProductPropertyModel brand) {
         this.code = request.getCode();
         this.productNumber = request.getProductNumber();

@@ -12,6 +12,7 @@ import com.ss.model.OrderItemModel;
 import com.ss.repository.query.OrderItemQuery;
 import com.ss.repository.query.OrderQuery;
 import com.ss.service.OrderService;
+import com.ss.service.ProductService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,8 @@ import java.util.UUID;
 public class ToolController {
 
     private final OrderService orderService;
+
+    private final ProductService productService;
 
     @GetMapping("/order")
     ServiceResponse<List<OrderToolResponse>> searchOrder(
@@ -85,6 +88,11 @@ public class ToolController {
     @GetMapping("/store-order/in-cart")
     ServiceResponse<List<OrderItemByStoreResponse>> getStoreOrderByInCart() {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.getStoreOrderByInCart());
+    }
+
+    @GetMapping("/sale-info/product")
+    ServiceResponse<ProductSaleResponse> getProductInfoBySale(long productId) {
+        return ServiceResponse.succeed(HttpStatus.OK, productService.getProductInfoBySale(productId));
     }
 
 }
