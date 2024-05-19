@@ -17,7 +17,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -89,6 +88,7 @@ public class Bot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
     }
+
     public void sendDocument(File file) {
         SendDocument sendDocumentRequest = new SendDocument();
         sendDocumentRequest.setChatId(groupId);

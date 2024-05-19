@@ -11,6 +11,7 @@ import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.InvalidInputError;
 
@@ -18,6 +19,9 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+
+import static com.ss.enums.Const.TELEGRAM_IMAGE_HEIGHT;
+import static com.ss.enums.Const.TELEGRAM_IMAGE_WITH;
 
 public final class FileUtil {
 
@@ -41,6 +45,7 @@ public final class FileUtil {
             for (String header : tableData.get(0)) {
                 table.addHeaderCell(new Cell().add(new Paragraph(header).setFont(font)));
             }
+            table.setHorizontalAlignment(HorizontalAlignment.CENTER);
 
             // Add table rows
             font = PdfFontFactory.createFont("Helvetica");
@@ -50,7 +55,8 @@ public final class FileUtil {
                     if (cellData.equals("image_" + (i - 1))) {
                         ImageData imageData = ImageDataFactory.create(imageBytes.get(i - 1));
                         Image image = new Image(imageData);
-                        image.setWidth(400);
+                        image.setWidth(TELEGRAM_IMAGE_WITH);
+                        image.setHeight(TELEGRAM_IMAGE_HEIGHT);
                         table.addCell(new Cell().add(image));
                     } else {
                         table.addCell(new Cell().add(new Paragraph(cellData).setFont(font)));
