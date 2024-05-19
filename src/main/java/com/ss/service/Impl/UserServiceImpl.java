@@ -177,6 +177,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserModel getUserInfo() {
         User auth = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         UserModel user = userRepository.findByUsername(auth.getUsername());
