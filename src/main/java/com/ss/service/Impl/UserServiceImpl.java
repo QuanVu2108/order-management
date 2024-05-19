@@ -137,7 +137,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public PageResponse<UserResponse> search(String username, String store, String permissionGroup, String position, String email, String fullName, PageCriteria pageCriteria) {
         UserQuery userQuery = UserQuery.builder()
-                .userNames(Arrays.asList(convertSqlSearchText(username)))
+                .username(username)
                 .store(convertSqlSearchText(store))
                 .permissionGroup(convertSqlSearchText(permissionGroup))
                 .position(convertSqlSearchText(position))
@@ -188,6 +188,12 @@ public class UserServiceImpl implements UserService {
     public List<UserModel> searchList(UserQuery userQuery) {
         List<UserModel> list = userRepository.searchList(userQuery);
         return list;
+    }
+
+    @Override
+    public List<UserModel> findByUsernames(Collection<String> usernames) {
+        List<UserModel> users = userRepository.findByUsernameIn(usernames);
+        return users;
     }
 
     @Override

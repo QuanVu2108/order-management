@@ -187,6 +187,23 @@
 			<artifactId>telegrambots-abilities</artifactId>
 			<version>6.9.7.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>core</artifactId>
+			<version>3.4.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>javase</artifactId>
+			<version>3.4.1</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.itextpdf/itext7-core -->
+		<dependency>
+			<groupId>com.itextpdf</groupId>
+			<artifactId>itext7-core</artifactId>
+			<version>7.2.4</version>
+			<type>pom</type>
+		</dependency>
 
 
 	</dependencies>

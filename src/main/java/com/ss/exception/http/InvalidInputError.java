@@ -16,6 +16,18 @@ public enum InvalidInputError implements ResponseError {
     PRODUCT_BRAND(4010104, "brand can not be null"),
     PRODUCT_COLOR(4010105, "color can not be null"),
     PRODUCT_SIZE(4010106, "size can not be null"),
+    EXPORT_FILE_FAILED(4010110,"export file failed!!!"),
+    GENERATE_QR_FAILED(4010115,"QR Code was generated unsuccessfully!!!"),
+    DOWNLOAD_FILE_FAILED(4010116,"Download file was failed!!!"),
+    GENERATE_FILE_FAILED(4010117,"File was generated unsuccessfully!!!"),
+
+    STORE_INVALID(4010120,"store is invalid!!!"),
+    TARGET_STORE_INVALID(4010121,"target store is invalid!!!"),
+    PRODUCT_INVALID(4010122,"product is invalid!!!"),
+    EXPORT_QUANTITY_INVALID(4010123,"export quantity is invalid!!!"),
+    STORE_ITEM_INVALID(4010124,"store item is invalid!!!"),
+    DELETE_EXPORT_STORE_ITEM_INVALID(4010125,"can not delete item because of quantity invalid!!!"),
+    ORDER_INVALID(4010126,"order is invalid!!!"),
 
     ;
 

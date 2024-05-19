@@ -4,8 +4,10 @@ import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
+import com.ss.model.ProductModel;
 import com.ss.repository.OrderItemRepository;
 import com.ss.repository.OrderRepository;
+import com.ss.repository.ProductRepository;
 import com.ss.service.AsyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.ss.util.QRCodeUtil.generateQRCodeImage;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -25,6 +29,8 @@ public class AsyncServiceImpl implements AsyncService {
     private final OrderItemRepository orderItemRepository;
 
     private final OrderRepository orderRepository;
+
+    private final ProductRepository productRepository;
 
     @Override
     @Async
@@ -37,6 +43,16 @@ public class AsyncServiceImpl implements AsyncService {
             order.setStatus(OrderStatus.DONE);
             order.setUpdatedAt(Instant.now());
             orderRepository.save(order);
+        }
+    }
+
+    @Override
+    public void generateQRCodeProduct(List<ProductModel> products) {
+        if (products != null && !products.isEmpty()) {
+            products.forEach(product -> {
+                product.setQrCode(generateQRCodeImage(String.valueOf(product.getId())));
+            });
+            productRepository.saveAll(products);
         }
     }
 

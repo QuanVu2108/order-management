@@ -12,11 +12,16 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.ss.enums.Const.DATE_FORMATTER;
 import static com.ss.util.DateUtils.timestampToString;
+import static com.ss.util.FileUtil.createPdfWithTableAndImage;
+import static com.ss.util.FileUtil.downloadImage;
 
 @Service
 @Slf4j
@@ -26,14 +31,40 @@ public class TelegramBotServiceImpl implements TelegramBotService {
     private final Bot bot;
 
     @Override
+    @Async
     public void sendOrder(OrderModel order) {
         StringBuilder message = new StringBuilder("Order ");
         message.append(order.getCode());
         message.append(" was sent!!!");
         bot.sendMessage(message.toString());
-        order.getItems().forEach(orderItem -> {
-            sendOrderItem(orderItem, OrderItemStatus.PENDING);
-        });
+        List<List<String>> tableData = new ArrayList<>();
+        List<String> tableTitles = List.of("STT", "image", "info");
+        tableData.add(tableTitles);
+        List<byte[]> imageBytes = new ArrayList<>();
+        List<OrderItemModel> orderItems = order.getItems();
+        for (int i = 0; i < orderItems.size(); i++) {
+            List<String> tableColumns = new ArrayList<>();
+            tableColumns.add(String.valueOf(i));
+            tableColumns.add("image_" + i);
+
+            OrderItemModel orderItem = orderItems.get(i);
+            StringBuilder fileData = new StringBuilder("");
+            fileData.append("Store: " + orderItem.getStore().getName() + "\n ");
+            fileData.append("Color: " + orderItem.getProduct().getColor() + "\n ");
+            fileData.append("Size: " + orderItem.getProduct().getSize() + "\n ");
+            fileData.append("Cost: " + orderItem.getCost() + "\n ");
+            fileData.append("Quantity: " + orderItem.getQuantityOrder() + "\n ");
+            tableColumns.add(fileData.toString());
+            tableData.add(tableColumns);
+            if (orderItem.getProduct().getImages() != null && !orderItem.getProduct().getImages().isEmpty()) {
+                FileModel file = new ArrayList<>(orderItem.getProduct().getImages()).get(0);
+                imageBytes.add(downloadImage(file.getUrl()));
+            } else
+                imageBytes.add(new byte[0]);
+
+        }
+        File file = createPdfWithTableAndImage(tableData, imageBytes);
+        bot.sendDocument(file);
     }
 
     @Override

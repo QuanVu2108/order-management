@@ -9,6 +9,7 @@ import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
 import com.ss.repository.query.OrderItemQuery;
+import org.springframework.core.io.Resource;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,9 +21,13 @@ public interface OrderService {
 
     PageResponse<OrderResponse> searchOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria);
 
+    Resource exportOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
+
     void receiveItemMulti(UUID orderId, List<OrderItemReceivedMultiRequest> request);
 
     PageResponse<OrderItemResponse> searchOrderItem(OrderItemQuery orderItemQuery, PageCriteria pageCriteria);
+
+    Resource exportOrderItem(OrderItemQuery orderItemQuery);
 
     List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request);
 
@@ -43,4 +48,5 @@ public interface OrderService {
     List<OrderItemByStoreResponse> getStoreOrderByInCart();
 
     List<OrderItemModel> updateItemByUpdating(OrderItemUpdatedRequest request);
+
 }
