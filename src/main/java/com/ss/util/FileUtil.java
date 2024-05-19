@@ -45,10 +45,12 @@ public final class FileUtil {
             // Add table rows
             font = PdfFontFactory.createFont("Helvetica");
             for (int i = 1; i < tableData.size(); i++) {
-                for (String cellData : tableData.get(i)) {
-                    if (cellData.equals("image_" + i)) {
-                        ImageData imageData = ImageDataFactory.create(imageBytes.get(i));
+                for (int j = 0; j < tableData.get(i).size(); j++ ) {
+                    String cellData = tableData.get(i).get(j);
+                    if (cellData.equals("image_" + (i - 1))) {
+                        ImageData imageData = ImageDataFactory.create(imageBytes.get(i - 1));
                         Image image = new Image(imageData);
+                        image.setWidth(400);
                         table.addCell(new Cell().add(image));
                     } else {
                         table.addCell(new Cell().add(new Paragraph(cellData).setFont(font)));
