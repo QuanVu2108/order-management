@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.ss.enums.Const.DATE_FORMATTER;
+import static com.ss.enums.Const.DATE_TITLE_FORMATTER;
 import static com.ss.util.DateUtils.timestampToString;
 import static com.ss.util.FileUtil.createPdfWithTableAndImage;
 import static com.ss.util.FileUtil.downloadImage;
@@ -63,7 +64,8 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 imageBytes.add(new byte[0]);
 
         }
-        File file = createPdfWithTableAndImage(tableData, imageBytes);
+        String title = "order_" + order.getCode();
+        File file = createPdfWithTableAndImage(title, tableData, imageBytes);
         bot.sendDocument(file);
     }
 
@@ -98,7 +100,8 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 imageBytes.add(new byte[0]);
 
         }
-        File file = createPdfWithTableAndImage(tableData, imageBytes);
+        String title = "item_" + timestampToString(DATE_TITLE_FORMATTER, System.currentTimeMillis());
+        File file = createPdfWithTableAndImage(title, tableData, imageBytes);
         bot.sendDocument(file);
     }
 
