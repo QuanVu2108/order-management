@@ -54,7 +54,7 @@ public class UserModel extends AuditModel {
     @JsonBackReference
     private PermissionGroupModel permissionGroup;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "user_store",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "store_id"))
