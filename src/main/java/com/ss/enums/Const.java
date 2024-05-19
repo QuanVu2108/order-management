@@ -17,6 +17,9 @@ public interface Const {
     int QR_CODE_WITH = 200;
 
     int QR_CODE_HEIGHT = 200;
+
+    float TELEGRAM_IMAGE_WITH = 200;
+    float TELEGRAM_IMAGE_HEIGHT = 200;
 }
 
 
