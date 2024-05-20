@@ -24,6 +24,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID>
             " WHERE 1=1 " +
             " AND (:#{#query.ids} is null or orderItem.id in :#{#query.ids}) " +
             " AND (:#{#query.productCode} is null or (upper(product.code) like :#{#query.productCode})) " +
+            " AND (:#{#query.productNumber} is null or (upper(product.productNumber) like :#{#query.productNumber})) " +
             " AND (:#{#query.productIds} is null or product.id in :#{#query.productIds}) " +
             " AND (:#{#query.orderCode} is null or (upper(orderModel.code) like :#{#query.orderCode})) " +
             " AND (:#{#query.orderIds} is null or orderModel.id in :#{#query.orderIds}) " +

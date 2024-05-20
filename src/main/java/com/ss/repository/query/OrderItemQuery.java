@@ -15,6 +15,7 @@ public class OrderItemQuery {
     private List<UUID> orderIds;
     private String orderCode;
     private String productCode;
+    private String productNumber;
     private List<Long> productIds;
     private String store;
     private List<UUID> storeIds;

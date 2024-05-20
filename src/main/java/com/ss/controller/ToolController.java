@@ -48,6 +48,7 @@ public class ToolController {
             @RequestParam(name = "orderCode", required = false) String orderCode,
             @RequestParam(name = "productIds", required = false) List<Long> productIds,
             @RequestParam(name = "productCode", required = false) String productCode,
+            @RequestParam(name = "productNumber", required = false) String productNumber,
             @RequestParam(name = "storeIds", required = false) List<UUID> storeIds,
             @RequestParam(name = "store", required = false) String store,
             @RequestParam(name = "statuses", required = false) List<OrderItemStatus> statuses,
@@ -58,6 +59,7 @@ public class ToolController {
                 .orderIds(orderIds)
                 .orderCode(orderCode)
                 .productCode(productCode)
+                .productNumber(productNumber)
                 .productIds(productIds)
                 .store(store)
                 .storeIds(storeIds)
