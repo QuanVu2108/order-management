@@ -6,7 +6,8 @@ import lombok.Getter;
 @Getter
 public enum NotFoundError implements ResponseError {
     USER_NOT_FOUND(4040000, "user is not existed" ),
-    PERMISSION_GROUP_NOT_FOUND(4040000, "permission group is not existed" ),
+    PERMISSION_GROUP_NOT_FOUND(4040001, "permission group is not existed" ),
+    PRODUCT_NOT_FOUND(4040100, "product not found" ),
     ;
 
     private Integer code;
