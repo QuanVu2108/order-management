@@ -25,9 +25,8 @@ public class StoreItemModel extends AuditModel {
     @JoinColumn(name = "store_id", referencedColumnName = "id")
     private StoreModel store;
 
-    @OneToOne
-    @JoinColumn(name = "product_id", referencedColumnName = "id")
-    private ProductModel product;
+    @Column(name = "product_id")
+    private Long productId;
 
     @Column(name = "quantity")
     private Long quantity;
@@ -57,7 +56,7 @@ public class StoreItemModel extends AuditModel {
         this.id = UUID.randomUUID();
         this.time = System.currentTimeMillis();
         this.store = store;
-        this.product = product;
+        this.productId = product.getId();
         this.type = type;
         this.quantity = Long.valueOf(0);
     }

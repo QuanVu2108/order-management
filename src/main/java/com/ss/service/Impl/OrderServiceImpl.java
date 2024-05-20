@@ -351,32 +351,7 @@ public class OrderServiceImpl implements OrderService {
             order.setStatus(OrderStatus.DONE);
         orderItemRepository.saveAll(orderItems);
 
-        List<StoreItemDetailRequest> storeItemDetails = new ArrayList<>();
-        StoreModel store = null;
-        for (int i = 0; i < request.size(); i++) {
-            OrderItemReceivedMultiRequest importItem = request.get(i);
-            OrderItemModel orderItem = importOrderItems.stream()
-                    .filter(item -> item.getId().equals(importItem.getId()))
-                    .findFirst().orElse(null);
-            if (orderItem != null) {
-                StoreItemDetailRequest storeItemDetail = StoreItemDetailRequest.builder()
-                        .productId(orderItem.getProduct().getId())
-                        .quantity(importItem.getReceivedQuantity())
-                        .cost(orderItem.getCost())
-                        .build();
-                storeItemDetails.add(storeItemDetail);
-                if (store == null)
-                    store = orderItem.getStore();
-            }
-        }
-
-        StoreItemRequest storeItemRequest = StoreItemRequest.builder()
-                .storeId(store.getId())
-                .type(StoreItemType.IMPORT)
-                .orderId(order.getId())
-                .items(storeItemDetails)
-                .build();
-        storeItemService.create(storeItemRequest);
+        storeItemService.createMulti(orderItems, request);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.StoreItemDetailRequest;
 import com.ss.dto.request.StoreItemRequest;
 import com.ss.dto.response.ServiceResponse;
+import com.ss.dto.response.StoreItemResponse;
 import com.ss.enums.StoreItemType;
 import com.ss.model.StoreItemModel;
 import com.ss.service.StoreItemService;
@@ -41,7 +42,7 @@ public class StoreItemController {
     }
 
     @GetMapping
-    PageResponse<StoreItemModel> search(
+    PageResponse<StoreItemResponse> search(
             @RequestParam(name = "product", required = false) String product,
             @RequestParam(name = "store", required = false) String store,
             @RequestParam(name = "order", required = false) UUID order,
