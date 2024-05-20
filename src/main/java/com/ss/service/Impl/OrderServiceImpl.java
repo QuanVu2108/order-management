@@ -387,7 +387,8 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItemResponse> responses = new ArrayList<>();
         orderItems.forEach(orderItem -> {
             OrderItemResponse response = orderItemMapper.toTarget(orderItem);
-            response.setOrder(new OrderResponse(orderItem.getOrderModel(), null));
+            OrderModel order = orderItem.getOrderModel();
+            response.setOrder(new BasicModelResponse(order.getId(), order.getCode(), null, order.getDate()));
             responses.add(response);
         });
         return PageResponse.<OrderItemResponse>builder()

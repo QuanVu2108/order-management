@@ -45,7 +45,7 @@ public class OrderItemResponse {
 
     private OrderItemStatus status;
 
-    private OrderResponse order;
+    private BasicModelResponse order;
 
     private Instant updatedAt;
 }
