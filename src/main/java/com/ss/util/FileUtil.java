@@ -25,7 +25,7 @@ import static com.ss.enums.Const.TELEGRAM_IMAGE_WITH;
 
 public final class FileUtil {
 
-    public static File createPdfWithTableAndImage(List<List<String>> tableData, List<byte[]> imageBytes) {
+    public static File createPdfWithTableAndImage(String title, List<List<String>> tableData, List<byte[]> imageBytes) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfWriter writer = new PdfWriter(baos);
@@ -68,7 +68,7 @@ public final class FileUtil {
             document.close();
 
             // Write the PDF to a temporary file
-            java.io.File file = java.io.File.createTempFile("table_document_with_image", ".pdf");
+            java.io.File file = java.io.File.createTempFile(title, ".pdf");
             FileOutputStream fos = new FileOutputStream(file);
             fos.write(baos.toByteArray());
             fos.close();

@@ -5,7 +5,9 @@ import com.ss.enums.OrderItemStatus;
 import com.ss.model.FileModel;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
+import com.ss.model.ProductModel;
 import com.ss.service.TelegramBotService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -13,11 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.ss.enums.Const.DATE_FORMATTER;
+import static com.ss.enums.Const.DATE_TITLE_FORMATTER;
 import static com.ss.util.DateUtils.timestampToString;
 import static com.ss.util.FileUtil.createPdfWithTableAndImage;
 import static com.ss.util.FileUtil.downloadImage;
@@ -41,29 +43,36 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         tableData.add(tableTitles);
         List<byte[]> imageBytes = new ArrayList<>();
         List<OrderItemModel> orderItems = order.getItems();
-        for (int i = 0; i < orderItems.size(); i++) {
+        Map<Long, Long> itemCountMap = new HashMap<>();
+        Set<ProductModel> productSet = new HashSet<>();
+        orderItems.forEach(orderItem -> {
+            ProductModel product = orderItem.getProduct();
+            Long cnt = itemCountMap.get(product.getId()) == null ? 0 : itemCountMap.get(product.getId());
+            itemCountMap.put(product.getId(), cnt + orderItem.getQuantityOrder());
+            productSet.add(product);
+        });
+        List<ProductModel> products = new ArrayList<>(productSet);
+        for (int i = 0; i < products.size(); i++) {
             List<String> tableColumns = new ArrayList<>();
             tableColumns.add(String.valueOf(i));
             tableColumns.add("image_" + i);
 
-            OrderItemModel orderItem = orderItems.get(i);
+            ProductModel product = products.get(i);
             StringBuilder fileData = new StringBuilder("");
-            fileData.append("Store: " + orderItem.getStore().getName() + "\n ");
-            fileData.append("Number: " + orderItem.getProduct().getProductNumber() + "\n ");
-            fileData.append("Color: " + orderItem.getProduct().getColor() + "\n ");
-            fileData.append("Size: " + orderItem.getProduct().getSize() + "\n ");
-            fileData.append("Cost: " + orderItem.getCost() + "\n ");
-            fileData.append("Quantity: " + orderItem.getQuantityOrder() + "\n ");
+            fileData.append("Number: " + product.getProductNumber() + "\n ");
+            fileData.append("Color: " + product.getColor() + "\n ");
+            fileData.append("Size: " + product.getSize() + "\n ");
+            fileData.append("Quantity: " + itemCountMap.get(product.getId()) + "\n ");
             tableColumns.add(fileData.toString());
             tableData.add(tableColumns);
-            if (orderItem.getProduct().getImages() != null && !orderItem.getProduct().getImages().isEmpty()) {
-                FileModel file = new ArrayList<>(orderItem.getProduct().getImages()).get(0);
+            if (product.getImages() != null && !product.getImages().isEmpty()) {
+                FileModel file = new ArrayList<>(product.getImages()).get(0);
                 imageBytes.add(downloadImage(file.getUrl()));
             } else
                 imageBytes.add(new byte[0]);
-
         }
-        File file = createPdfWithTableAndImage(tableData, imageBytes);
+        String title = "order_" + order.getCode();
+        File file = createPdfWithTableAndImage(title, tableData, imageBytes);
         bot.sendDocument(file);
     }
 
@@ -98,7 +107,8 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 imageBytes.add(new byte[0]);
 
         }
-        File file = createPdfWithTableAndImage(tableData, imageBytes);
+        String title = "item_" + timestampToString(DATE_TITLE_FORMATTER, System.currentTimeMillis());
+        File file = createPdfWithTableAndImage(title, tableData, imageBytes);
         bot.sendDocument(file);
     }
 
