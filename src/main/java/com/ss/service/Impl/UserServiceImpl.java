@@ -137,7 +137,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public PageResponse<UserResponse> search(String username, String store, String permissionGroup, String position, String email, String fullName, PageCriteria pageCriteria) {
         UserQuery userQuery = UserQuery.builder()
-                .username(username)
+                .username(convertSqlSearchText(username))
                 .store(convertSqlSearchText(store))
                 .permissionGroup(convertSqlSearchText(permissionGroup))
                 .position(convertSqlSearchText(position))
