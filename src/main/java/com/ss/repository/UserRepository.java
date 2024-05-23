@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<UserModel, UUID> {
             " LEFT JOIN user.stores store " +
             " WHERE 1=1 " +
             " AND ((:#{#query.keyword} is null) or (upper(user.username) like :#{#query.keyword}) or (upper(user.fullName) like :#{#query.keyword}))" +
-            " AND (:#{#query.userNames} is null or user.username in :#{#query.userNames} ) " +
+            " AND (:#{#query.username} is null or user.username like :#{#query.username} ) " +
             " AND (:#{#query.fullName} is null or UPPER(user.fullName) like :#{#query.fullName} ) " +
             " AND (:#{#query.position} is null or UPPER(user.position) like :#{#query.position} ) " +
             " AND (:#{#query.email} is null or UPPER(user.email) like :#{#query.email} ) " +
