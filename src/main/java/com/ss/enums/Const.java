@@ -10,6 +10,7 @@ public interface Const {
     String SYSTEM = "System";
     String ADMIN = "admin";
     String DEFAULT_PASSWORD = "abc13579";
+    String IMAGE_CONTENT_TYPE = "image/jpeg";
 
     int MAX_EXPORT_SIZE = 100000;
 

@@ -19,6 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
+import static com.ss.enums.Const.IMAGE_CONTENT_TYPE;
+
 @Slf4j
 @Component
 public class StorageUtil {
@@ -65,6 +67,40 @@ public class StorageUtil {
                     .name(blob.getName())
                     .url(generateFileUrl(bucketId, fileName))
                     .build();
+
+        } catch (Exception e) {
+            log.error("An error occurred while uploading data. Exception: ", e);
+            throw new ExceptionResponse("An error occurred while storing data to GCS");
+        }
+    }
+
+    public String uploadFileByUrl(String fileName, String url) {
+        byte[] fileBytes = FileUtil.downloadImage(url);
+        MultipartFile file = new CustomMultipartFile(fileBytes, fileName, IMAGE_CONTENT_TYPE);
+        if (file == null)
+            return null;
+        if (fileName == null) {
+            throw new ExceptionResponse("Original file name is null");
+        }
+        Path path = new File(fileName).toPath();
+        try {
+            Storage storage = getStorage();
+            String contentType = Files.probeContentType(path);
+            log.debug("Start file uploading process on GCS");
+            byte[] fileData = FileUtils.readFileToByteArray(convertFile(file));
+
+            UUID bucketId = UUID.randomUUID();
+
+            Bucket bucket = storage.create(BucketInfo.newBuilder(bucketId.toString()).build());
+
+            Bucket.BlobTargetOption targetOption = Bucket.BlobTargetOption.predefinedAcl(Storage.PredefinedAcl.PUBLIC_READ_WRITE);
+            Blob blob = bucket.create(fileName, fileData, contentType, targetOption);
+
+            if (blob == null) {
+                throw new ExceptionResponse("Can not upload file " + fileName);
+            }
+            log.debug("File successfully uploaded to GCS");
+            return generateFileUrl(bucketId, fileName);
 
         } catch (Exception e) {
             log.error("An error occurred while uploading data. Exception: ", e);
