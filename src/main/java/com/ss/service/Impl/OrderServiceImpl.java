@@ -726,7 +726,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request) {
         List<OrderItemModel> orderItems = orderItemRepository.findAllById(request.getIds());
-        telegramBotService.sendOrderItems(orderItems);
+        Map<UUID, Long> inCartOrderItem = new HashMap<>();
+        orderItems.forEach(item -> {
+            inCartOrderItem.put(item.getId(), item.getQuantityInCart());
+            item.submitByTool();
+        });
+        telegramBotService.sendOrderItems(orderItems, inCartOrderItem);
         orderItems = orderItemRepository.saveAll(orderItems);
         return orderItems;
     }

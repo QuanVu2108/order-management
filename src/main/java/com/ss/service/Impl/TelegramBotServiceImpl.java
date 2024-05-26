@@ -78,7 +78,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
 
     @Override
     @Async
-    public void sendOrderItems(List<OrderItemModel> orderItems) {
+    public void sendOrderItems(List<OrderItemModel> orderItems, Map<UUID, Long> quantityMap) {
         bot.sendMessage("China side sent list product");
         List<List<String>> tableData = new ArrayList<>();
         List<String> tableTitles = List.of("STT", "image", "info");
@@ -97,7 +97,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             fileData.append("Color: " + orderItem.getProduct().getColor() + "\n ");
             fileData.append("Size: " + orderItem.getProduct().getSize() + "\n ");
             fileData.append("Cost: " + orderItem.getCost() + "\n ");
-            fileData.append("Quantity: " + orderItem.getQuantityOrder() + "\n ");
+            fileData.append("Quantity: " + quantityMap.get(orderItem.getId()) + "\n ");
             tableColumns.add(fileData.toString());
             tableData.add(tableColumns);
             if (orderItem.getProduct().getImages() != null && !orderItem.getProduct().getImages().isEmpty()) {

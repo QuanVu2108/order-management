@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+import static com.ss.util.StringUtil.convertSqlSearchText;
+
 @RestController
 @RequestMapping("/order")
 @AllArgsConstructor
@@ -113,11 +115,11 @@ public class OrderController {
         OrderItemQuery orderItemQuery = OrderItemQuery.builder()
                 .ids(ids)
                 .orderIds(orderIds)
-                .orderCode(orderCode)
-                .productCode(productCode)
-                .productNumber(productNumber)
+                .orderCode(convertSqlSearchText(orderCode))
+                .productCode(convertSqlSearchText(productCode))
+                .productNumber(convertSqlSearchText(productNumber))
                 .productIds(productIds)
-                .store(store)
+                .store(convertSqlSearchText(store))
                 .storeIds(storeIds)
                 .statuses(statuses)
                 .build();
@@ -139,11 +141,11 @@ public class OrderController {
         OrderItemQuery orderItemQuery = OrderItemQuery.builder()
                 .ids(ids)
                 .orderIds(orderIds)
-                .orderCode(orderCode)
-                .productCode(productCode)
-                .productNumber(productNumber)
+                .orderCode(convertSqlSearchText(orderCode))
+                .productCode(convertSqlSearchText(productCode))
+                .productNumber(convertSqlSearchText(productNumber))
                 .productIds(productIds)
-                .store(store)
+                .store(convertSqlSearchText(store))
                 .storeIds(storeIds)
                 .statuses(statuses)
                 .build();
@@ -192,10 +194,10 @@ public class OrderController {
         OrderItemQuery orderItemQuery = OrderItemQuery.builder()
                 .ids(ids)
                 .orderIds(orderIds)
-                .orderCode(orderCode)
-                .productCode(productCode)
+                .orderCode(convertSqlSearchText(orderCode))
+                .productCode(convertSqlSearchText(productCode))
                 .productIds(productIds)
-                .store(store)
+                .store(convertSqlSearchText(store))
                 .storeIds(storeIds)
                 .statuses(statuses)
                 .build();

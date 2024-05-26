@@ -89,17 +89,6 @@ public class ProductServiceImpl implements ProductService {
         ProductPropertyModel brand;
     }
 
-    @Data
-    private static class FileImport {
-        String productNumber;
-        List<String> fileUrls;
-
-        private FileImport(String productNumber, List<String> fileUrls) {
-            this.productNumber = productNumber;
-            this.fileUrls = fileUrls;
-        }
-    }
-
     @Override
     public ProductModel create(ProductRequest request) {
         long invalidProductCodeCnt = repository.countByCode(request.getCode());
@@ -203,7 +192,7 @@ public class ProductServiceImpl implements ProductService {
         Set<String> categoryNames = new HashSet<>();
         Set<String> brandNames = new HashSet<>();
 
-        List<FileImport> fileImports = new ArrayList<>();
+        Map<String, List<String>> fileImports = new HashMap<>();
         try {
             InputStream inputStream = fileRequest.getInputStream();
             List<Map<String, String>> assets = readUploadFileData(inputStream, fileName, columns, 1, 0, new ArrayList<>());
@@ -270,7 +259,7 @@ public class ProductServiceImpl implements ProductService {
                     String productUrls = asset.get(ProductExcelTemplate.IMAGE_URL.getKey());
                     if (StringUtils.hasText(productUrls)) {
                         List<String> fileUrls = List.of(productUrls.split(","));
-                        fileImports.add(new FileImport(productNumber, fileUrls));
+                        fileImports.put(productNumber, fileUrls);
                     }
                 }
             }
@@ -341,27 +330,10 @@ public class ProductServiceImpl implements ProductService {
             products.add(product);
         });
         List<ProductModel> updatedProducts = repository.saveAll(products);
+
         asyncService.generateQRCodeProduct(updatedProducts);
 
-
-        List<FileModel> files = new ArrayList<>();
-        fileImports.forEach(fileImport -> {
-            ProductModel product = updatedProducts.stream()
-                    .filter(item -> item.getProductNumber().equals(fileImport.getProductNumber()))
-                    .findFirst().orElse(null);
-            if (product != null) {
-                fileImport.getFileUrls().forEach(fileUrl -> {
-                    FileModel file = FileModel.builder()
-                            .id(UUID.randomUUID())
-                            .product(product)
-                            .name(product.getName())
-                            .url(fileUrl)
-                            .build();
-                    files.add(file);
-                });
-            }
-        });
-        fileRepository.saveAll(files);
+        asyncService.createImageProduct(updatedProducts, fileImports);
 
         return updatedProducts;
     }

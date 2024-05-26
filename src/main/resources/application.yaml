@@ -37,6 +37,7 @@ spring:
           batch_size: 10
         order_inserts: true
         order_updates: true
+#    show-sql: true
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
@@ -84,7 +85,7 @@ management:
       enabled: false
 
 gcp:
-  server: ${GCP_SERVER_URL:http://localhost}
+  server: ${GCP_SERVER_URL:http://13.214.53.31}
   port: ":4443"
   project:
     id: ${GCP_PROJECT_ID:order-management}
