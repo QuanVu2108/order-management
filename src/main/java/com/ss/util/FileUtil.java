@@ -5,6 +5,7 @@ import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfDocumentInfo;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Cell;
@@ -12,24 +13,29 @@ import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.HorizontalAlignment;
+import com.itextpdf.layout.properties.TextAlignment;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.InvalidInputError;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.Normalizer;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
-import static com.ss.enums.Const.TELEGRAM_IMAGE_HEIGHT;
-import static com.ss.enums.Const.TELEGRAM_IMAGE_WITH;
+import static com.ss.enums.Const.*;
 
 public final class FileUtil {
 
-    public static File createPdfWithTableAndImage(String title, List<List<String>> tableData, List<byte[]> imageBytes) {
+    public static File createPdfWithTableAndImage(String title, List<String> data, List<List<String>> tableData, List<byte[]> imageBytes) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdf = new PdfDocument(writer);
+            PdfDocumentInfo info = pdf.getDocumentInfo();
+            info.setTitle(title);
             Document document = new Document(pdf);
 
             // Create a table with the number of columns equal to the size of the first row
@@ -37,6 +43,12 @@ public final class FileUtil {
             for (int i = 0; i < columnWidths.length; i++) {
                 columnWidths[i] = 1; // Set all column widths to 1 for simplicity
             }
+
+            data.forEach(item -> {
+                Paragraph paragraph = new Paragraph(item);
+                paragraph.setTextAlignment(TextAlignment.CENTER);
+                document.add(paragraph);
+            });
 
             Table table = new Table(columnWidths);
 

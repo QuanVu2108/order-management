@@ -121,6 +121,7 @@ public class OrderItemModel extends AuditModel {
     }
 
     public void submitByTool() {
+        this.status = OrderItemStatus.SENT;
         this.quantitySent = this.quantityInCart;
         this.quantityInCart = Long.valueOf(0);
     }

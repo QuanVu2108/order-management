@@ -20,7 +20,7 @@ public interface ProductRepository extends JpaRepository<ProductModel, Long> {
     @Query("SELECT DISTINCT e FROM ProductModel e " +
             " WHERE 1=1 " +
             " AND ((:#{#query.code} is null) or (upper(e.code) like :#{#query.code}))" +
-            " AND ((:#{#query.number} is null) or (e.id = :#{#query.number}))" +
+            " AND ((:#{#query.number} is null) or (e.productNumber like :#{#query.number}))" +
             " AND ((:#{#query.name} is null) or (upper(e.name) like :#{#query.name}))" +
             " AND ((:#{#query.size} is null) or (upper(e.size) like :#{#query.size}))" +
             " AND ((:#{#query.color} is null) or (upper(e.color) like :#{#query.color}))" +

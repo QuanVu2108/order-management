@@ -8,9 +8,10 @@ public enum OrderItemStatus {
     DELAY,
     UPDATING,
     CANCEL,
+    SENT,
     DONE;
 
     public static List<OrderItemStatus> getPendingStatus() {
-        return Arrays.asList(PENDING, DELAY, UPDATING);
+        return Arrays.asList(PENDING, DELAY, UPDATING, SENT);
     }
 }
