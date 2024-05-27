@@ -12,6 +12,10 @@ public interface Const {
     String DEFAULT_PASSWORD = "abc13579";
     String IMAGE_CONTENT_TYPE = "image/jpeg";
 
+    String PRODUCT_CNT = "PRODUCT_COUNT";
+
+    String ORDER_ITEM_COUNT = "ORDER_ITEM_COUNT";
+
     int MAX_EXPORT_SIZE = 100000;
 
     int REFRESH_TOKEN = 5400000;

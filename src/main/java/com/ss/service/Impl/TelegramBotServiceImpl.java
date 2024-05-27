@@ -1,12 +1,14 @@
 package com.ss.service.Impl;
 
 import com.ss.client.telegram.Bot;
+import com.ss.enums.Const;
 import com.ss.enums.OrderItemStatus;
 import com.ss.model.FileModel;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
 import com.ss.model.ProductModel;
 import com.ss.service.TelegramBotService;
+import io.swagger.models.auth.In;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +20,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.ss.enums.Const.DATE_FORMATTER;
-import static com.ss.enums.Const.DATE_TITLE_FORMATTER;
+import static com.ss.enums.Const.*;
 import static com.ss.util.DateUtils.timestampToString;
 import static com.ss.util.FileUtil.createPdfWithTableAndImage;
 import static com.ss.util.FileUtil.downloadImage;
@@ -52,6 +53,8 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             productSet.add(product);
         });
         List<ProductModel> products = new ArrayList<>(productSet);
+        Integer productCnt = products.size();
+        Integer orderItemCnt = 0;
         for (int i = 0; i < products.size(); i++) {
             List<String> tableColumns = new ArrayList<>();
             tableColumns.add(String.valueOf(i));
@@ -70,9 +73,14 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 imageBytes.add(downloadImage(file.getUrl()));
             } else
                 imageBytes.add(new byte[0]);
+            orderItemCnt += Math.toIntExact(itemCountMap.get(product.getId()));
         }
-        String title = "order_" + order.getCode();
-        File file = createPdfWithTableAndImage(title, tableData, imageBytes);
+        String title = "order_" + order.getCode() + "_" + timestampToString(Const.DATE_TITLE_FORMATTER, System.currentTimeMillis());
+        List<String> data = new ArrayList<>();
+        data.add("Order : " + order.getCode());
+        data.add("Total products : " + productCnt);
+        data.add("Total product items : " + orderItemCnt);
+        File file = createPdfWithTableAndImage(title, data, tableData, imageBytes);
         bot.sendDocument(file);
     }
 
@@ -108,7 +116,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
 
         }
         String title = "item_" + timestampToString(DATE_TITLE_FORMATTER, System.currentTimeMillis());
-        File file = createPdfWithTableAndImage(title, tableData, imageBytes);
+        File file = createPdfWithTableAndImage(title, new ArrayList<>(), tableData, imageBytes);
         bot.sendDocument(file);
     }
 
