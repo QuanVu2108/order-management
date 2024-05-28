@@ -22,6 +22,8 @@ public interface UserService {
 
     UserModel getUserInfo();
 
+    UserResponse getMe();
+
     PageResponse<UserResponse> search(String username, String store, String permissionGroup, String position, String email, String fullName, PageCriteria pageCriteria);
 
     TokenResponse refreshToken(String requestRefreshToken);

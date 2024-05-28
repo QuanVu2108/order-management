@@ -186,6 +186,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    public UserResponse getMe() {
+        User auth = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserModel user = userRepository.findByUsername(auth.getUsername());
+        return new UserResponse(user, user.getPermissionGroup(), user.getStores());
+    }
+
+    @Override
+    @Transactional
     public List<UserModel> searchList(UserQuery userQuery) {
         List<UserModel> list = userRepository.searchList(userQuery);
         return list;
