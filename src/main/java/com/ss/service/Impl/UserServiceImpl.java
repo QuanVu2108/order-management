@@ -127,8 +127,8 @@ public class UserServiceImpl implements UserService {
                 throw new ExceptionResponse(DuplicatedError.USER_CODE_DUPLICATED.getMessage(), DuplicatedError.USER_CODE_DUPLICATED);
         }
 
-        String password = passwordEncoder.encode(request.getPassword());
-        user.update(request, password, permissionGroup, stores);
+        String password = (StringUtils.hasText(request.getPassword())) ? passwordEncoder.encode(request.getPassword()) : user.getPassword();
+        user.update(request, passwordEncoder.encode(password), permissionGroup, stores);
         user = userRepository.save(user);
         return new UserResponse(user, permissionGroup, stores);
     }

@@ -103,6 +103,7 @@ public class OrderController {
     @GetMapping("/order-item")
     PageResponse<OrderItemResponse> searchOrderItem(
             @RequestParam(name = "ids", required = false) List<UUID> ids,
+            @RequestParam(name = "orderItemCode", required = false) String orderItemCode,
             @RequestParam(name = "orderIds", required = false) List<UUID> orderIds,
             @RequestParam(name = "orderCode", required = false) String orderCode,
             @RequestParam(name = "productIds", required = false) List<Long> productIds,
@@ -115,6 +116,7 @@ public class OrderController {
         OrderItemQuery orderItemQuery = OrderItemQuery.builder()
                 .ids(ids)
                 .orderIds(orderIds)
+                .orderItemCode(orderItemCode)
                 .orderCode(convertSqlSearchText(orderCode))
                 .productCode(convertSqlSearchText(productCode))
                 .productNumber(convertSqlSearchText(productNumber))
@@ -129,6 +131,7 @@ public class OrderController {
     @PostMapping("/order-item/export")
     ResponseEntity<Resource> exportOrderItem(
             @RequestParam(name = "ids", required = false) List<UUID> ids,
+            @RequestParam(name = "orderItemCode", required = false) String orderItemCode,
             @RequestParam(name = "orderIds", required = false) List<UUID> orderIds,
             @RequestParam(name = "orderCode", required = false) String orderCode,
             @RequestParam(name = "productIds", required = false) List<Long> productIds,
@@ -141,6 +144,7 @@ public class OrderController {
         OrderItemQuery orderItemQuery = OrderItemQuery.builder()
                 .ids(ids)
                 .orderIds(orderIds)
+                .orderItemCode(orderItemCode)
                 .orderCode(convertSqlSearchText(orderCode))
                 .productCode(convertSqlSearchText(productCode))
                 .productNumber(convertSqlSearchText(productNumber))
