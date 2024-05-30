@@ -42,8 +42,8 @@ public class UserController {
     }
 
     @GetMapping("/get-me")
-    public ServiceResponse<UserModel> getUserInfo() {
-        return ServiceResponse.succeed(HttpStatus.OK, userService.getUserInfo());
+    public ServiceResponse<UserResponse> getUserInfo() {
+        return ServiceResponse.succeed(HttpStatus.OK, userService.getMe());
     }
 
     @GetMapping

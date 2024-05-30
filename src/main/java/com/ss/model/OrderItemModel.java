@@ -115,6 +115,10 @@ public class OrderItemModel extends AuditModel {
 
     public void updateByReceive(OrderItemReceivedRequest request) {
         this.quantityReceived = (this.quantityReceived == null ? 0 : this.quantityReceived) + request.getReceivedQuantity();
+        if (this.quantitySent <= request.getReceivedQuantity())
+            this.quantitySent = Long.valueOf(0);
+        else
+            this.quantitySent = this.quantitySent - request.getReceivedQuantity();
         if (this.quantityReceived >= this.quantityOrder)
             this.status = OrderItemStatus.DONE;
         this.note = request.getNote();

@@ -29,6 +29,8 @@ public enum InvalidInputError implements ResponseError {
     DELETE_EXPORT_STORE_ITEM_INVALID(4010125,"can not delete item because of quantity invalid!!!"),
     ORDER_INVALID(4010126,"order is invalid!!!"),
 
+    ORDER_ITEM_STATUS_INVALID(4010130,"order item status is invalid!!!"),
+
     ;
 
     private Integer code;

@@ -13,6 +13,7 @@ import java.util.UUID;
 public class OrderItemQuery {
     private List<UUID> ids;
     private List<UUID> orderIds;
+    private String orderItemCode;
     private String orderCode;
     private String productCode;
     private String productNumber;

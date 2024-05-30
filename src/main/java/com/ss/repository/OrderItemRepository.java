@@ -23,6 +23,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID>
             " LEFT JOIN orderItem.store store " +
             " WHERE 1=1 " +
             " AND (:#{#query.ids} is null or orderItem.id in :#{#query.ids}) " +
+            " AND (:#{#query.orderItemCode} is null or (upper(orderItem.code) like :#{#query.orderItemCode})) " +
             " AND (:#{#query.productCode} is null or (upper(product.code) like :#{#query.productCode})) " +
             " AND (:#{#query.productNumber} is null or (upper(product.productNumber) like :#{#query.productNumber})) " +
             " AND (:#{#query.productIds} is null or product.id in :#{#query.productIds}) " +
