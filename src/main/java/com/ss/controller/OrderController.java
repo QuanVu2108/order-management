@@ -116,7 +116,7 @@ public class OrderController {
         OrderItemQuery orderItemQuery = OrderItemQuery.builder()
                 .ids(ids)
                 .orderIds(orderIds)
-                .orderItemCode(orderItemCode)
+                .orderItemCode(convertSqlSearchText(orderItemCode))
                 .orderCode(convertSqlSearchText(orderCode))
                 .productCode(convertSqlSearchText(productCode))
                 .productNumber(convertSqlSearchText(productNumber))
