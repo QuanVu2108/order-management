@@ -360,6 +360,21 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public List<ProductModel> getList(String code, String number, String name, String category, String brand, String color, String size) {
+        ProductQuery query = ProductQuery.builder()
+                .code(convertSqlSearchText(code))
+                .number(convertSqlSearchText(number))
+                .name(convertSqlSearchText(name))
+                .category(convertSqlSearchText(category))
+                .brand(convertSqlSearchText(brand))
+                .color(convertSqlSearchText(color))
+                .size(convertSqlSearchText(size))
+                .build();
+        List<ProductModel> responses = repository.getList(query);
+        return responses;
+    }
+
+    @Override
     public Resource export(String code, String number, String name, String category, String brand, String color, String size) {
         PageCriteria pageCriteria = PageCriteria.builder()
                 .pageIndex(1)

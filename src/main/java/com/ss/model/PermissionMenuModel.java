@@ -24,10 +24,6 @@ public class PermissionMenuModel extends AuditModel {
     @Column(name = "name")
     private String name;
 
-    @OneToMany(mappedBy = "permissionMenu", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference
-    private Set<PermissionModel> permissions;
-
     public PermissionMenuModel() {
         this.id = UUID.randomUUID();
         this.deleted = false;

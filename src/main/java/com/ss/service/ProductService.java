@@ -22,6 +22,8 @@ public interface ProductService {
 
     PageResponse<ProductModel> search(String code, String number, String name, String category, String brand, String color, String size, PageCriteria pageCriteria);
 
+    List<ProductModel> getList(String code, String number, String name, String category, String brand, String color, String size);
+
     Resource export(String code, String number, String name, String category, String brand, String color, String size);
 
     ProductModel uploadImage(long id, MultipartFile[] fileRequests);

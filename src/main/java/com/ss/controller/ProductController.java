@@ -81,6 +81,18 @@ public class ProductController {
         return PageResponse.succeed(HttpStatus.OK, productService.search(code, number, name, category, brand, color, size, pageCriteria));
     }
 
+    @GetMapping("get-list")
+    ServiceResponse<List<ProductModel>> getList(
+            @RequestParam(name = "code", required = false) String code,
+            @RequestParam(name = "number", required = false) String number,
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "brand", required = false) String brand,
+            @RequestParam(name = "color", required = false) String color,
+            @RequestParam(name = "size", required = false) String size) {
+        return ServiceResponse.succeed(HttpStatus.OK, productService.getList(code, number, name, category, brand, color, size));
+    }
+
     @PostMapping("/export")
     ResponseEntity<Resource> export(
             @RequestParam(name = "code", required = false) String code,

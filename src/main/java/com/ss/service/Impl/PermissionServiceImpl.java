@@ -165,7 +165,6 @@ public class PermissionServiceImpl implements PermissionService {
         for (int i = 0; i < permissionGroups.size(); i++) {
             newPermissions.add(new PermissionModel(permissionGroups.get(i), permissionMenu));
         }
-        permissionMenu.setPermissions(newPermissions);
         return permissionMenu;
     }
 

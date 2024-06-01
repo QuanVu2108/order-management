@@ -26,9 +26,8 @@ public class PermissionModel extends AuditModel {
     @JsonBackReference
     private PermissionGroupModel permissionGroup;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "permission_menu_id")
-    @JsonBackReference
+    @OneToOne
+    @JoinColumn(name = "menu_id", referencedColumnName = "id")
     private PermissionMenuModel permissionMenu;
 
     @Column(name = "is_viewed")
