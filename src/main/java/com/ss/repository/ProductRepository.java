@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -54,4 +55,6 @@ public interface ProductRepository extends JpaRepository<ProductModel, Long> {
     List<ProductModel> findByCodeInOrProductNumberIn(List<String> productCodes, List<String> productNumbers);
 
     Optional<ProductModel> findByProductNumber(String productNumber);
+
+    List<ProductModel> findByProductNumberIn(List<String> productNumbers);
 }

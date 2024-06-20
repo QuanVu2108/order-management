@@ -337,7 +337,7 @@ public class OrderServiceImpl implements OrderService {
             OrderItemReceivedMultiRequest receivedItemRequest = request.stream()
                     .filter(itemRequest -> itemRequest.getId().equals(item.getId()))
                     .findFirst().orElse(null);
-            if (receivedItemRequest != null) {
+            if (receivedItemRequest != null && receivedItemRequest.getReceivedQuantity() != null && receivedItemRequest.getReceivedQuantity() > 0) {
                 if (!OrderItemStatus.SENT.equals(item.getStatus()))
                     throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_STATUS_INVALID.getMessage(), InvalidInputError.ORDER_ITEM_STATUS_INVALID);
                 item.updateByReceive(receivedItemRequest);

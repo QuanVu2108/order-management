@@ -149,6 +149,11 @@ public class ProductController {
         return ServiceResponse.succeed(HttpStatus.OK, productService.checkImportFile(file));
     };
 
+    @PostMapping("/check-import-file-kiotviet")
+    ServiceResponse<List<ProductCheckImportResponse>> checkImportFileKiotviet(MultipartFile file) throws Exception {
+        return ServiceResponse.succeed(HttpStatus.OK, productService.checkImportFileKiotviet(file));
+    };
+
     @PostMapping("/generate-qr-code")
     ServiceResponse<Void> generateQRCode() {
         productService.generateQRCode();

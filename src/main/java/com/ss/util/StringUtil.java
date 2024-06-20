@@ -33,4 +33,14 @@ public final class StringUtil<T> {
             return "";
         return value.toString();
     }
+
+    public static int findFirstLetterIndex(String str) {
+        for (int i = 0; i < str.length(); i++) {
+            char ch = str.charAt(i);
+            if (Character.isLetter(ch)) {
+                return i;
+            }
+        }
+        return str.length();
+    }
 }

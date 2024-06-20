@@ -5,10 +5,8 @@ import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.OrderItemReceivedMultiRequest;
-import com.ss.dto.request.OrderItemReceivedRequest;
 import com.ss.dto.request.StoreItemDetailRequest;
 import com.ss.dto.request.StoreItemRequest;
-import com.ss.dto.response.OrderResponse;
 import com.ss.dto.response.StoreItemResponse;
 import com.ss.enums.StoreItemType;
 import com.ss.exception.ExceptionResponse;
@@ -23,11 +21,9 @@ import com.ss.repository.query.StoreItemQuery;
 import com.ss.service.StoreItemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -127,6 +123,7 @@ public class StoreItemServiceImpl implements StoreItemService {
                     storeItem.setQuantity(orderItemRequest.getReceivedQuantity());
                     storeItem.setNote(orderItemRequest.getNote());
                     storeItem.setOrder(orderItem.getOrderModel());
+                    storeItem.setCost(orderItem.getCost());
                     storeItems.add(storeItem);
 
                     StoreItemModel inventory = existedInventories.stream()
@@ -191,9 +188,10 @@ public class StoreItemServiceImpl implements StoreItemService {
     }
 
     @Override
-    public PageResponse<StoreItemResponse> search(String product, String store, UUID order, StoreItemType type, Long fromTime, Long toTime, PageCriteria pageCriteria) {
+    public PageResponse<StoreItemResponse> search(String product, List<Long> productIds, String store, UUID order, StoreItemType type, Long fromTime, Long toTime, PageCriteria pageCriteria) {
         StoreItemQuery query = StoreItemQuery.builder()
                 .product(convertSqlSearchText(product))
+                .productIds(productIds)
                 .store(convertSqlSearchText(store))
                 .order(order)
                 .type(type)
@@ -202,12 +200,16 @@ public class StoreItemServiceImpl implements StoreItemService {
                 .build();
         Page<StoreItemModel> storeItemPage = storeItemRepository.search(query, pageCriteriaPageableMapper.toPageable(pageCriteria));
         List<StoreItemModel> storeItems = storeItemPage.getContent();
-        Set<Long> productIds = storeItems.stream().filter(item -> item.getProductId() != null).map(StoreItemModel::getProductId).collect(Collectors.toSet());
-        List<ProductModel> products = productRepository.findAllById(productIds);
+        Set<Long> productIdSet = (productIds == null || productIds.isEmpty())
+                ? storeItems.stream().filter(item -> item.getProductId() != null).map(StoreItemModel::getProductId).collect(Collectors.toSet())
+                : new HashSet<>(productIds);
+        List<ProductModel> products = productRepository.findAllById(productIdSet);
         List<StoreItemResponse> responses = storeItemPage.getContent().stream()
                 .map(item -> new StoreItemResponse(item, products))
                 .collect(Collectors.toList());
+        Long total = storeItemRepository.countAllQuantity(query);
         return PageResponse.<StoreItemResponse>builder()
+                .total(total)
                 .paging(Paging.builder().totalCount(storeItemPage.getTotalElements())
                         .pageIndex(pageCriteria.getPageIndex())
                         .pageSize(pageCriteria.getPageSize())

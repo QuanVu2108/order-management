@@ -33,6 +33,8 @@ public interface ProductService {
 
     List<ProductCheckImportResponse> checkImportFile(MultipartFile file);
 
+    List<ProductCheckImportResponse> checkImportFileKiotviet(MultipartFile file);
+
     ProductModel getByNumber(String number);
 
     void generateQRCode();

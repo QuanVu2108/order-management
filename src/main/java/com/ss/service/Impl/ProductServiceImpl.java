@@ -9,6 +9,7 @@ import com.ss.dto.response.ProductCheckImportResponse;
 import com.ss.dto.response.ProductSaleResponse;
 import com.ss.enums.ProductPropertyType;
 import com.ss.enums.excel.ProductCheckImportExcelTemplate;
+import com.ss.enums.excel.ProductCheckImportKiotvietExcelTemplate;
 import com.ss.enums.excel.ProductExcelTemplate;
 import com.ss.enums.excel.ProductExportExcel;
 import com.ss.exception.ExceptionResponse;
@@ -46,8 +47,7 @@ import static com.ss.enums.Const.DATE_TIME_DETAIL_FORMATTER;
 import static com.ss.enums.Const.MAX_EXPORT_SIZE;
 import static com.ss.util.DateUtils.instantToString;
 import static com.ss.util.QRCodeUtil.generateQRCodeImage;
-import static com.ss.util.StringUtil.convertSqlSearchText;
-import static com.ss.util.StringUtil.convertToString;
+import static com.ss.util.StringUtil.*;
 import static com.ss.util.excel.ExcelUtil.*;
 
 @Service
@@ -477,7 +477,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductCheckImportResponse> checkImportFile(MultipartFile file) {
         String fileName = file.getOriginalFilename();
-        List<ProductCheckImportExcelTemplate> template = ProductCheckImportExcelTemplate.getColumns();
+        List<ProductCheckImportExcelTemplate> template = List.of(ProductCheckImportExcelTemplate.values());
         List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
 
         List<ProductCheckImportResponse> responses = new ArrayList<>();
@@ -549,6 +549,68 @@ public class ProductServiceImpl implements ProductService {
                     .filter(item -> item.getName().equals(response.getStoreName()))
                     .findFirst().orElse(null);
             response.setStore(store);
+        }
+        return responses;
+    }
+
+    @Override
+    public List<ProductCheckImportResponse> checkImportFileKiotviet(MultipartFile file) {
+        String fileName = file.getOriginalFilename();
+        StoreModel store = null;
+        if (fileName.endsWith(".xlsx")) {
+            String storeName = fileName.substring(0, fileName.lastIndexOf(".xlsx"));
+            List<StoreModel> stores = storeService.findByNameIn(Arrays.asList(storeName));
+            store = stores.isEmpty() ? null : stores.get(0);
+        }
+        if (store == null)
+            throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(), InvalidInputError.STORE_INVALID);
+
+        List<ProductCheckImportKiotvietExcelTemplate> template = List.of(ProductCheckImportKiotvietExcelTemplate.values());
+        List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
+
+        List<ProductCheckImportResponse> responses = new ArrayList<>();
+        Set<String> productNumbers = new HashSet<>();
+        Map<String, Long> productQuantities = new HashMap<>();
+        try {
+            InputStream inputStream = file.getInputStream();
+            List<Map<String, String>> assets = readUploadFileData(inputStream, fileName, columns, 1, 0, new ArrayList<>());
+            int idx = 1;
+            for (Map<String, String> asset : assets) {
+                String productNumber = asset.get(ProductCheckImportKiotvietExcelTemplate.NUMBER.getKey());
+                productNumber = productNumber.substring(0, findFirstLetterIndex(productNumber));
+                if (StringUtils.hasText(productNumber)) {
+                    productNumbers.add(productNumber);
+                    Long checkQuantity = Long.valueOf(0);
+                    try {
+                        checkQuantity = Long.parseLong(asset.get(ProductCheckImportExcelTemplate.QUANTITY.getKey()));
+                    } catch (Exception ex) {
+                        log.error("************ can not parse quantity in row " + idx);
+                    }
+                    if (checkQuantity != 0) {
+                        Long updatedQuantity = productQuantities.get(productNumber) == null ? 0 : productQuantities.get(productNumber);
+                        productQuantities.put(productNumber, updatedQuantity + checkQuantity);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new ExceptionResponse("import file unsuccessfully!!! ");
+        }
+
+        List<String> productNumberList = new ArrayList<>(productNumbers);
+        List<ProductModel> products = repository.findByProductNumberIn(productNumberList);
+        for (int i = 0; i < productNumberList.size(); i++) {
+            String productNumber = productNumberList.get(i);
+            ProductModel product = products.stream()
+                    .filter(item -> item.getProductNumber().equals(productNumber))
+                    .findFirst().orElse(null);
+            if (product == null)
+                continue;
+            ProductCheckImportResponse response = new ProductCheckImportResponse();
+            response.setProduct(product);
+            response.setQuantity(productQuantities.get(productNumber));
+            response.setStore(store);
+            responses.add(response);
         }
         return responses;
     }
