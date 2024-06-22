@@ -57,7 +57,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         Integer orderItemCnt = 0;
         for (int i = 0; i < products.size(); i++) {
             List<String> tableColumns = new ArrayList<>();
-            tableColumns.add(String.valueOf(i));
+            tableColumns.add(String.valueOf(i + 1));
             tableColumns.add("image_" + i);
 
             ProductModel product = products.get(i);

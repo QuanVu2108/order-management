@@ -81,6 +81,18 @@ public class ProductController {
         return PageResponse.succeed(HttpStatus.OK, productService.search(code, number, name, category, brand, color, size, pageCriteria));
     }
 
+    @GetMapping("get-list")
+    ServiceResponse<List<ProductModel>> getList(
+            @RequestParam(name = "code", required = false) String code,
+            @RequestParam(name = "number", required = false) String number,
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "brand", required = false) String brand,
+            @RequestParam(name = "color", required = false) String color,
+            @RequestParam(name = "size", required = false) String size) {
+        return ServiceResponse.succeed(HttpStatus.OK, productService.getList(code, number, name, category, brand, color, size));
+    }
+
     @PostMapping("/export")
     ResponseEntity<Resource> export(
             @RequestParam(name = "code", required = false) String code,
@@ -135,6 +147,11 @@ public class ProductController {
     @PostMapping("/check-import-file")
     ServiceResponse<List<ProductCheckImportResponse>> checkImportFile(MultipartFile file) throws Exception {
         return ServiceResponse.succeed(HttpStatus.OK, productService.checkImportFile(file));
+    };
+
+    @PostMapping("/check-import-file-kiotviet")
+    ServiceResponse<List<ProductCheckImportResponse>> checkImportFileKiotviet(MultipartFile file) throws Exception {
+        return ServiceResponse.succeed(HttpStatus.OK, productService.checkImportFileKiotviet(file));
     };
 
     @PostMapping("/generate-qr-code")

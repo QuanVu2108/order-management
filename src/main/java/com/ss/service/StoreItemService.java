@@ -25,7 +25,7 @@ public interface StoreItemService {
 
     void delete(UUID id);
 
-    PageResponse<StoreItemResponse> search(String product, String store, UUID order, StoreItemType type, Long fromTime, Long toTime, PageCriteria pageCriteria);
+    PageResponse<StoreItemResponse> search(String product, List<Long> productIds, String store, UUID order, StoreItemType type, Long fromTime, Long toTime, PageCriteria pageCriteria);
 
     List<StoreItemModel> findByProduct(ProductModel id);
 }

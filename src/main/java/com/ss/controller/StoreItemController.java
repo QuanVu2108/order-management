@@ -44,13 +44,14 @@ public class StoreItemController {
     @GetMapping
     PageResponse<StoreItemResponse> search(
             @RequestParam(name = "product", required = false) String product,
+            @RequestParam(name = "productIds", required = false) List<Long> productIds,
             @RequestParam(name = "store", required = false) String store,
             @RequestParam(name = "order", required = false) UUID order,
             @RequestParam(name = "type", required = false) StoreItemType type,
             @RequestParam(name = "fromTime", required = false) Long fromTime,
             @RequestParam(name = "toTime", required = false) Long toTime,
             @Valid PageCriteria pageCriteria) {
-        return PageResponse.succeed(HttpStatus.OK, storeItemService.search(product, store, order, type, fromTime, toTime, pageCriteria));
+        return PageResponse.succeed(HttpStatus.OK, storeItemService.search(product, productIds, store, order, type, fromTime, toTime, pageCriteria));
     }
 
 }

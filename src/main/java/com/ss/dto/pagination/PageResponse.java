@@ -14,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PageResponse<T> {
     private int code;
+    private Long total;
     private String message;
     private Paging paging;
     private List<T> data;
