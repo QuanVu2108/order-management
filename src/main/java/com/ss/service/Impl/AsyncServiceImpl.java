@@ -66,7 +66,6 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Override
     @Async
-    @Transactional
     public void createImageProduct(List<ProductModel> updatedProducts, Map<String, List<String>> productImageUrlOriginal) {
         List<String> fileUrlOriginals = new ArrayList<>();
         Map<String, Set<String>> imageUrlOriginalProducts = new HashMap<>();

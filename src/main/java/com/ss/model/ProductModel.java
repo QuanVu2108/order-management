@@ -61,7 +61,6 @@ public class ProductModel extends AuditModel {
     private Boolean isActive;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference
     private Set<FileModel> images;
 
     @Column(name = "qr_code")

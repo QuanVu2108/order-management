@@ -1,7 +1,6 @@
 package com.ss.model;
 
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 import org.hibernate.annotations.Where;
 
@@ -9,7 +8,10 @@ import javax.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "file_tbl")
+@Table(name = "file_tbl", indexes = {
+        @Index(name = "idx_url_original", columnList = "url_original"),
+        @Index(name = "idx_product_id", columnList = "product_id")
+})
 @Where(clause = "deleted = false")
 @Setter
 @Getter
@@ -29,9 +31,8 @@ public class FileModel extends AuditModel {
     @Column(name = "url_original", columnDefinition = "text")
     private String urlOriginal;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "product_id")
-    @JsonBackReference
     private ProductModel product;
 
 }
