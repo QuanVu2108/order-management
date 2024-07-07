@@ -176,6 +176,9 @@ public class ProductServiceImpl implements ProductService {
         if (productOptional.isEmpty())
             throw new ExceptionResponse("product is not existed!!!");
         ProductModel product = productOptional.get();
+        List<FileModel> files = fileRepository.findByProduct(product);
+        files.forEach(file -> file.setDeleted(true));
+        fileRepository.saveAll(files);
         product.setDeleted(true);
         repository.save(product);
     }
