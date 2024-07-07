@@ -31,7 +31,7 @@ public class FileModel extends AuditModel {
     @Column(name = "url_original", columnDefinition = "text")
     private String urlOriginal;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private ProductModel product;
 
