@@ -1,7 +1,6 @@
 
 package com.ss.dto.response;
 
-import com.ss.model.ProductModel;
 import com.ss.model.StoreItemModel;
 import com.ss.model.StoreModel;
 import lombok.AllArgsConstructor;
@@ -18,7 +17,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductSaleResponse {
-    private ProductModel product;
+    private ProductResponse product;
 
     private List<StoreInfo> stores;
 

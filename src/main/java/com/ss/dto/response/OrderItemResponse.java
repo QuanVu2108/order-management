@@ -2,7 +2,6 @@
 package com.ss.dto.response;
 
 import com.ss.enums.OrderItemStatus;
-import com.ss.model.ProductModel;
 import com.ss.model.StoreModel;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +16,7 @@ public class OrderItemResponse {
 
     private String code;
 
-    private ProductModel product;
+    private ProductResponse product;
 
     private String note;
 
