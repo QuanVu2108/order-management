@@ -5,7 +5,9 @@ import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.ProductRequest;
+import com.ss.dto.response.FileResponse;
 import com.ss.dto.response.ProductCheckImportResponse;
+import com.ss.dto.response.ProductResponse;
 import com.ss.dto.response.ProductSaleResponse;
 import com.ss.enums.ProductPropertyType;
 import com.ss.enums.excel.ProductCheckImportExcelTemplate;
@@ -21,6 +23,8 @@ import com.ss.repository.ProductPropertyRepository;
 import com.ss.repository.ProductRepository;
 import com.ss.repository.query.ProductQuery;
 import com.ss.service.*;
+import com.ss.service.mapper.FileMapper;
+import com.ss.service.mapper.ProductMapper;
 import com.ss.util.StorageUtil;
 import com.ss.util.excel.ExcelTemplate;
 import lombok.Data;
@@ -57,6 +61,8 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository repository;
 
+    private final ProductMapper productMapper;
+
     private final ProductPropertyRepository propertyRepository;
 
     private final StoreService storeService;
@@ -72,6 +78,8 @@ public class ProductServiceImpl implements ProductService {
     private final StorageUtil storageUtil;
 
     private final FileRepository fileRepository;
+
+    private final FileMapper fileMapper;
 
     @Data
     private static class ProductImport {
@@ -90,7 +98,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductModel create(ProductRequest request) {
+    public ProductResponse create(ProductRequest request) {
         long invalidProductCodeCnt = repository.countByCode(request.getCode());
         if (invalidProductCodeCnt > 0)
             throw new ExceptionResponse(DuplicatedError.PRODUCT_CODE_DUPLICATED.getMessage(), DuplicatedError.PRODUCT_CODE_DUPLICATED);
@@ -114,12 +122,12 @@ public class ProductServiceImpl implements ProductService {
         product = repository.save(product);
         product.setQrCode(generateQRCodeImage(String.valueOf(product.getId())));
         product = repository.save(product);
-        return product;
+        return productMapper.toTarget(product);
     }
 
 
     @Override
-    public ProductModel update(long id, ProductRequest request) {
+    public ProductResponse update(long id, ProductRequest request) {
         Optional<ProductModel> productOptional = repository.findById(id);
         if (productOptional.isEmpty())
             throw new ExceptionResponse("product is not existed!!!");
@@ -167,7 +175,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         product = repository.save(product);
-        return product;
+        return productMapper.toTarget(product);
     }
 
     @Override
@@ -184,7 +192,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductModel> importFile(MultipartFile fileRequest) {
+    public List<ProductResponse> importFile(MultipartFile fileRequest) {
         String fileName = fileRequest.getOriginalFilename();
         List<ProductExcelTemplate> template = ProductExcelTemplate.getColumns();
         List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
@@ -338,11 +346,12 @@ public class ProductServiceImpl implements ProductService {
 
         asyncService.createImageProduct(updatedProducts, fileImports);
 
-        return updatedProducts;
+        return productMapper.toTarget(updatedProducts);
     }
 
     @Override
-    public PageResponse<ProductModel> search(String code, String number, String name, String category, String brand, String color, String size, PageCriteria pageCriteria) {
+    @Transactional
+    public PageResponse<ProductResponse> search(String code, String number, String name, String category, String brand, String color, String size, PageCriteria pageCriteria) {
         ProductQuery query = ProductQuery.builder()
                 .code(convertSqlSearchText(code))
                 .number(convertSqlSearchText(number))
@@ -353,17 +362,32 @@ public class ProductServiceImpl implements ProductService {
                 .size(convertSqlSearchText(size))
                 .build();
         Page<ProductModel> pages = repository.search(query, pageCriteriaPageableMapper.toPageable(pageCriteria));
-        return PageResponse.<ProductModel>builder()
+        List<ProductResponse> productResponses = enrichProductResponse(pages.getContent());
+    return PageResponse.<ProductResponse>builder()
                 .paging(Paging.builder().totalCount(pages.getTotalElements())
                         .pageIndex(pageCriteria.getPageIndex())
                         .pageSize(pageCriteria.getPageSize())
                         .build())
-                .data(pages.getContent())
+                .data(productResponses)
                 .build();
     }
 
+    private List<ProductResponse> enrichProductResponse(List<ProductModel> products) {
+        List<ProductResponse> productResponses = new ArrayList<>();
+        products.forEach(product -> {
+            ProductResponse response = productMapper.toTarget(product);
+            if (product.getImages() != null && !product.getImages().isEmpty()) {
+                List<FileModel> files = new ArrayList<>(product.getImages());
+                List<FileResponse> fileResponses = fileMapper.toTarget(files);
+                response.setImages(new HashSet<>(fileResponses));
+            }
+            productResponses.add(response);
+        });
+        return productResponses;
+    }
+
     @Override
-    public List<ProductModel> getList(String code, String number, String name, String category, String brand, String color, String size) {
+    public List<ProductResponse> getList(String code, String number, String name, String category, String brand, String color, String size) {
         ProductQuery query = ProductQuery.builder()
                 .code(convertSqlSearchText(code))
                 .number(convertSqlSearchText(number))
@@ -373,8 +397,8 @@ public class ProductServiceImpl implements ProductService {
                 .color(convertSqlSearchText(color))
                 .size(convertSqlSearchText(size))
                 .build();
-        List<ProductModel> responses = repository.getList(query);
-        return responses;
+        List<ProductModel> products = repository.getList(query);
+        return enrichProductResponse(products);
     }
 
     @Override
@@ -383,7 +407,7 @@ public class ProductServiceImpl implements ProductService {
                 .pageIndex(1)
                 .pageSize(MAX_EXPORT_SIZE)
                 .build();
-        PageResponse<ProductModel> productPage = search(code, number, name, category, brand, color, size, pageCriteria);
+        PageResponse<ProductResponse> productPage = search(code, number, name, category, brand, color, size, pageCriteria);
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         Workbook workbook = null;
@@ -423,16 +447,16 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-    private List<Map<String, String>> getAssets(List<ProductModel> data) {
+    private List<Map<String, String>> getAssets(List<ProductResponse> data) {
         List<Map<String, String>> result = new ArrayList<>();
         int count = 1;
-        for (ProductModel product : data) {
+        for (ProductResponse product : data) {
             Map<String, String> map = new HashMap<>();
             map.put(ProductExportExcel.STT.getKey(), String.valueOf(count++));
             map.put(ProductExportExcel.PRODUCT_NUMBER.getKey(), product.getProductNumber());
             String imageUrl = "";
             if (product.getImages() != null && !product.getImages().isEmpty())
-                imageUrl = product.getImages().stream().map(FileModel::getUrl).collect(Collectors.joining(","));
+                imageUrl = product.getImages().stream().map(FileResponse::getUrl).collect(Collectors.joining(","));
             map.put(ProductExportExcel.IMAGE_URL.getKey(), imageUrl);
             map.put(ProductExportExcel.CODE.getKey(), product.getCode());
             map.put(ProductExportExcel.NAME.getKey(), product.getName());
@@ -450,7 +474,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductModel uploadImage(long id, MultipartFile[] fileRequests) {
+    public ProductResponse uploadImage(long id, MultipartFile[] fileRequests) {
         Optional<ProductModel> productOptional = repository.findById(id);
         if (productOptional.isEmpty())
             throw new ExceptionResponse("product is not existed!!!");
@@ -466,7 +490,7 @@ public class ProductServiceImpl implements ProductService {
         Set<FileModel> existedImages = product.getImages();
         existedImages.addAll(images);
         product.setImages(existedImages);
-        return product;
+        return enrichProductResponse(List.of(product)).get(0);
     }
 
     @Override
@@ -619,13 +643,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductModel getByNumber(String number) {
+    public ProductResponse getByNumber(String number) {
         if (!StringUtils.hasText(number))
             return null;
         Optional<ProductModel> product = repository.findByProductNumber(number);
         if (product.isEmpty())
             throw new ExceptionResponse("product is not existed!!!");
-        return product.get();
+        return enrichProductResponse(List.of(product.get())).get(0);
     }
 
     @Override

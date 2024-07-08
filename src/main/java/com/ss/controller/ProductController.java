@@ -5,6 +5,7 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.request.ProductPropertyRequest;
 import com.ss.dto.request.ProductRequest;
 import com.ss.dto.response.ProductCheckImportResponse;
+import com.ss.dto.response.ProductResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.enums.ExportFormat;
 import com.ss.enums.ProductPropertyType;
@@ -36,18 +37,18 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-    ServiceResponse<ProductModel> create(@RequestBody @Valid ProductRequest request) {
+    ServiceResponse<ProductResponse> create(@RequestBody @Valid ProductRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, productService.create(request));
     }
 
     @PutMapping("/{id}")
-    ServiceResponse<ProductModel> update(@PathVariable @Valid long id,
+    ServiceResponse<ProductResponse> update(@PathVariable @Valid long id,
                                          @RequestBody @Valid ProductRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, productService.update(id, request));
     }
 
     @PostMapping("/upload-image/{id}")
-    ServiceResponse<ProductModel> uploadImage(@PathVariable @Valid long id,
+    ServiceResponse<ProductResponse> uploadImage(@PathVariable @Valid long id,
                                               @RequestPart(name = "fileRequests") MultipartFile[] fileRequests) {
         return ServiceResponse.succeed(HttpStatus.OK, productService.uploadImage(id, fileRequests));
     }
@@ -59,17 +60,17 @@ public class ProductController {
     }
 
     @PostMapping("/import")
-    ServiceResponse<List<ProductModel>> importFile(MultipartFile file) {
+    ServiceResponse<List<ProductResponse>> importFile(MultipartFile file) {
         return ServiceResponse.succeed(HttpStatus.OK, productService.importFile(file));
     }
 
     @GetMapping("/number/{number}")
-    ServiceResponse<ProductModel> getByNumber(@PathVariable @Valid String number) {
+    ServiceResponse<ProductResponse> getByNumber(@PathVariable @Valid String number) {
         return ServiceResponse.succeed(HttpStatus.OK, productService.getByNumber(number));
     }
 
     @GetMapping
-    PageResponse<ProductModel> search(
+    PageResponse<ProductResponse> search(
             @RequestParam(name = "code", required = false) String code,
             @RequestParam(name = "number", required = false) String number,
             @RequestParam(name = "name", required = false) String name,
@@ -82,7 +83,7 @@ public class ProductController {
     }
 
     @GetMapping("get-list")
-    ServiceResponse<List<ProductModel>> getList(
+    ServiceResponse<List<ProductResponse>> getList(
             @RequestParam(name = "code", required = false) String code,
             @RequestParam(name = "number", required = false) String number,
             @RequestParam(name = "name", required = false) String name,

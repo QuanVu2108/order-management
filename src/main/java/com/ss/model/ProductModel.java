@@ -60,7 +60,7 @@ public class ProductModel extends AuditModel {
     @Column(name = "is_active")
     private Boolean isActive;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<FileModel> images;
 
     @Column(name = "qr_code")
