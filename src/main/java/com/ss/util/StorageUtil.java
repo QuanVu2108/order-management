@@ -86,7 +86,7 @@ public class StorageUtil {
         try {
             Storage storage = getStorage();
             String contentType = Files.probeContentType(path);
-            log.debug("Start file uploading process on GCS");
+            log.info("Start file uploading process on GCS");
             byte[] fileData = FileUtils.readFileToByteArray(convertFile(file));
 
             UUID bucketId = UUID.randomUUID();
@@ -99,7 +99,7 @@ public class StorageUtil {
             if (blob == null) {
                 throw new ExceptionResponse("Can not upload file " + fileName);
             }
-            log.debug("File successfully uploaded to GCS");
+            log.info("File successfully uploaded to GCS");
             return generateFileUrl(bucketId, fileName);
 
         } catch (Exception e) {

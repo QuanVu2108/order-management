@@ -19,7 +19,7 @@ public interface ProductService {
 
     void delete(long id);
 
-    List<ProductResponse> importFile(MultipartFile file);
+    void importFile(MultipartFile file);
 
     PageResponse<ProductResponse> search(String code, String number, String name, String category, String brand, String color, String size, PageCriteria pageCriteria);
 

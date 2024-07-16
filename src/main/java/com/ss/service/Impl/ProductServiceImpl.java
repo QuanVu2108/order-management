@@ -35,6 +35,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -189,7 +190,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductResponse> importFile(MultipartFile fileRequest) {
+    @Async
+    public void importFile(MultipartFile fileRequest) {
         String fileName = fileRequest.getOriginalFilename();
         List<ProductExcelTemplate> template = ProductExcelTemplate.getColumns();
         List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
@@ -269,6 +271,17 @@ public class ProductServiceImpl implements ProductService {
                         List<String> fileUrls = List.of(productUrls.split(","));
                         fileImports.put(productNumber, fileUrls);
                     }
+
+                    if (productImports.size() > 0 && (productImports.size() % 200 == 0)) {
+                        createProductByImport(productImports, fileImports, productNumbers, productCodes, categoryNames, brandNames);
+
+                        productImports.clear();
+                        fileImports.clear();
+                        productNumbers.clear();
+                        productCodes.clear();
+                        categoryNames.clear();
+                        brandNames.clear();
+                    }
                 }
             }
         } catch (Exception e) {
@@ -276,6 +289,11 @@ public class ProductServiceImpl implements ProductService {
             throw new ExceptionResponse("import fileRequest unsuccessfully!!! ");
         }
 
+        log.info("******************** import file successfully");
+    }
+
+    private void createProductByImport(List<ProductImport> productImports, Map<String, List<String>> fileImports, Set<String> productNumbers, Set<String> productCodes, Set<String> categoryNames, Set<String> brandNames) {
+        log.info("******************** import file start");
         // category
         List<ProductPropertyModel> existedCategories = propertyRepository.findByTypeAndNames(ProductPropertyType.CATEGORY, categoryNames.stream().map(item -> item.toUpperCase()).collect(Collectors.toList()));
         List<String> existedCategoryNames = existedCategories.stream().map(item -> item.getName().toUpperCase()).collect(Collectors.toList());
@@ -342,8 +360,6 @@ public class ProductServiceImpl implements ProductService {
         asyncService.generateQRCodeProduct(updatedProducts);
 
         asyncService.createImageProduct(updatedProducts, fileImports);
-
-        return productMapper.toTarget(updatedProducts);
     }
 
     @Override
