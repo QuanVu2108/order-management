@@ -432,7 +432,7 @@ public class OrderServiceImpl implements OrderService {
             map.put(OrderItemExportExcel.ORDER_CODE.getKey(), orderItem.getOrder().getCode());
             map.put(OrderItemExportExcel.PRODUCT_CODE.getKey(), orderItem.getProduct().getCode());
             map.put(OrderItemExportExcel.PRODUCT_NUMBER.getKey(), orderItem.getProduct().getProductNumber());
-            String imageUrl = orderItem.getProduct().getImages().stream().map(FileModel::getUrl).collect(Collectors.joining(","));
+            String imageUrl = orderItem.getProduct().getImages().stream().map(FileResponse::getUrl).collect(Collectors.joining(","));
             map.put(OrderItemExportExcel.IMAGE_URL.getKey(), imageUrl);
             map.put(OrderItemExportExcel.STATUS.getKey(), orderItem.getStatus() == null ? "" : orderItem.getStatus().name());
             map.put(OrderItemExportExcel.DATE.getKey(), instantToString(DATE_FORMATTER, orderItem.getUpdatedAt()));

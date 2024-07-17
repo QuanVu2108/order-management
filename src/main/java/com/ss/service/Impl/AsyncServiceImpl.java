@@ -130,6 +130,7 @@ public class AsyncServiceImpl implements AsyncService {
             }
         });
         fileRepository.saveAll(newFiles);
+        log.info("******************** upload file successfully");
     }
 
 }

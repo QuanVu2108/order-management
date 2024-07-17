@@ -60,8 +60,9 @@ public class ProductController {
     }
 
     @PostMapping("/import")
-    ServiceResponse<List<ProductResponse>> importFile(MultipartFile file) {
-        return ServiceResponse.succeed(HttpStatus.OK, productService.importFile(file));
+    ServiceResponse<Void> importFile(MultipartFile file) {
+        productService.importFile(file);
+        return ServiceResponse.succeed(HttpStatus.OK, null);
     }
 
     @GetMapping("/number/{number}")

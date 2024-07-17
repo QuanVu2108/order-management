@@ -7,6 +7,7 @@ import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.OrderItemReceivedMultiRequest;
 import com.ss.dto.request.StoreItemDetailRequest;
 import com.ss.dto.request.StoreItemRequest;
+import com.ss.dto.response.ProductResponse;
 import com.ss.dto.response.StoreItemResponse;
 import com.ss.enums.StoreItemType;
 import com.ss.exception.ExceptionResponse;
@@ -19,11 +20,13 @@ import com.ss.repository.StoreItemRepository;
 import com.ss.repository.StoreRepository;
 import com.ss.repository.query.StoreItemQuery;
 import com.ss.service.StoreItemService;
+import com.ss.service.mapper.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,6 +41,8 @@ public class StoreItemServiceImpl implements StoreItemService {
     private final StoreItemRepository storeItemRepository;
 
     private final ProductRepository productRepository;
+
+    private final ProductMapper productMapper;
 
     private final StoreRepository storeRepository;
 
@@ -188,6 +193,7 @@ public class StoreItemServiceImpl implements StoreItemService {
     }
 
     @Override
+    @Transactional
     public PageResponse<StoreItemResponse> search(String product, List<Long> productIds, String store, UUID order, StoreItemType type, Long fromTime, Long toTime, PageCriteria pageCriteria) {
         StoreItemQuery query = StoreItemQuery.builder()
                 .product(convertSqlSearchText(product))
@@ -203,7 +209,8 @@ public class StoreItemServiceImpl implements StoreItemService {
         Set<Long> productIdSet = (productIds == null || productIds.isEmpty())
                 ? storeItems.stream().filter(item -> item.getProductId() != null).map(StoreItemModel::getProductId).collect(Collectors.toSet())
                 : new HashSet<>(productIds);
-        List<ProductModel> products = productRepository.findAllById(productIdSet);
+        List<ProductModel> productModels = productRepository.findAllById(productIdSet);
+        List<ProductResponse> products = productMapper.toTarget(productModels);
         List<StoreItemResponse> responses = storeItemPage.getContent().stream()
                 .map(item -> new StoreItemResponse(item, products))
                 .collect(Collectors.toList());

@@ -1,6 +1,7 @@
 
 package com.ss.dto.response;
 
+import com.ss.model.FileModel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,4 +18,10 @@ public class FileResponse {
 
     private String urlOriginal;
 
+    public FileResponse(FileModel image) {
+        this.id = image.getId();
+        this.name = image.getName();
+        this.url = image.getUrl();
+        this.urlOriginal = image.getUrlOriginal();
+    }
 }

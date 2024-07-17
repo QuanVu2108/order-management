@@ -1,7 +1,6 @@
 
 package com.ss.dto.response;
 
-import com.ss.model.ProductModel;
 import com.ss.model.StoreModel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,7 +15,7 @@ public class ProductCheckImportResponse {
     private Long quantity;
     private Double cost;
     private Double incentive;
-    private ProductModel product;
+    private ProductResponse product;
     private StoreModel store;
 
     public ProductCheckImportResponse(int idx, String code, String number, String storeName, Long quantity, Double cost, Double incentive) {

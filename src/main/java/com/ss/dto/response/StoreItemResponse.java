@@ -2,7 +2,6 @@ package com.ss.dto.response;
 
 import com.ss.enums.StoreItemType;
 import com.ss.model.OrderModel;
-import com.ss.model.ProductModel;
 import com.ss.model.StoreItemModel;
 import com.ss.model.StoreModel;
 import lombok.AllArgsConstructor;
@@ -24,7 +23,7 @@ public class StoreItemResponse {
 
     private StoreModel store;
 
-    private ProductModel product;
+    private ProductResponse product;
 
     private Long quantity;
 
@@ -40,7 +39,7 @@ public class StoreItemResponse {
 
     private BasicModelResponse order;
 
-    public StoreItemResponse(StoreItemModel storeItem, List<ProductModel> products) {
+    public StoreItemResponse(StoreItemModel storeItem, List<ProductResponse> products) {
         this.id = storeItem.getId();
         this.store = storeItem.getStore();
         if (storeItem.getProductId() != null)

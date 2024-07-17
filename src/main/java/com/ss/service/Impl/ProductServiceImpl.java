@@ -23,7 +23,6 @@ import com.ss.repository.ProductPropertyRepository;
 import com.ss.repository.ProductRepository;
 import com.ss.repository.query.ProductQuery;
 import com.ss.service.*;
-import com.ss.service.mapper.FileMapper;
 import com.ss.service.mapper.ProductMapper;
 import com.ss.util.StorageUtil;
 import com.ss.util.excel.ExcelTemplate;
@@ -36,6 +35,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -78,8 +78,6 @@ public class ProductServiceImpl implements ProductService {
     private final StorageUtil storageUtil;
 
     private final FileRepository fileRepository;
-
-    private final FileMapper fileMapper;
 
     @Data
     private static class ProductImport {
@@ -192,7 +190,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductResponse> importFile(MultipartFile fileRequest) {
+    @Async
+    public void importFile(MultipartFile fileRequest) {
         String fileName = fileRequest.getOriginalFilename();
         List<ProductExcelTemplate> template = ProductExcelTemplate.getColumns();
         List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
@@ -272,6 +271,17 @@ public class ProductServiceImpl implements ProductService {
                         List<String> fileUrls = List.of(productUrls.split(","));
                         fileImports.put(productNumber, fileUrls);
                     }
+
+                    if (productImports.size() > 0 && (productImports.size() % 200 == 0)) {
+                        createProductByImport(productImports, fileImports, productNumbers, productCodes, categoryNames, brandNames);
+
+                        productImports.clear();
+                        fileImports.clear();
+                        productNumbers.clear();
+                        productCodes.clear();
+                        categoryNames.clear();
+                        brandNames.clear();
+                    }
                 }
             }
         } catch (Exception e) {
@@ -279,6 +289,11 @@ public class ProductServiceImpl implements ProductService {
             throw new ExceptionResponse("import fileRequest unsuccessfully!!! ");
         }
 
+        log.info("******************** import file successfully");
+    }
+
+    private void createProductByImport(List<ProductImport> productImports, Map<String, List<String>> fileImports, Set<String> productNumbers, Set<String> productCodes, Set<String> categoryNames, Set<String> brandNames) {
+        log.info("******************** import file start");
         // category
         List<ProductPropertyModel> existedCategories = propertyRepository.findByTypeAndNames(ProductPropertyType.CATEGORY, categoryNames.stream().map(item -> item.toUpperCase()).collect(Collectors.toList()));
         List<String> existedCategoryNames = existedCategories.stream().map(item -> item.getName().toUpperCase()).collect(Collectors.toList());
@@ -345,8 +360,6 @@ public class ProductServiceImpl implements ProductService {
         asyncService.generateQRCodeProduct(updatedProducts);
 
         asyncService.createImageProduct(updatedProducts, fileImports);
-
-        return productMapper.toTarget(updatedProducts);
     }
 
     @Override
@@ -363,7 +376,7 @@ public class ProductServiceImpl implements ProductService {
                 .build();
         Page<ProductModel> pages = repository.search(query, pageCriteriaPageableMapper.toPageable(pageCriteria));
         List<ProductResponse> productResponses = enrichProductResponse(pages.getContent());
-    return PageResponse.<ProductResponse>builder()
+        return PageResponse.<ProductResponse>builder()
                 .paging(Paging.builder().totalCount(pages.getTotalElements())
                         .pageIndex(pageCriteria.getPageIndex())
                         .pageSize(pageCriteria.getPageSize())
@@ -377,9 +390,7 @@ public class ProductServiceImpl implements ProductService {
         products.forEach(product -> {
             ProductResponse response = productMapper.toTarget(product);
             if (product.getImages() != null && !product.getImages().isEmpty()) {
-                List<FileModel> files = new ArrayList<>(product.getImages());
-                List<FileResponse> fileResponses = fileMapper.toTarget(files);
-                response.setImages(new HashSet<>(fileResponses));
+                response.setImages(product.getImages());
             }
             productResponses.add(response);
         });
@@ -571,7 +582,7 @@ public class ProductServiceImpl implements ProductService {
             }
             if (product == null)
                 continue;
-            response.setProduct(product);
+            response.setProduct(productMapper.toTarget(product));
             StoreModel store = stores.stream()
                     .filter(item -> item.getName().equals(response.getStoreName()))
                     .findFirst().orElse(null);
@@ -581,13 +592,22 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public List<ProductCheckImportResponse> checkImportFileKiotviet(MultipartFile file) {
         String fileName = file.getOriginalFilename();
         StoreModel store = null;
         if (fileName.endsWith(".xlsx")) {
             String storeName = fileName.substring(0, fileName.lastIndexOf(".xlsx"));
-            List<StoreModel> stores = storeService.findByNameIn(Arrays.asList(storeName));
-            store = stores.isEmpty() ? null : stores.get(0);
+            UserModel user = userService.getUserInfo();
+            if (!user.getRoles().contains(RoleModel.ROLE_ADMIN)) {
+                Set<StoreModel> stores = user.getStores();
+                store = stores.stream()
+                        .filter(item -> item.getName().equals(storeName))
+                        .findFirst().orElse(null);
+            } else {
+                List<StoreModel> stores = storeService.findByNameIn(Arrays.asList(storeName));
+                store = stores.isEmpty() ? null : stores.get(0);
+            }
         }
         if (store == null)
             throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(), InvalidInputError.STORE_INVALID);
@@ -624,17 +644,22 @@ public class ProductServiceImpl implements ProductService {
             throw new ExceptionResponse("import file unsuccessfully!!! ");
         }
 
-        List<String> productNumberList = new ArrayList<>(productNumbers);
-        List<ProductModel> products = repository.findByProductNumberIn(productNumberList);
-        for (int i = 0; i < productNumberList.size(); i++) {
-            String productNumber = productNumberList.get(i);
+        return enrichProductCheckImport(new ArrayList<>(productNumbers), productQuantities, store);
+
+    }
+
+    private List<ProductCheckImportResponse> enrichProductCheckImport(List<String> productNumbers, Map<String, Long> productQuantities, StoreModel store) {
+        List<ProductCheckImportResponse> responses = new ArrayList<>();
+        List<ProductModel> products = repository.findByProductNumberIn(productNumbers);
+        for (int i = 0; i < productNumbers.size(); i++) {
+            String productNumber = productNumbers.get(i);
             ProductModel product = products.stream()
                     .filter(item -> item.getProductNumber().equals(productNumber))
                     .findFirst().orElse(null);
             if (product == null)
                 continue;
             ProductCheckImportResponse response = new ProductCheckImportResponse();
-            response.setProduct(product);
+            response.setProduct(productMapper.toTarget(product));
             response.setQuantity(productQuantities.get(productNumber));
             response.setStore(store);
             responses.add(response);
@@ -666,7 +691,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ExceptionResponse("product is not existed!!!");
         ProductSaleResponse response = new ProductSaleResponse();
         ProductModel product = productOptional.get();
-        response.setProduct(product);
+        response.setProduct(productMapper.toTarget(product));
         List<StoreItemModel> storeItems = storeItemService.findByProduct(product);
         UserModel user = userService.getUserInfo();
         Set<StoreModel> ownerStores = user.getStores();
