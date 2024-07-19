@@ -1,19 +1,16 @@
 package com.ss.enums.excel;
 
-public enum ProductCheckImportExcelTemplate {
-    STT("KEY_STT", 0, "STT"),
-    CODE("CODE", 1, "Product Code"),
-    NUMBER("NUMBER", 2, "Product Number"),
+public enum ProductCheckConfirmTemplate {
+    NUMBER("NUMBER", 1, "Product Number"),
+    ORDER_CODE("ORDER_CODE", 2, "Order Code"),
     STORE("STORE", 3, "Store"),
     QUANTITY("QUANTITY", 4, "Quantity"),
-    COST("COST", 5, "Cost"),
-    INCENTIVE("INCENTIVE", 6, "Incentive"),
     ;
     private final String key;
     private final int column;
     private final String title;
 
-    ProductCheckImportExcelTemplate(String key, int column, String title) {
+    ProductCheckConfirmTemplate(String key, int column, String title) {
         this.key = key;
         this.column = column;
         this.title = title;

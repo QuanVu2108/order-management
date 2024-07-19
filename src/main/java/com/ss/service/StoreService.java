@@ -24,4 +24,6 @@ public interface StoreService {
     Set<StoreModel> findByIds(List<UUID> ids);
 
     List<StoreModel> findByNameIn(Collection<String> storeNames);
+
+    List<StoreModel> findAll();
 }

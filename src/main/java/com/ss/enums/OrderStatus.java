@@ -2,8 +2,8 @@ package com.ss.enums;
 
 public enum OrderStatus {
     NEW,
-    CHECK_CONFIRM,
-    CONFIRM,
+    CHECKING,
+    CONFIRMED,
     PENDING,
     DONE,
     CANCEL

@@ -73,7 +73,7 @@ public class OrderItemModel extends AuditModel {
     @Enumerated(EnumType.STRING)
     private OrderItemStatus status;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     @JsonBackReference
     private OrderModel orderModel;

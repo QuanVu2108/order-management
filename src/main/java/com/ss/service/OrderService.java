@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OrderService {
-    OrderModel createOrder(OrderRequest request);
+    OrderResponse createOrder(OrderRequest request);
 
-    OrderModel updateOrder(UUID orderId, OrderRequest request);
+    OrderResponse updateOrder(UUID orderId, OrderRequest request);
 
     PageResponse<OrderResponse> searchOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria);
 
