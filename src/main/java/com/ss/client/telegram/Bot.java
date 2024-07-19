@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-@Component
+//@Component
 public class Bot extends TelegramLongPollingBot {
     @Value("${telegram-bot.username}")
     private String botUsername;
