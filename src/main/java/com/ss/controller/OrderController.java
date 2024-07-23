@@ -35,12 +35,12 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    ServiceResponse<OrderModel> createOrder(@RequestBody @Valid OrderRequest request) {
+    ServiceResponse<OrderResponse> createOrder(@RequestBody @Valid OrderRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.createOrder(request));
     }
 
     @PutMapping("/{orderId}")
-    ServiceResponse<OrderModel> updateOrder(
+    ServiceResponse<OrderResponse> updateOrder(
             @PathVariable @Valid UUID orderId,
             @RequestBody @Valid OrderRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrder(orderId, request));

@@ -58,8 +58,7 @@ public class OrderModel extends AuditModel {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
-    @OneToMany(mappedBy = "orderModel", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference
+    @OneToMany(mappedBy = "orderModel", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItemModel> items;
 
     public OrderModel(String code) {

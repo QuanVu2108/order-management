@@ -10,17 +10,12 @@ import com.ss.dto.response.ProductCheckImportResponse;
 import com.ss.dto.response.ProductResponse;
 import com.ss.dto.response.ProductSaleResponse;
 import com.ss.enums.ProductPropertyType;
-import com.ss.enums.excel.ProductCheckImportExcelTemplate;
-import com.ss.enums.excel.ProductCheckImportKiotvietExcelTemplate;
-import com.ss.enums.excel.ProductExcelTemplate;
-import com.ss.enums.excel.ProductExportExcel;
+import com.ss.enums.excel.*;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.DuplicatedError;
 import com.ss.exception.http.InvalidInputError;
 import com.ss.model.*;
-import com.ss.repository.FileRepository;
-import com.ss.repository.ProductPropertyRepository;
-import com.ss.repository.ProductRepository;
+import com.ss.repository.*;
 import com.ss.repository.query.ProductQuery;
 import com.ss.service.*;
 import com.ss.service.mapper.ProductMapper;
@@ -78,6 +73,10 @@ public class ProductServiceImpl implements ProductService {
     private final StorageUtil storageUtil;
 
     private final FileRepository fileRepository;
+
+    private final OrderRepository orderRepository;
+
+    private final OrderItemRepository orderItemRepository;
 
     @Data
     private static class ProductImport {
@@ -615,7 +614,6 @@ public class ProductServiceImpl implements ProductService {
         List<ProductCheckImportKiotvietExcelTemplate> template = List.of(ProductCheckImportKiotvietExcelTemplate.values());
         List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
 
-        List<ProductCheckImportResponse> responses = new ArrayList<>();
         Set<String> productNumbers = new HashSet<>();
         Map<String, Long> productQuantities = new HashMap<>();
         try {
@@ -697,5 +695,77 @@ public class ProductServiceImpl implements ProductService {
         Set<StoreModel> ownerStores = user.getStores();
         response.setStoreInfo(ownerStores, storeItems);
         return response;
+    }
+
+    @Override
+    @Transactional
+    public List<ProductCheckImportResponse> checkConfirmFile(UUID id, MultipartFile file) {
+        Optional<OrderModel> orderOptional = orderRepository.findById(id);
+        if (orderOptional.isEmpty())
+            throw new ExceptionResponse("order is not existed!!!");
+        OrderModel order = orderOptional.get();
+        String orderCode = order.getCode();
+
+        List<OrderItemModel> orderItems = orderItemRepository.findByOrderModel(order);
+
+        String fileName = file.getOriginalFilename();
+        List<StoreModel> stores = new ArrayList<>();
+        UserModel user = userService.getUserInfo();
+        if (!user.getRoles().contains(RoleModel.ROLE_ADMIN)) {
+            stores.addAll(user.getStores());
+        } else
+            stores.addAll(storeService.findAll());
+
+        if (stores.isEmpty())
+            throw new ExceptionResponse("Need config store for this account!!!");
+
+        List<ProductCheckConfirmTemplate> template = List.of(ProductCheckConfirmTemplate.values());
+        List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
+
+        List<ProductCheckImportResponse> responses = new ArrayList<>();
+        try {
+            InputStream inputStream = file.getInputStream();
+            List<Map<String, String>> assets = readUploadFileData(inputStream, fileName, columns, 4, 0, new ArrayList<>());
+            int idx = 1;
+            for (Map<String, String> asset : assets) {
+                String orderCodeRequest = asset.get(ProductCheckConfirmTemplate.ORDER_CODE.getKey());
+                if (!orderCode.equalsIgnoreCase(orderCodeRequest))
+                    throw new ExceptionResponse("order is invalid " + idx);
+
+                String storeName = asset.get(ProductCheckConfirmTemplate.STORE.getKey());
+                StoreModel store = stores.stream().filter(item -> storeName.equalsIgnoreCase(item.getName())).findFirst().orElse(null);
+                if (store != null) {
+                    String productNumber = asset.get(ProductCheckConfirmTemplate.NUMBER.getKey());
+                    if (StringUtils.hasText(productNumber)) {
+                        OrderItemModel orderItem = orderItems.stream()
+                                .filter(item -> productNumber.equalsIgnoreCase(item.getProduct().getProductNumber()))
+                                .findFirst().orElse(null);
+                        if (orderItem != null) {
+                            Long quantity = Long.valueOf(0);
+                            try {
+                                quantity = Long.parseLong(asset.get(ProductCheckConfirmTemplate.QUANTITY.getKey()));
+                            } catch (Exception ex) {
+                                log.error("************ can not parse quantity in row " + idx);
+                            }
+                            if (quantity != 0) {
+                                if (quantity > orderItem.getQuantityOrder())
+                                    quantity = orderItem.getQuantityOrder();
+
+                                ProductCheckImportResponse response = new ProductCheckImportResponse();
+                                response.setProduct(productMapper.toTarget(orderItem.getProduct()));
+                                response.setQuantity(quantity);
+                                response.setStore(store);
+                                responses.add(response);
+                            }
+                        }
+                    }
+                }
+                idx++;
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new ExceptionResponse("import file unsuccessfully!!! ");
+        }
+        return responses;
     }
 }

@@ -9,16 +9,13 @@ import com.ss.dto.response.ProductResponse;
 import com.ss.dto.response.ServiceResponse;
 import com.ss.enums.ExportFormat;
 import com.ss.enums.ProductPropertyType;
-import com.ss.model.ProductModel;
 import com.ss.model.ProductPropertyModel;
 import com.ss.service.ProductPropertyService;
 import com.ss.service.ProductService;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,13 +40,13 @@ public class ProductController {
 
     @PutMapping("/{id}")
     ServiceResponse<ProductResponse> update(@PathVariable @Valid long id,
-                                         @RequestBody @Valid ProductRequest request) {
+                                            @RequestBody @Valid ProductRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, productService.update(id, request));
     }
 
     @PostMapping("/upload-image/{id}")
     ServiceResponse<ProductResponse> uploadImage(@PathVariable @Valid long id,
-                                              @RequestPart(name = "fileRequests") MultipartFile[] fileRequests) {
+                                                 @RequestPart(name = "fileRequests") MultipartFile[] fileRequests) {
         return ServiceResponse.succeed(HttpStatus.OK, productService.uploadImage(id, fileRequests));
     }
 
@@ -149,16 +146,29 @@ public class ProductController {
     @PostMapping("/check-import-file")
     ServiceResponse<List<ProductCheckImportResponse>> checkImportFile(MultipartFile file) throws Exception {
         return ServiceResponse.succeed(HttpStatus.OK, productService.checkImportFile(file));
-    };
+    }
+
+    ;
 
     @PostMapping("/check-import-file-kiotviet")
     ServiceResponse<List<ProductCheckImportResponse>> checkImportFileKiotviet(MultipartFile file) throws Exception {
         return ServiceResponse.succeed(HttpStatus.OK, productService.checkImportFileKiotviet(file));
-    };
+    }
+
+    ;
+
+    @PostMapping("/check-confirm-file/{id}")
+    ServiceResponse<List<ProductCheckImportResponse>> checkConfirmFile(@PathVariable @Valid UUID id, MultipartFile file) {
+        return ServiceResponse.succeed(HttpStatus.OK, productService.checkConfirmFile(id, file));
+    }
+
+    ;
 
     @PostMapping("/generate-qr-code")
     ServiceResponse<Void> generateQRCode() {
         productService.generateQRCode();
         return ServiceResponse.succeed(HttpStatus.OK, null);
-    };
+    }
+
+    ;
 }

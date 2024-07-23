@@ -72,7 +72,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderModel createOrder(OrderRequest request) {
+    public OrderResponse createOrder(OrderRequest request) {
         String orderCode = genOrderCode();
         OrderModel order = new OrderModel(orderCode);
         order.update(request);
@@ -80,7 +80,7 @@ public class OrderServiceImpl implements OrderService {
         order = orderRepository.save(order);
         List<OrderItemModel> orderItems = createOrderItem(request.getItems(), order);
         order.setItems(orderItems);
-        return order;
+        return enrichOrderResponse(List.of(order), List.of(userService.getUserInfo())).get(0);
     }
 
     private String genOrderCode() {
@@ -91,7 +91,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderModel updateOrder(UUID orderId, OrderRequest request) {
+    public OrderResponse updateOrder(UUID orderId, OrderRequest request) {
         Optional<OrderModel> orderModelOptional = orderRepository.findById(orderId);
         if (orderModelOptional.isEmpty())
             throw new ExceptionResponse("order is not existed!!!");
@@ -160,7 +160,7 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList()));
         if (order.getStatus().equals(OrderStatus.PENDING))
             telegramBotService.sendOrder(order);
-        return order;
+        return enrichOrderResponse(List.of(order), List.of(userService.getUserInfo())).get(0);
     }
 
     public List<OrderItemModel> createOrderItem(List<OrderItemRequest> itemRequests, OrderModel order) {
@@ -202,6 +202,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public PageResponse<OrderResponse> searchOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria) {
         List<String> createdUsers = null;
         List<UserModel> users = new ArrayList<>();
@@ -234,7 +235,7 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
-    private List<OrderResponse> enrichOrderResponse(List<OrderModel> orders, List<UserModel> users) {
+    public List<OrderResponse> enrichOrderResponse(List<OrderModel> orders, List<UserModel> users) {
         List<OrderResponse> responses = new ArrayList<>();
         if (users.isEmpty()) {
             Set<String> userNames = orders.stream()

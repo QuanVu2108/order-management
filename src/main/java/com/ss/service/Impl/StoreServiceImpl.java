@@ -97,4 +97,9 @@ public class StoreServiceImpl implements StoreService {
             return new ArrayList<>();
         return storeRepository.findByNameIn(new ArrayList<>(storeNames));
     }
+
+    @Override
+    public List<StoreModel> findAll() {
+        return storeRepository.findAll();
+    }
 }

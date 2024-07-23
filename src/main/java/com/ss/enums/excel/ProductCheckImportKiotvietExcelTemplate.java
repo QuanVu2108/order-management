@@ -1,7 +1,6 @@
 package com.ss.enums.excel;
 
 public enum ProductCheckImportKiotvietExcelTemplate {
-    // coordinated progress
     NUMBER("NUMBER", 1, "Product Number"),
     QUANTITY("QUANTITY", 18, "Quantity")
     ;
