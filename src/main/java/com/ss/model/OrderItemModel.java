@@ -25,7 +25,7 @@ public class OrderItemModel extends AuditModel {
     @Column(name = "code")
     private String code;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", referencedColumnName = "id")
     private ProductModel product;
 
@@ -62,7 +62,7 @@ public class OrderItemModel extends AuditModel {
     @Column(name = "incentive")
     private Double incentive;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id", referencedColumnName = "id")
     private StoreModel store;
 

@@ -44,4 +44,6 @@ public interface ProductService {
     ProductSaleResponse getProductInfoBySale(long id);
 
     List<ProductCheckImportResponse> checkConfirmFile(UUID id, MultipartFile file);
+
+    List<ProductResponse> enrichProductResponse(List<ProductModel> products);
 }

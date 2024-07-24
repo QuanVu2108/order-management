@@ -10,6 +10,7 @@ import com.ss.dto.response.ProductCheckImportResponse;
 import com.ss.dto.response.ProductResponse;
 import com.ss.dto.response.ProductSaleResponse;
 import com.ss.enums.ProductPropertyType;
+import com.ss.enums.StoreItemType;
 import com.ss.enums.excel.*;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.DuplicatedError;
@@ -18,7 +19,6 @@ import com.ss.model.*;
 import com.ss.repository.*;
 import com.ss.repository.query.ProductQuery;
 import com.ss.service.*;
-import com.ss.service.mapper.ProductMapper;
 import com.ss.util.StorageUtil;
 import com.ss.util.excel.ExcelTemplate;
 import lombok.Data;
@@ -56,8 +56,6 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository repository;
 
-    private final ProductMapper productMapper;
-
     private final ProductPropertyRepository propertyRepository;
 
     private final StoreService storeService;
@@ -66,7 +64,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final AsyncService asyncService;
 
-    private final StoreItemService storeItemService;
+    private final StoreItemRepository storeItemRepository;
 
     private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
 
@@ -119,7 +117,7 @@ public class ProductServiceImpl implements ProductService {
         product = repository.save(product);
         product.setQrCode(generateQRCodeImage(String.valueOf(product.getId())));
         product = repository.save(product);
-        return productMapper.toTarget(product);
+        return enrichProductResponse(Arrays.asList(product)).get(0);
     }
 
 
@@ -172,7 +170,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         product = repository.save(product);
-        return productMapper.toTarget(product);
+        return enrichProductResponse(Arrays.asList(product)).get(0);
     }
 
     @Override
@@ -362,7 +360,6 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    @Transactional
     public PageResponse<ProductResponse> search(String code, String number, String name, String category, String brand, String color, String size, PageCriteria pageCriteria) {
         ProductQuery query = ProductQuery.builder()
                 .code(convertSqlSearchText(code))
@@ -384,13 +381,28 @@ public class ProductServiceImpl implements ProductService {
                 .build();
     }
 
-    private List<ProductResponse> enrichProductResponse(List<ProductModel> products) {
+    @Override
+    public List<ProductResponse> enrichProductResponse(List<ProductModel> products) {
         List<ProductResponse> productResponses = new ArrayList<>();
+        List<ProductPropertyModel> allProperties = propertyRepository.findAll();
+
+        List<FileModel> allImages = fileRepository.findByProductIn(products);
+
         products.forEach(product -> {
-            ProductResponse response = productMapper.toTarget(product);
-            if (product.getImages() != null && !product.getImages().isEmpty()) {
-                response.setImages(product.getImages());
-            }
+            ProductResponse response = new ProductResponse(product);
+            Set<FileResponse> images = allImages.stream()
+                    .filter(item -> item.getProduct().getId() == product.getId())
+                    .map(FileResponse::new)
+                    .collect(Collectors.toSet());
+            response.setImages(images);
+
+            response.setCategory(allProperties.stream()
+                    .filter(item -> item.getId().equals(product.getCategory().getId()))
+                    .findFirst().orElse(null));
+            response.setBrand(allProperties.stream()
+                    .filter(item -> item.getId().equals(product.getBrand().getId()))
+                    .findFirst().orElse(null));
+
             productResponses.add(response);
         });
         return productResponses;
@@ -494,7 +506,7 @@ public class ProductServiceImpl implements ProductService {
         for (int i = 0; i < fileRequests.length; i++) {
             FileModel file = storageUtil.uploadFile(fileRequests[i]);
             file.setProduct(product);
-            fileRepository.save(file);
+            file = fileRepository.save(file);
             images.add(file);
         }
         Set<FileModel> existedImages = product.getImages();
@@ -581,7 +593,7 @@ public class ProductServiceImpl implements ProductService {
             }
             if (product == null)
                 continue;
-            response.setProduct(productMapper.toTarget(product));
+            response.setProduct(new ProductResponse(product));
             StoreModel store = stores.stream()
                     .filter(item -> item.getName().equals(response.getStoreName()))
                     .findFirst().orElse(null);
@@ -649,6 +661,7 @@ public class ProductServiceImpl implements ProductService {
     private List<ProductCheckImportResponse> enrichProductCheckImport(List<String> productNumbers, Map<String, Long> productQuantities, StoreModel store) {
         List<ProductCheckImportResponse> responses = new ArrayList<>();
         List<ProductModel> products = repository.findByProductNumberIn(productNumbers);
+        List<ProductResponse> productResponses = enrichProductResponse(products);
         for (int i = 0; i < productNumbers.size(); i++) {
             String productNumber = productNumbers.get(i);
             ProductModel product = products.stream()
@@ -657,7 +670,10 @@ public class ProductServiceImpl implements ProductService {
             if (product == null)
                 continue;
             ProductCheckImportResponse response = new ProductCheckImportResponse();
-            response.setProduct(productMapper.toTarget(product));
+            ProductResponse productResponse = productResponses.stream()
+                    .filter(item -> item.getId() == product.getId())
+                    .findFirst().orElse(null);
+            response.setProduct(productResponse);
             response.setQuantity(productQuantities.get(productNumber));
             response.setStore(store);
             responses.add(response);
@@ -689,8 +705,8 @@ public class ProductServiceImpl implements ProductService {
             throw new ExceptionResponse("product is not existed!!!");
         ProductSaleResponse response = new ProductSaleResponse();
         ProductModel product = productOptional.get();
-        response.setProduct(productMapper.toTarget(product));
-        List<StoreItemModel> storeItems = storeItemService.findByProduct(product);
+        response.setProduct(enrichProductResponse(Arrays.asList(product)).get(0));
+        List<StoreItemModel> storeItems = storeItemRepository.findByProductIdAndType(id, StoreItemType.INVENTORY);
         UserModel user = userService.getUserInfo();
         Set<StoreModel> ownerStores = user.getStores();
         response.setStoreInfo(ownerStores, storeItems);
@@ -707,6 +723,8 @@ public class ProductServiceImpl implements ProductService {
         String orderCode = order.getCode();
 
         List<OrderItemModel> orderItems = orderItemRepository.findByOrderModel(order);
+        List<ProductModel> allProducts = orderItemRepository.findProductsByOrders(Arrays.asList(order));
+        List<ProductResponse> allProductResponses = enrichProductResponse(allProducts);
 
         String fileName = file.getOriginalFilename();
         List<StoreModel> stores = new ArrayList<>();
@@ -752,7 +770,10 @@ public class ProductServiceImpl implements ProductService {
                                     quantity = orderItem.getQuantityOrder();
 
                                 ProductCheckImportResponse response = new ProductCheckImportResponse();
-                                response.setProduct(productMapper.toTarget(orderItem.getProduct()));
+                                ProductResponse productResponse = allProductResponses.stream()
+                                        .filter(item -> item.getId() == orderItem.getProduct().getId())
+                                        .findFirst().orElse(null);
+                                response.setProduct(productResponse);
                                 response.setQuantity(quantity);
                                 response.setStore(store);
                                 responses.add(response);

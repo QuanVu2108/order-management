@@ -13,4 +13,6 @@ public interface FileRepository extends JpaRepository<FileModel, UUID> {
     List<FileModel> findByUrlOriginalIn(List<String> urlOriginals);
 
     List<FileModel> findByProduct(ProductModel product);
+
+    List<FileModel> findByProductIn(List<ProductModel> products);
 }

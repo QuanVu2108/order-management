@@ -1,7 +1,7 @@
 
 package com.ss.dto.response;
 
-import com.ss.model.FileModel;
+import com.ss.model.ProductModel;
 import com.ss.model.ProductPropertyModel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -47,12 +46,18 @@ public class ProductResponse extends AuditResponse {
 
     private byte[] qrCode;
 
-    public void setImages(Set<FileModel> images) {
-        if (images == null)
-            return;
-        this.images = new HashSet<>();
-        images.forEach(image -> {
-            this.images.add(new FileResponse(image));
-        });
+    public ProductResponse(ProductModel model) {
+        this.id = model.getId();
+        this.code = model.getCode();
+        this.productNumber = model.getProductNumber();
+        this.name = model.getName();
+        this.description = model.getDescription();
+        this.soldPrice = model.getSoldPrice();
+        this.costPrice = model.getCostPrice();
+        this.incentive = model.getIncentive();
+        this.color = model.getColor();
+        this.size = model.getSize();
+        this.isActive = model.getIsActive();
+        this.qrCode = model.getQrCode();
     }
 }
