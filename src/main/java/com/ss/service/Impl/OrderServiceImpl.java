@@ -21,7 +21,6 @@ import com.ss.repository.query.OrderItemQuery;
 import com.ss.repository.query.OrderQuery;
 import com.ss.repository.query.UserQuery;
 import com.ss.service.*;
-import com.ss.service.mapper.OrderItemMapper;
 import com.ss.util.StringUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,8 +64,6 @@ public class OrderServiceImpl implements OrderService {
     private final UserService userService;
 
     private final StoreItemService storeItemService;
-
-    private final OrderItemMapper orderItemMapper;
 
     private final TelegramBotService telegramBotService;
 
@@ -202,7 +199,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
     public PageResponse<OrderResponse> searchOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser, PageCriteria pageCriteria) {
         List<String> createdUsers = null;
         List<UserModel> users = new ArrayList<>();
@@ -245,12 +241,25 @@ public class OrderServiceImpl implements OrderService {
             users = userService.findByUsernames(userNames);
         }
 
+        List<OrderItemModel> allOrderItems = orderItemRepository.findByOrderModelIn(orders);
+        List<ProductModel> allProducts = orderItemRepository.findProductsByOrders(orders);
+        List<StoreModel> allStores = orderItemRepository.findStoresByOrders(orders);
+
         for (int i = 0; i < orders.size(); i++) {
             OrderModel order = orders.get(i);
             UserModel user = users.stream()
                     .filter(item -> StringUtils.hasText(order.getCreatedBy()) && order.getCreatedBy().equals(item.getUsername()))
                     .findFirst().orElse(null);
-            OrderResponse response = new OrderResponse(order, user);
+
+            List<OrderItemModel> orderItems = allOrderItems.stream()
+                    .filter(item -> item.getOrderModel().getId().equals(order.getId()))
+                    .collect(Collectors.toList());
+            List<Long> productIds = orderItems.stream().map(item -> item.getProduct().getId()).collect(Collectors.toList());
+            List<ProductModel> products = allProducts.stream()
+                    .filter(item -> productIds.contains(item.getId()))
+                    .collect(Collectors.toList());
+
+            OrderResponse response = new OrderResponse(order, user, orderItems, products, allStores);
             responses.add(response);
         }
         return responses;
@@ -358,15 +367,40 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
     public PageResponse<OrderItemResponse> searchOrderItem(OrderItemQuery orderItemQuery, PageCriteria pageCriteria) {
         Page<OrderItemModel> orderPage = orderItemRepository.search(orderItemQuery, pageCriteriaPageableMapper.toPageable(pageCriteria));
         List<OrderItemModel> orderItems = orderPage.getContent();
+        Set<Long> productIds = new HashSet<>();
+        Set<UUID> storeIds = new HashSet<>();
+        Set<UUID> orderIds = new HashSet<>();
+        orderItems.forEach(orderItem -> {
+            productIds.add(orderItem.getProduct().getId());
+            storeIds.add(orderItem.getStore().getId());
+            orderIds.add(orderItem.getOrderModel().getId());
+        });
+        List<ProductModel> productModels = productService.findByIds(new ArrayList<>(productIds));
+        List<ProductResponse> products = productService.enrichProductResponse(productModels);
+        Set<StoreModel> stores = storeService.findByIds(new ArrayList<>(storeIds));
+        List<OrderModel> orders = orderRepository.findAllById(orderIds);
+
         List<OrderItemResponse> responses = new ArrayList<>();
         orderItems.forEach(orderItem -> {
-            OrderItemResponse response = orderItemMapper.toTarget(orderItem);
-            OrderModel order = orderItem.getOrderModel();
-            response.setOrder(new BasicModelResponse(order.getId(), order.getCode(), null, order.getDate()));
+            OrderItemResponse response = new OrderItemResponse(orderItem);
+            OrderModel order = orders.stream()
+                    .filter(item -> item.getId().equals(orderItem.getOrderModel().getId()))
+                    .findFirst().orElse(null);
+            if (order != null)
+                response.setOrder(new BasicModelResponse(order.getId(), order.getCode(), null, order.getDate()));
+
+            ProductResponse product = products.stream()
+                    .filter(item -> item.getId() == orderItem.getProduct().getId())
+                    .findFirst().orElse(null);
+            response.setProduct(product);
+
+            StoreModel store = stores.stream()
+                    .filter(item -> item.getId().equals(orderItem.getStore().getId()))
+                    .findFirst().orElse(null);
+            response.setStore(store);
             responses.add(response);
         });
         return PageResponse.<OrderItemResponse>builder()
@@ -498,6 +532,10 @@ public class OrderServiceImpl implements OrderService {
             users = userService.findByUsernames(userNames);
         }
 
+        List<OrderItemModel> allOrderItems = orderItemRepository.findByOrderModelIn(orders);
+        List<ProductModel> allProducts = orderItemRepository.findProductsByOrders(orders);
+        List<StoreModel> allStores = orderItemRepository.findStoresByOrders(orders);
+
         List<OrderToolResponse> responses = new ArrayList<>();
         for (int i = 0; i < orders.size(); i++) {
             OrderModel order = orders.get(i);
@@ -505,7 +543,16 @@ public class OrderServiceImpl implements OrderService {
                     .filter(item -> StringUtils.hasText(order.getCreatedBy()) && order.getCreatedBy().equals(item.getUsername()))
                     .findFirst().orElse(null);
             OrderItemStatisticResponse statistic = enrichItemStatistic(order.getItems());
-            OrderResponse orderResponse = new OrderResponse(order, user);
+
+            List<OrderItemModel> orderItems = allOrderItems.stream()
+                    .filter(item -> item.getOrderModel().getId().equals(order.getId()))
+                    .collect(Collectors.toList());
+            List<Long> productIds = orderItems.stream().map(item -> item.getProduct().getId()).collect(Collectors.toList());
+            List<ProductModel> products = allProducts.stream()
+                    .filter(item -> productIds.contains(item.getId()))
+                    .collect(Collectors.toList());
+
+            OrderResponse orderResponse = new OrderResponse(order, user, orderItems, products, allStores);
             OrderToolResponse response = OrderToolResponse.builder()
                     .statistic(statistic)
                     .order(orderResponse)

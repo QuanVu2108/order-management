@@ -3,6 +3,8 @@ package com.ss.repository;
 import com.ss.enums.OrderItemStatus;
 import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
+import com.ss.model.ProductModel;
+import com.ss.model.StoreModel;
 import com.ss.repository.query.OrderItemQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -60,4 +63,12 @@ public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID>
     List<OrderItemModel> searchList(OrderItemQuery query);
 
     List<OrderItemModel> findByStatusInAndQuantityInCartGreaterThan(List<OrderItemStatus> list, Long quantityInCart);
+
+    List<OrderItemModel> findByOrderModelIn(List<OrderModel> orders);
+
+    @Query("SELECT distinct orderItem.product FROM OrderItemModel orderItem WHERE orderItem.orderModel in :orders ")
+    List<ProductModel> findProductsByOrders(List<OrderModel> orders);
+
+    @Query("SELECT distinct orderItem.store FROM OrderItemModel orderItem WHERE orderItem.orderModel in :orders ")
+    List<StoreModel> findStoresByOrders(List<OrderModel> orders);
 }
