@@ -34,11 +34,11 @@ public class ProductModel extends AuditModel {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category", referencedColumnName = "id")
     private ProductPropertyModel category;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand", referencedColumnName = "id")
     private ProductPropertyModel brand;
 

@@ -19,8 +19,8 @@ import com.ss.repository.ProductRepository;
 import com.ss.repository.StoreItemRepository;
 import com.ss.repository.StoreRepository;
 import com.ss.repository.query.StoreItemQuery;
+import com.ss.service.ProductService;
 import com.ss.service.StoreItemService;
-import com.ss.service.mapper.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -42,13 +42,13 @@ public class StoreItemServiceImpl implements StoreItemService {
 
     private final ProductRepository productRepository;
 
-    private final ProductMapper productMapper;
-
     private final StoreRepository storeRepository;
 
     private final OrderRepository orderRepository;
 
     private final PageCriteriaPageableMapper pageCriteriaPageableMapper;
+
+    private final ProductService productService;
 
     @Override
     public List<StoreItemModel> create(StoreItemRequest request) {
@@ -193,7 +193,6 @@ public class StoreItemServiceImpl implements StoreItemService {
     }
 
     @Override
-    @Transactional
     public PageResponse<StoreItemResponse> search(String product, List<Long> productIds, String store, UUID order, StoreItemType type, Long fromTime, Long toTime, PageCriteria pageCriteria) {
         StoreItemQuery query = StoreItemQuery.builder()
                 .product(convertSqlSearchText(product))
@@ -210,7 +209,7 @@ public class StoreItemServiceImpl implements StoreItemService {
                 ? storeItems.stream().filter(item -> item.getProductId() != null).map(StoreItemModel::getProductId).collect(Collectors.toSet())
                 : new HashSet<>(productIds);
         List<ProductModel> productModels = productRepository.findAllById(productIdSet);
-        List<ProductResponse> products = productMapper.toTarget(productModels);
+        List<ProductResponse> products = productService.enrichProductResponse(productModels);
         List<StoreItemResponse> responses = storeItemPage.getContent().stream()
                 .map(item -> new StoreItemResponse(item, products))
                 .collect(Collectors.toList());

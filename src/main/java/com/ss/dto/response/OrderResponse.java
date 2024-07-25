@@ -1,9 +1,7 @@
 package com.ss.dto.response;
 
 import com.ss.enums.OrderStatus;
-import com.ss.model.OrderModel;
-import com.ss.model.ProductModel;
-import com.ss.model.UserModel;
+import com.ss.model.*;
 import lombok.Data;
 
 import java.time.Instant;
@@ -42,6 +40,12 @@ public class OrderResponse {
     @Data
     public static class OrderItemRes {
 
+        private UUID id;
+
+        private String code;
+
+        private StoreModel store;
+
         public ProductRes product;
 
         @Data
@@ -63,12 +67,15 @@ public class OrderResponse {
             }
         }
 
-        private OrderItemRes(ProductRes product) {
-            this.product = product;
+        private OrderItemRes(OrderItemModel orderItem, ProductModel product, StoreModel store) {
+            this.id = orderItem.getId();
+            this.code = orderItem.getCode();
+            this.store = store;
+            this.product = new ProductRes(product);
         }
     }
 
-    public OrderResponse(OrderModel order, UserModel user) {
+    public OrderResponse(OrderModel order, UserModel user, List<OrderItemModel> orderItems, List<ProductModel> products, List<StoreModel> stores) {
         this.id = order.getId();
         this.code = order.getCode();
         this.date = order.getDate();
@@ -82,12 +89,16 @@ public class OrderResponse {
         this.updatedAt = order.getUpdatedAt();
         if (user != null)
             this.createdBy = new BasicModelResponse(user.getId(), user.getUsername(), user.getFullName(), null);
-        if (order.getItems() != null && !order.getItems().isEmpty()) {
+        if (orderItems != null && !orderItems.isEmpty()) {
             this.items = new ArrayList<>();
-            order.getItems().forEach(orderItem -> {
-                ProductModel product = orderItem.getProduct();
-                OrderItemRes.ProductRes productRes = new OrderItemRes.ProductRes(product);
-                this.items.add(new OrderItemRes(productRes));
+            orderItems.forEach(orderItem -> {
+                ProductModel product = products.stream()
+                        .filter(item -> item.getId() == orderItem.getProduct().getId())
+                        .findFirst().orElse(null);
+                StoreModel store = stores.stream()
+                        .filter(item -> item.getId().equals(orderItem.getStore().getId()))
+                        .findFirst().orElse(null);
+                this.items.add(new OrderItemRes(orderItem, product, store));
             });
         }
     }
