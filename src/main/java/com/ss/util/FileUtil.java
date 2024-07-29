@@ -14,8 +14,20 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
+import com.ss.dto.pagination.PageCriteria;
+import com.ss.dto.pagination.PageResponse;
+import com.ss.dto.response.OrderItemResponse;
+import com.ss.enums.excel.OrderItemExportExcel;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.InvalidInputError;
+import com.ss.repository.query.OrderItemQuery;
+import com.ss.util.excel.ExportTemplate;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -26,7 +38,10 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.ss.enums.Const.*;
+import static com.ss.util.excel.ExcelUtil.*;
+import static com.ss.util.excel.ExcelUtil.autoSizeColumns;
 
+@Slf4j
 public final class FileUtil {
 
     public static File createPdfWithTableAndImage(String title, List<String> data, List<List<String>> tableData, List<byte[]> imageBytes) {
@@ -115,6 +130,47 @@ public final class FileUtil {
             }
         } catch (Exception ex) {
             throw new ExceptionResponse(InvalidInputError.DOWNLOAD_FILE_FAILED.getMessage(), InvalidInputError.DOWNLOAD_FILE_FAILED);
+        }
+    }
+
+    public static File createExcelFile(List<Map<String, String>> assets, ExportTemplate[] columns, String fileName) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        Workbook workbook = null;
+        try {
+            workbook = getWorkbook(null, fileName + ".xlsx");
+            CellStyle style = workbook.createCellStyle();
+            style.setWrapText(true);
+            Sheet sheet = workbook.createSheet("data");
+            int rowHeaderIndex = 0;
+            makeHeader(workbook, sheet, rowHeaderIndex, columns);
+
+            makeContent(workbook, sheet, rowHeaderIndex, assets, columns);
+            autoSizeColumns(sheet, columns.length);
+
+            workbook.write(byteArrayOutputStream);
+
+            java.io.File file = java.io.File.createTempFile(fileName, ".xlsx");
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(byteArrayOutputStream.toByteArray());
+            fos.close();
+            return file;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ExceptionResponse(InvalidInputError.EXPORT_FILE_FAILED.getMessage(), InvalidInputError.EXPORT_FILE_FAILED);
+        } finally {
+            try {
+                if (workbook != null) {
+                    workbook.close();
+                }
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+
+            try {
+                byteArrayOutputStream.close();
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 }

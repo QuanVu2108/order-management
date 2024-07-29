@@ -1,29 +1,30 @@
 package com.ss.service.Impl;
 
 import com.ss.client.telegram.Bot;
+import com.ss.dto.response.OrderItemResponse;
+import com.ss.dto.response.ProductResponse;
 import com.ss.enums.Const;
 import com.ss.enums.OrderItemStatus;
-import com.ss.model.FileModel;
-import com.ss.model.OrderItemModel;
-import com.ss.model.OrderModel;
-import com.ss.model.ProductModel;
+import com.ss.enums.excel.OrderItemExportExcel;
+import com.ss.model.*;
+import com.ss.repository.OrderItemRepository;
+import com.ss.service.OrderService;
 import com.ss.service.TelegramBotService;
-import io.swagger.models.auth.In;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.ss.enums.Const.*;
+import static com.ss.enums.Const.DATE_FORMATTER;
+import static com.ss.enums.Const.DATE_TITLE_FORMATTER;
 import static com.ss.util.DateUtils.timestampToString;
-import static com.ss.util.FileUtil.createPdfWithTableAndImage;
-import static com.ss.util.FileUtil.downloadImage;
+import static com.ss.util.FileUtil.*;
 
 @Service
 @Slf4j
@@ -32,9 +33,12 @@ public class TelegramBotServiceImpl implements TelegramBotService {
 
     private final Bot bot;
 
+    private final OrderItemRepository orderItemRepository;
+
     @Override
     @Async
-    public void sendOrder(OrderModel order) {
+    @Transactional
+    public void sendOrder(OrderModel order, List<Map<String, String>> assets) {
         StringBuilder message = new StringBuilder("Order ");
         message.append(order.getCode());
         message.append(" was sent!!!");
@@ -44,15 +48,17 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         tableData.add(tableTitles);
         List<byte[]> imageBytes = new ArrayList<>();
         List<OrderItemModel> orderItems = order.getItems();
+        List<ProductModel> products = orderItemRepository.findProductsByOrders(Arrays.asList(order));
         Map<Long, Long> itemCountMap = new HashMap<>();
-        Set<ProductModel> productSet = new HashSet<>();
         orderItems.forEach(orderItem -> {
-            ProductModel product = orderItem.getProduct();
-            Long cnt = itemCountMap.get(product.getId()) == null ? 0 : itemCountMap.get(product.getId());
-            itemCountMap.put(product.getId(), cnt + orderItem.getQuantityOrder());
-            productSet.add(product);
+            ProductModel product = products.stream()
+                    .filter(item -> item.getId() == orderItem.getProduct().getId())
+                    .findFirst().orElse(null);
+            if (product != null) {
+                Long cnt = itemCountMap.get(product.getId()) == null ? 0 : itemCountMap.get(product.getId());
+                itemCountMap.put(product.getId(), cnt + orderItem.getQuantityOrder());
+            }
         });
-        List<ProductModel> products = new ArrayList<>(productSet);
         Integer productCnt = products.size();
         Integer orderItemCnt = 0;
         for (int i = 0; i < products.size(); i++) {
@@ -80,12 +86,28 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         data.add("Order : " + order.getCode());
         data.add("Total products : " + productCnt);
         data.add("Total product items : " + orderItemCnt);
-        File file = createPdfWithTableAndImage(title, data, tableData, imageBytes);
-        bot.sendDocument(file);
+        File pdfFile = createPdfWithTableAndImage(title, data, tableData, imageBytes);
+        bot.sendDocument(pdfFile);
+
+        List<OrderItemResponse> responses = new ArrayList<>();
+        orderItems.forEach(orderItem -> {
+            OrderItemResponse response = new OrderItemResponse(orderItem);
+            ProductModel product = products.stream()
+                    .filter(item -> item.getId() == orderItem.getProduct().getId())
+                    .findFirst().orElse(null);
+            response.setProduct(new ProductResponse(product));
+
+            StoreModel store = orderItem.getStore();
+            response.setStore(store);
+            responses.add(response);
+        });
+        File excelFile = createExcelFile(assets, OrderItemExportExcel.values(), "order_item");
+        bot.sendDocument(excelFile);
     }
 
     @Override
     @Async
+    @Transactional
     public void sendOrderItems(List<OrderItemModel> orderItems, Map<UUID, Long> quantityMap) {
         bot.sendMessage("China side sent list product");
         List<List<String>> tableData = new ArrayList<>();
@@ -122,6 +144,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
 
     @Override
     @Async
+    @Transactional
     public void sendOrderItem(OrderItemModel orderItem, OrderItemStatus status) {
         StringBuilder message = new StringBuilder("");
         message.append("Order Item " + orderItem.getProduct().getInfo() + " was " + status.name() + " \n ");
