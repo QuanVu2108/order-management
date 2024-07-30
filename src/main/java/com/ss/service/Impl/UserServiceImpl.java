@@ -38,7 +38,7 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.ss.util.StringUtil.convertSqlSearchText;
+import static com.ss.util.CommonUtil.convertSqlSearchText;
 
 @Service
 @RequiredArgsConstructor

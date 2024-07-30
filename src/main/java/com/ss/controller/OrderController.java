@@ -11,7 +11,6 @@ import com.ss.enums.ExportFormat;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.model.OrderItemModel;
-import com.ss.model.OrderModel;
 import com.ss.repository.query.OrderItemQuery;
 import com.ss.service.OrderService;
 import lombok.AllArgsConstructor;
@@ -25,7 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
-import static com.ss.util.StringUtil.convertSqlSearchText;
+import static com.ss.util.CommonUtil.convertSqlSearchText;
 
 @RestController
 @RequestMapping("/order")

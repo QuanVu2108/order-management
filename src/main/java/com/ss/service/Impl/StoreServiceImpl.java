@@ -9,7 +9,7 @@ import com.ss.exception.ExceptionResponse;
 import com.ss.model.StoreModel;
 import com.ss.repository.StoreRepository;
 import com.ss.service.StoreService;
-import com.ss.util.StringUtil;
+import com.ss.util.CommonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -62,7 +62,7 @@ public class StoreServiceImpl implements StoreService {
     @Override
     @Transactional
     public PageResponse<StoreModel> search(String keyword, PageCriteria pageCriteria) {
-        keyword = StringUtil.convertSqlSearchText(keyword);
+        keyword = CommonUtil.convertSqlSearchText(keyword);
         Page<StoreModel> storePage = storeRepository.search(keyword, pageCriteriaPageableMapper.toPageable(pageCriteria));
 
         return PageResponse.<StoreModel>builder()

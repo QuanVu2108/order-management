@@ -46,7 +46,7 @@ import static com.ss.enums.Const.DATE_TIME_DETAIL_FORMATTER;
 import static com.ss.enums.Const.MAX_EXPORT_SIZE;
 import static com.ss.util.DateUtils.instantToString;
 import static com.ss.util.QRCodeUtil.generateQRCodeImage;
-import static com.ss.util.StringUtil.*;
+import static com.ss.util.CommonUtil.*;
 import static com.ss.util.excel.ExcelUtil.*;
 
 @Service

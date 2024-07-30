@@ -5,31 +5,21 @@ import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.ProductPropertyRequest;
-import com.ss.dto.response.ProductCheckImportResponse;
 import com.ss.enums.ProductPropertyType;
-import com.ss.enums.excel.ProductCheckImportExcelTemplate;
 import com.ss.exception.ExceptionResponse;
 import com.ss.model.ProductModel;
 import com.ss.model.ProductPropertyModel;
-import com.ss.model.StoreModel;
 import com.ss.repository.ProductPropertyRepository;
 import com.ss.repository.ProductRepository;
 import com.ss.service.ProductPropertyService;
-import com.ss.util.excel.ExcelTemplate;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static com.ss.util.StringUtil.convertSqlSearchText;
-import static com.ss.util.excel.ExcelUtil.readUploadFileData;
+import static com.ss.util.CommonUtil.convertSqlSearchText;
 
 @Service
 @Slf4j

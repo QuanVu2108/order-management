@@ -226,12 +226,16 @@ public class ExcelUtil {
     public static void makeHeader(Workbook workbook, Sheet sheet, int rowHeaderIndex, ExportTemplate[] columns) {
         Row rowHeader = sheet.createRow(rowHeaderIndex);
         CellStyle headerStyle = workbook.createCellStyle();
+        headerStyle.setBorderTop(BorderStyle.THIN);
+        headerStyle.setBorderBottom(BorderStyle.THIN);
+        headerStyle.setBorderLeft(BorderStyle.THIN);
+        headerStyle.setBorderRight(BorderStyle.THIN);
         headerStyle.setWrapText(true);
+        headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
         Font font = workbook.createFont();
         font.setBold(true);
         headerStyle.setFont(font);
-        headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-        headerStyle.setAlignment(HorizontalAlignment.CENTER);
 
         // set header
         for (int i = 0; i < columns.length; i++) {

@@ -12,6 +12,7 @@ import com.ss.repository.query.OrderItemQuery;
 import org.springframework.core.io.Resource;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface OrderService {
@@ -49,4 +50,5 @@ public interface OrderService {
 
     List<OrderItemModel> updateItemByUpdating(OrderItemUpdatedRequest request);
 
+    List<Map<String, String>> getOrderItemAssets(List<OrderItemResponse> data);
 }

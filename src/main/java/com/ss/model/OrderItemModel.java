@@ -2,13 +2,18 @@ package com.ss.model;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.ss.dto.request.*;
+import com.ss.dto.request.OrderItemReceivedRequest;
+import com.ss.dto.request.OrderItemRequest;
+import com.ss.dto.request.OrderItemToolRequest;
+import com.ss.dto.request.OrderItemUpdatedDetailRequest;
 import com.ss.enums.OrderItemStatus;
 import lombok.*;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.util.UUID;
+
+import static com.ss.util.CommonUtil.nullToDefault;
 
 @Entity
 @Table(name = "order_item")
@@ -91,16 +96,14 @@ public class OrderItemModel extends AuditModel {
 
     public void update(OrderItemRequest itemRequest, StoreModel store, ProductModel product) {
         this.note = itemRequest.getNote();
-        this.quantityOrder = itemRequest.getQuantity();
-        this.quantityReality = itemRequest.getQuantity();
-        this.cost = itemRequest.getCost();
-        this.costReality = itemRequest.getCost();
-        this.costTotal = itemRequest.getCostTotal();
-        this.incentive = itemRequest.getIncentive();
-        if (store != null)
-            this.store = store;
-        if (product != null)
-            this.product = product;
+        this.quantityOrder = nullToDefault(itemRequest.getQuantity(), this.quantityOrder);
+        this.quantityReality = nullToDefault(itemRequest.getQuantity(), this.quantityReality);
+        this.cost = nullToDefault(itemRequest.getCost(), this.cost);
+        this.costReality = nullToDefault(itemRequest.getCost(), this.costReality);
+        this.costTotal = nullToDefault(itemRequest.getCostTotal(), this.costTotal);
+        this.incentive = nullToDefault(itemRequest.getIncentive(), this.incentive);
+        this.store = nullToDefault(store, this.store);
+        this.product = nullToDefault(product, this.product);
     }
 
     public void updateByTool(OrderItemToolRequest request) {

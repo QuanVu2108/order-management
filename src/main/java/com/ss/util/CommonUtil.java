@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public final class StringUtil<T> {
+public final class CommonUtil<T> {
 
     public static List<String> uuidGetNotContainedList(List<UUID> childList, List<UUID> parentList) {
         List<String> childStrList = childList == null ? new ArrayList<>() : childList.stream().map(item -> item.toString()).collect(Collectors.toList());
@@ -43,4 +43,9 @@ public final class StringUtil<T> {
         }
         return str.length();
     }
+
+    public static <T> T nullToDefault(T value, T defaultValue) {
+        return value == null ? defaultValue : value;
+    }
+
 }

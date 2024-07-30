@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public interface TelegramBotService {
-    void sendOrder(OrderModel order);
+    void sendOrder(OrderModel order, List<Map<String, String>> assets);
     void sendOrderItems(List<OrderItemModel> orderItems, Map<UUID, Long> quantityMap);
 
     void sendOrderItem(OrderItemModel orderItem, OrderItemStatus status);

@@ -15,13 +15,14 @@ import com.ss.enums.excel.OrderItemExportExcel;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.InvalidInputError;
 import com.ss.model.*;
+import com.ss.repository.FileRepository;
 import com.ss.repository.OrderItemRepository;
 import com.ss.repository.OrderRepository;
 import com.ss.repository.query.OrderItemQuery;
 import com.ss.repository.query.OrderQuery;
 import com.ss.repository.query.UserQuery;
 import com.ss.service.*;
-import com.ss.util.StringUtil;
+import com.ss.util.CommonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
 import static com.ss.enums.Const.*;
 import static com.ss.util.DateUtils.instantToString;
 import static com.ss.util.DateUtils.timestampToString;
-import static com.ss.util.StringUtil.convertToString;
+import static com.ss.util.CommonUtil.convertToString;
 import static com.ss.util.excel.ExcelUtil.*;
 
 @Service
@@ -64,6 +65,8 @@ public class OrderServiceImpl implements OrderService {
     private final UserService userService;
 
     private final StoreItemService storeItemService;
+
+    private final FileRepository fileRepository;
 
     private final TelegramBotService telegramBotService;
 
@@ -123,6 +126,7 @@ public class OrderServiceImpl implements OrderService {
                 .map(OrderItemRequest::getProductId)
                 .collect(Collectors.toList());
         List<ProductModel> products = productService.findByIds(productIds);
+        List<FileModel> files = fileRepository.findByProductIn(products);
 
         List<OrderItemModel> existedItems = orderItemRepository.findAllById(updatingItemIds);
         existedItems.forEach(existedItem -> {
@@ -155,8 +159,35 @@ public class OrderServiceImpl implements OrderService {
         order.setItems(updatedOrderItems.stream()
                 .filter(item -> !item.isDeleted())
                 .collect(Collectors.toList()));
-        if (order.getStatus().equals(OrderStatus.PENDING))
-            telegramBotService.sendOrder(order);
+        if (order.getStatus().equals(OrderStatus.PENDING)) {
+
+            List<OrderItemResponse> responses = new ArrayList<>();
+            OrderModel finalOrder = order;
+            orderItems.forEach(orderItem -> {
+                OrderItemResponse response = new OrderItemResponse(orderItem);
+                response.setOrder(new BasicModelResponse(finalOrder.getId(), finalOrder.getCode(), null, finalOrder.getDate()));
+
+                ProductResponse product = products.stream()
+                        .filter(item -> item.getId() == orderItem.getProduct().getId())
+                        .map(ProductResponse::new)
+                        .findFirst().orElse(null);
+
+                Set<FileResponse> images = files.stream()
+                        .filter(item -> item.getProduct().getId() == product.getId())
+                        .map(FileResponse::new)
+                        .collect(Collectors.toSet());
+                product.setImages(images);
+                response.setProduct(product);
+
+                StoreModel store = stores.stream()
+                        .filter(item -> item.getId().equals(orderItem.getStore().getId()))
+                        .findFirst().orElse(null);
+                response.setStore(store);
+                responses.add(response);
+            });
+            List<Map<String, String>> assets = getOrderItemAssets(responses);
+            telegramBotService.sendOrder(order, assets);
+        }
         return enrichOrderResponse(List.of(order), List.of(userService.getUserInfo())).get(0);
     }
 
@@ -213,7 +244,7 @@ public class OrderServiceImpl implements OrderService {
         }
         OrderQuery query = OrderQuery.builder()
                 .ids(ids)
-                .code(StringUtil.convertSqlSearchText(code))
+                .code(CommonUtil.convertSqlSearchText(code))
                 .statuses(statuses)
                 .fromDate(fromDate)
                 .toDate(toDate)
@@ -458,7 +489,8 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private List<Map<String, String>> getOrderItemAssets(List<OrderItemResponse> data) {
+    @Override
+    public List<Map<String, String>> getOrderItemAssets(List<OrderItemResponse> data) {
         List<Map<String, String>> result = new ArrayList<>();
         int count = 1;
         for (OrderItemResponse orderItem : data) {
@@ -487,6 +519,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemToolRequest request) {
         Optional<OrderItemModel> orderItemModelOptional = orderItemRepository.findById(orderItemId);
         if (orderItemModelOptional.isEmpty())
@@ -517,7 +550,7 @@ public class OrderServiceImpl implements OrderService {
         }
         OrderQuery query = OrderQuery.builder()
                 .ids(ids)
-                .code(StringUtil.convertSqlSearchText(code))
+                .code(CommonUtil.convertSqlSearchText(code))
                 .statuses(statuses)
                 .fromDate(fromDate)
                 .toDate(toDate)
@@ -614,7 +647,7 @@ public class OrderServiceImpl implements OrderService {
         }
         OrderQuery query = OrderQuery.builder()
                 .ids(ids)
-                .code(StringUtil.convertSqlSearchText(code))
+                .code(CommonUtil.convertSqlSearchText(code))
                 .statuses(statuses)
                 .fromDate(fromDate)
                 .toDate(toDate)
@@ -774,6 +807,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request) {
         List<OrderItemModel> orderItems = orderItemRepository.findAllById(request.getIds());
         Map<UUID, Long> inCartOrderItem = new HashMap<>();
