@@ -85,7 +85,7 @@ public class StoreServiceImpl implements StoreService {
     }
 
     @Override
-    public Set<StoreModel> findByIds(List<UUID> ids) {
+    public Set<StoreModel> findByIds(Collection<UUID> ids) {
         if (ids == null || ids.isEmpty())
             return new HashSet<>();
         return new HashSet<>(storeRepository.findAllById(ids));

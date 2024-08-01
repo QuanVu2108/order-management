@@ -93,7 +93,7 @@ gcp:
     id: ${GCP_BUCKET_ID:order-management}
 
 telegram-bot:
-  token: "6373709530:AAFYS5ZqiL3pjlGI-gr03-JSCOFNwwNdnuE"
+  token: "7337351130:AAGjefblo2y0vaYLEI7l4JWqYZyGLXeNmNA"
   username: "lux_bot"
   group-id: -1002006995047
 

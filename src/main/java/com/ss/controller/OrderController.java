@@ -167,20 +167,20 @@ public class OrderController {
     }
 
     @PutMapping("/order-item/update")
-    ServiceResponse<List<OrderItemModel>> updateOrderItem(
+    ServiceResponse<List<OrderItemResponse>> updateOrderItem(
             @RequestBody @Valid OrderItemUpdatedRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.updateItemByUpdating(request));
     }
 
     @PutMapping("/order-item/receive/{orderItemId}")
-    ServiceResponse<OrderItemModel> receiveOrderItem(
+    ServiceResponse<OrderItemResponse> receiveOrderItem(
             @PathVariable @Valid UUID orderItemId,
             @RequestBody @Valid OrderItemReceivedRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.receiveItem(orderItemId, request));
     }
 
     @PutMapping("/order-item/cancel/{orderItemId}")
-    ServiceResponse<OrderItemModel> cancelOrderItem(@PathVariable @Valid UUID orderItemId) {
+    ServiceResponse<OrderItemResponse> cancelOrderItem(@PathVariable @Valid UUID orderItemId) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.cancelItem(orderItemId));
     }
 

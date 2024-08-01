@@ -38,17 +38,17 @@ public interface OrderService {
 
     OrderStatisticResponse getStatistic(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
 
-    OrderItemModel receiveItem(UUID orderItemId, OrderItemReceivedRequest request);
+    OrderItemResponse receiveItem(UUID orderItemId, OrderItemReceivedRequest request);
 
     List<OrderItemByStoreResponse> getOrderByStore(List<OrderItemStatus> statuses);
 
-    OrderItemModel cancelItem(UUID orderItemId);
+    OrderItemResponse cancelItem(UUID orderItemId);
 
     OrderItemStatisticResponse getOrderItemStatistic(OrderItemQuery orderItemQuery);
 
     List<OrderItemByStoreResponse> getStoreOrderByInCart();
 
-    List<OrderItemModel> updateItemByUpdating(OrderItemUpdatedRequest request);
+    List<OrderItemResponse> updateItemByUpdating(OrderItemUpdatedRequest request);
 
     List<Map<String, String>> getOrderItemAssets(List<OrderItemResponse> data);
 }
