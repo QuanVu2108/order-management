@@ -1,14 +1,16 @@
 package com.ss.service.Impl;
 
 import com.ss.client.telegram.Bot;
+import com.ss.dto.response.FileResponse;
 import com.ss.dto.response.OrderItemResponse;
 import com.ss.dto.response.ProductResponse;
 import com.ss.enums.Const;
 import com.ss.enums.OrderItemStatus;
-import com.ss.enums.excel.OrderItemExportExcel;
+import com.ss.enums.OrderStatus;
+import com.ss.enums.excel.OrderItemTelegramExcel;
 import com.ss.model.*;
 import com.ss.repository.OrderItemRepository;
-import com.ss.service.OrderService;
+import com.ss.service.ProductService;
 import com.ss.service.TelegramBotService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static com.ss.enums.Const.DATE_FORMATTER;
 import static com.ss.enums.Const.DATE_TITLE_FORMATTER;
+import static com.ss.util.CommonUtil.convertToString;
 import static com.ss.util.DateUtils.timestampToString;
 import static com.ss.util.FileUtil.*;
 
@@ -35,23 +38,31 @@ public class TelegramBotServiceImpl implements TelegramBotService {
 
     private final OrderItemRepository orderItemRepository;
 
+    private final ProductService productService;
+
     @Override
     @Async
     @Transactional
-    public void sendOrder(OrderModel order, List<Map<String, String>> assets) {
+    public void sendOrder(OrderModel order) {
         StringBuilder message = new StringBuilder("Order ");
         message.append(order.getCode());
-        message.append(" was sent!!!");
+        if (OrderStatus.CHECKING.equals(order.getStatus()))
+            message.append(" was sent to checking !!!");
+        else if (OrderStatus.PENDING.equals(order.getStatus()))
+            message.append(" was confirmed and in processing!!!");
+        else
+            return;
         bot.sendMessage(message.toString());
         List<List<String>> tableData = new ArrayList<>();
         List<String> tableTitles = List.of("STT", "image", "info");
         tableData.add(tableTitles);
         List<byte[]> imageBytes = new ArrayList<>();
         List<OrderItemModel> orderItems = order.getItems();
-        List<ProductModel> products = orderItemRepository.findProductsByOrders(Arrays.asList(order));
+        List<ProductModel> productModels = orderItemRepository.findProductsByOrders(Arrays.asList(order));
+        List<ProductResponse> products = productService.enrichProductResponse(productModels);
         Map<Long, Long> itemCountMap = new HashMap<>();
         orderItems.forEach(orderItem -> {
-            ProductModel product = products.stream()
+            ProductResponse product = products.stream()
                     .filter(item -> item.getId() == orderItem.getProduct().getId())
                     .findFirst().orElse(null);
             if (product != null) {
@@ -66,7 +77,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             tableColumns.add(String.valueOf(i + 1));
             tableColumns.add("image_" + i);
 
-            ProductModel product = products.get(i);
+            ProductResponse product = products.get(i);
             StringBuilder fileData = new StringBuilder("");
             fileData.append("Number: " + product.getProductNumber() + "\n ");
             fileData.append("Color: " + product.getColor() + "\n ");
@@ -75,7 +86,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             tableColumns.add(fileData.toString());
             tableData.add(tableColumns);
             if (product.getImages() != null && !product.getImages().isEmpty()) {
-                FileModel file = new ArrayList<>(product.getImages()).get(0);
+                FileResponse file = new ArrayList<>(product.getImages()).get(0);
                 imageBytes.add(downloadImage(file.getUrl()));
             } else
                 imageBytes.add(new byte[0]);
@@ -92,17 +103,38 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         List<OrderItemResponse> responses = new ArrayList<>();
         orderItems.forEach(orderItem -> {
             OrderItemResponse response = new OrderItemResponse(orderItem);
-            ProductModel product = products.stream()
+            ProductResponse product = products.stream()
                     .filter(item -> item.getId() == orderItem.getProduct().getId())
                     .findFirst().orElse(null);
-            response.setProduct(new ProductResponse(product));
+            response.setProduct(product);
 
             StoreModel store = orderItem.getStore();
             response.setStore(store);
             responses.add(response);
         });
-        File excelFile = createExcelFile(assets, OrderItemExportExcel.values(), "order_item");
+        List<Map<String, String>> assets = getOrderItemAssets(responses);
+        File excelFile = createExcelFile(assets, OrderItemTelegramExcel.values(), "order_item");
         bot.sendDocument(excelFile);
+    }
+
+    private List<Map<String, String>> getOrderItemAssets(List<OrderItemResponse> data) {
+        List<Map<String, String>> result = new ArrayList<>();
+        int count = 1;
+        for (OrderItemResponse orderItem : data) {
+            Map<String, String> map = new HashMap<>();
+            map.put(OrderItemTelegramExcel.STT.getKey(), String.valueOf(count++));
+            map.put(OrderItemTelegramExcel.PRODUCT_NUMBER.getKey(), orderItem.getProduct().getProductNumber());
+            ProductResponse product = orderItem.getProduct();
+            if (product != null) {
+                String imageUrl = product.getImages().stream().map(FileResponse::getUrl).collect(Collectors.joining(","));
+                map.put(OrderItemTelegramExcel.IMAGE_URL.getKey(), imageUrl);
+                map.put(OrderItemTelegramExcel.COLOR.getKey(), product.getColor());
+                map.put(OrderItemTelegramExcel.SIZE.getKey(), product.getSize());
+            }
+            map.put(OrderItemTelegramExcel.QUANTITY.getKey(), convertToString(orderItem.getQuantityOrder()));
+            result.add(map);
+        }
+        return result;
     }
 
     @Override

@@ -159,35 +159,7 @@ public class OrderServiceImpl implements OrderService {
         order.setItems(updatedOrderItems.stream()
                 .filter(item -> !item.isDeleted())
                 .collect(Collectors.toList()));
-        if (order.getStatus().equals(OrderStatus.PENDING)) {
-
-            List<OrderItemResponse> responses = new ArrayList<>();
-            OrderModel finalOrder = order;
-            orderItems.forEach(orderItem -> {
-                OrderItemResponse response = new OrderItemResponse(orderItem);
-                response.setOrder(new BasicModelResponse(finalOrder.getId(), finalOrder.getCode(), null, finalOrder.getDate()));
-
-                ProductResponse product = products.stream()
-                        .filter(item -> item.getId() == orderItem.getProduct().getId())
-                        .map(ProductResponse::new)
-                        .findFirst().orElse(null);
-
-                Set<FileResponse> images = files.stream()
-                        .filter(item -> item.getProduct().getId() == product.getId())
-                        .map(FileResponse::new)
-                        .collect(Collectors.toSet());
-                product.setImages(images);
-                response.setProduct(product);
-
-                StoreModel store = stores.stream()
-                        .filter(item -> item.getId().equals(orderItem.getStore().getId()))
-                        .findFirst().orElse(null);
-                response.setStore(store);
-                responses.add(response);
-            });
-            List<Map<String, String>> assets = getOrderItemAssets(responses);
-            telegramBotService.sendOrder(order, assets);
-        }
+        telegramBotService.sendOrder(order);
         return enrichOrderResponse(List.of(order), List.of(userService.getUserInfo())).get(0);
     }
 
@@ -674,7 +646,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderItemModel receiveItem(UUID orderItemId, OrderItemReceivedRequest request) {
+    public OrderItemResponse receiveItem(UUID orderItemId, OrderItemReceivedRequest request) {
         Optional<OrderItemModel> itemOptional = orderItemRepository.findById(orderItemId);
         if (itemOptional.isEmpty())
             throw new ExceptionResponse("order item is not existed!!!");
@@ -700,7 +672,7 @@ public class OrderServiceImpl implements OrderService {
                 .items(Arrays.asList(storeItemDetail))
                 .build();
         storeItemService.create(storeItemRequest);
-        return item;
+        return new OrderItemResponse(item);
     }
 
     @Override
@@ -723,7 +695,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderItemModel cancelItem(UUID orderItemId) {
+    public OrderItemResponse cancelItem(UUID orderItemId) {
         Optional<OrderItemModel> itemOptional = orderItemRepository.findById(orderItemId);
         if (itemOptional.isEmpty())
             throw new ExceptionResponse("order item is not existed!!!");
@@ -731,7 +703,7 @@ public class OrderServiceImpl implements OrderService {
         item.setStatus(OrderItemStatus.CANCEL);
         item = orderItemRepository.save(item);
         updateOrderByItem(item);
-        return item;
+        return new OrderItemResponse(item);
     }
 
     @Override
@@ -759,21 +731,53 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderItemModel> updateItemByUpdating(OrderItemUpdatedRequest request) {
+    public List<OrderItemResponse> updateItemByUpdating(OrderItemUpdatedRequest request) {
         boolean isApproved = request.isApproved();
         List<UUID> ids = request.getDetails().stream().map(OrderItemUpdatedDetailRequest::getId).collect(Collectors.toList());
         List<OrderItemModel> orderItems = orderItemRepository.findAllById(ids);
+
+        Set<Long> productIds = new HashSet<>();
+        Set<UUID> storeIds = new HashSet<>();
         if (isApproved) {
             request.getDetails().forEach(itemRequest -> {
                 OrderItemModel orderItem = orderItems.stream()
                         .filter(item -> item.getId().equals(itemRequest.getId()))
                         .findFirst().orElse(null);
-                orderItem.updateItemByUpdating(itemRequest);
+                if (orderItem != null) {
+                    orderItem.updateItemByUpdating(itemRequest);
+                    productIds.add(orderItem.getProduct().getId());
+                    storeIds.add(orderItem.getStore().getId());
+                }
             });
-        } else
-            orderItems.forEach(item -> item.setStatus(OrderItemStatus.CANCEL));
+        } else {
+            orderItems.forEach(item -> {
+                item.setStatus(OrderItemStatus.CANCEL);
+                productIds.add(item.getProduct().getId());
+            });
+        }
         List<OrderItemModel> updatedOrderItems = orderItemRepository.saveAll(orderItems);
-        return updatedOrderItems;
+
+        List<ProductModel> productModels = productService.findByIds(productIds);
+        List<ProductResponse> products = productService.enrichProductResponse(productModels);
+
+        Set<StoreModel> stores = storeService.findByIds(storeIds);
+
+        List<OrderItemResponse> responses = new ArrayList<>();
+        orderItems.forEach(orderItem -> {
+            OrderItemResponse response = new OrderItemResponse(orderItem);
+
+            ProductResponse product = products.stream()
+                    .filter(item -> item.getId() == orderItem.getProduct().getId())
+                    .findFirst().orElse(null);
+            response.setProduct(product);
+
+            StoreModel store = stores.stream()
+                    .filter(item -> item.getId().equals(orderItem.getStore().getId()))
+                    .findFirst().orElse(null);
+            response.setStore(store);
+            responses.add(response);
+        });
+        return responses;
     }
 
     private void updateOrderByItem(OrderItemModel item) {
