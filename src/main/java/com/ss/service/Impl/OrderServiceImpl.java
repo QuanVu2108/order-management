@@ -628,6 +628,7 @@ public class OrderServiceImpl implements OrderService {
         List<OrderModel> orders = orderRepository.searchList(query);
         int allCnt = 0;
         int newCnt = 0;
+        int checkingCnt = 0;
         int pendingCnt = 0;
         int doneCnt = 0;
         int cancelCnt = 0;
@@ -636,12 +637,13 @@ public class OrderServiceImpl implements OrderService {
             OrderModel order = orders.get(i);
             if (order.getStatus() != null) {
                 if (order.getStatus().equals(OrderStatus.NEW)) newCnt++;
+                if (order.getStatus().equals(OrderStatus.CHECKING)) checkingCnt++;
                 if (order.getStatus().equals(OrderStatus.PENDING)) pendingCnt++;
                 if (order.getStatus().equals(OrderStatus.DONE)) doneCnt++;
                 if (order.getStatus().equals(OrderStatus.CANCEL)) cancelCnt++;
             }
         }
-        return new OrderStatisticResponse(allCnt, newCnt, pendingCnt, doneCnt, cancelCnt);
+        return new OrderStatisticResponse(allCnt, newCnt, checkingCnt, pendingCnt, doneCnt, cancelCnt);
     }
 
     @Override

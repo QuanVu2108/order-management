@@ -11,6 +11,7 @@ import java.util.UUID;
 public class OrderStatisticResponse {
     private int allCnt;
     private int newCnt;
+    private int checkingCnt;
     private int pendingCnt;
     private int doneCnt;
     private int cancelCnt;
