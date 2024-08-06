@@ -94,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse updateOrder(UUID orderId, OrderRequest request) {
         Optional<OrderModel> orderModelOptional = orderRepository.findById(orderId);
         if (orderModelOptional.isEmpty())
-            throw new ExceptionResponse("order is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_NOT_FOUND.getMessage(), InvalidInputError.PRODUCT_NOT_FOUND);
         OrderModel order = orderModelOptional.get();
         List<OrderItemRequest> itemRequests = request.getItems();
         List<OrderItemRequest> newItems = new ArrayList<>();
@@ -138,13 +138,13 @@ public class OrderServiceImpl implements OrderService {
                         .filter(item -> itemRequest.getStoreId() != null && item.getId().equals(itemRequest.getStoreId()))
                         .findFirst().orElse(null);
                 if (store == null)
-                    throw new ExceptionResponse("store is invalid by product " + itemRequest.getStoreId());
+                    throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(),  InvalidInputError.STORE_INVALID);
 
                 ProductModel product = products.stream()
                         .filter(item -> itemRequest.getProductId() != null && item.getId() == itemRequest.getProductId())
                         .findFirst().orElse(null);
                 if (product == null)
-                    throw new ExceptionResponse("product is invalid at row " + itemRequest.getProductId());
+                    throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(),  InvalidInputError.PRODUCT_INVALID);
 
                 existedItem.update(itemRequest, store, product);
             } else {
@@ -185,13 +185,13 @@ public class OrderServiceImpl implements OrderService {
                     .filter(item -> itemRequest.getStoreId() != null && item.getId().equals(itemRequest.getStoreId()))
                     .findFirst().orElse(null);
             if (store == null)
-                throw new ExceptionResponse("store is invalid at row " + i);
+                throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(),  InvalidInputError.STORE_INVALID);
 
             ProductModel product = products.stream()
                     .filter(item -> itemRequest.getProductId() != null && item.getId() == itemRequest.getProductId())
                     .findFirst().orElse(null);
             if (product == null)
-                throw new ExceptionResponse("product is invalid at row " + i);
+                throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(),  InvalidInputError.PRODUCT_INVALID);
 
             orderItem.update(itemRequest, store, product);
             orderItems.add(orderItem);
@@ -342,7 +342,7 @@ public class OrderServiceImpl implements OrderService {
     public void receiveItemMulti(UUID orderId, List<OrderItemReceivedMultiRequest> request) {
         Optional<OrderModel> orderModelOptional = orderRepository.findById(orderId);
         if (orderModelOptional.isEmpty())
-            throw new ExceptionResponse("order is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.ORDER_INVALID.getMessage(),  InvalidInputError.ORDER_INVALID);
         OrderModel order = orderModelOptional.get();
         List<OrderItemModel> orderItems = order.getItems();
         List<OrderItemModel> importOrderItems = new ArrayList<>();
@@ -495,7 +495,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemToolRequest request) {
         Optional<OrderItemModel> orderItemModelOptional = orderItemRepository.findById(orderItemId);
         if (orderItemModelOptional.isEmpty())
-            throw new ExceptionResponse("order item is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_INVALID.getMessage(),  InvalidInputError.ORDER_ITEM_INVALID);
         OrderItemModel orderItem = orderItemModelOptional.get();
         orderItem.updateByTool(request);
 
@@ -651,7 +651,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderItemResponse receiveItem(UUID orderItemId, OrderItemReceivedRequest request) {
         Optional<OrderItemModel> itemOptional = orderItemRepository.findById(orderItemId);
         if (itemOptional.isEmpty())
-            throw new ExceptionResponse("order item is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_INVALID.getMessage(),  InvalidInputError.ORDER_ITEM_INVALID);
         OrderItemModel item = itemOptional.get();
         item.updateByReceive(request);
         item = orderItemRepository.save(item);
@@ -700,7 +700,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderItemResponse cancelItem(UUID orderItemId) {
         Optional<OrderItemModel> itemOptional = orderItemRepository.findById(orderItemId);
         if (itemOptional.isEmpty())
-            throw new ExceptionResponse("order item is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_INVALID.getMessage(),  InvalidInputError.ORDER_ITEM_INVALID);
         OrderItemModel item = itemOptional.get();
         item.setStatus(OrderItemStatus.CANCEL);
         item = orderItemRepository.save(item);

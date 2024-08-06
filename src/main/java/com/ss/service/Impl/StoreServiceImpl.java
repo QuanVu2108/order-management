@@ -6,6 +6,7 @@ import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.Store;
 import com.ss.exception.ExceptionResponse;
+import com.ss.exception.http.InvalidInputError;
 import com.ss.model.StoreModel;
 import com.ss.repository.StoreRepository;
 import com.ss.service.StoreService;
@@ -31,7 +32,7 @@ public class StoreServiceImpl implements StoreService {
     public StoreModel create(Store request) {
         List<StoreModel> stores = storeRepository.findByName(request.getName());
         if (!stores.isEmpty())
-            throw new ExceptionResponse("store is existed!!!");
+            throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(),  InvalidInputError.STORE_INVALID);
         StoreModel storeModel = new StoreModel();
         storeModel.update(request);
         storeModel = storeRepository.save(storeModel);
@@ -42,7 +43,7 @@ public class StoreServiceImpl implements StoreService {
     public StoreModel update(UUID id, Store request) {
         Optional<StoreModel> storeOptional = storeRepository.findById(id);
         if (storeOptional.isEmpty())
-            throw new ExceptionResponse("store is existed!!!");
+            throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(),  InvalidInputError.STORE_INVALID);
         StoreModel store = storeOptional.get();
         store.update(request);
         store = storeRepository.save(store);
@@ -53,7 +54,7 @@ public class StoreServiceImpl implements StoreService {
     public void delete(UUID id) {
         Optional<StoreModel> storeOptional = storeRepository.findById(id);
         if (storeOptional.isEmpty())
-            throw new ExceptionResponse("store is existed!!!");
+            throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(),  InvalidInputError.STORE_INVALID);
         StoreModel store = storeOptional.get();
         store.setDeleted(true);
         storeRepository.save(store);

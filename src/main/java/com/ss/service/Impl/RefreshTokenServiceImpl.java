@@ -1,6 +1,7 @@
 package com.ss.service.Impl;
 
 import com.ss.exception.ExceptionResponse;
+import com.ss.exception.http.InvalidInputError;
 import com.ss.model.RefreshToken;
 import com.ss.model.UserModel;
 import com.ss.repository.RefreshTokenRepository;
@@ -29,7 +30,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken findByToken(String token) {
         Optional<RefreshToken> refreshToken = refreshTokenRepository.findByToken(token);
         if (refreshToken.isEmpty())
-            throw new ExceptionResponse("Refresh token was expired. Please make a new signin request");
+            throw new ExceptionResponse(InvalidInputError.TOKEN_EXPIRED.getMessage(),  InvalidInputError.TOKEN_EXPIRED);
         return refreshToken.get();
     }
 
@@ -54,7 +55,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public void verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
             refreshTokenRepository.delete(token);
-            throw new ExceptionResponse("Refresh token was expired. Please make a new signin request");
+            throw new ExceptionResponse(InvalidInputError.TOKEN_EXPIRED.getMessage(),  InvalidInputError.TOKEN_EXPIRED);
         }
     }
 

@@ -9,6 +9,7 @@ import com.ss.dto.response.*;
 import com.ss.enums.ProductPropertyType;
 import com.ss.enums.StoreItemType;
 import com.ss.enums.excel.*;
+import com.ss.exception.BadRequestError;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.DuplicatedError;
 import com.ss.exception.http.InvalidInputError;
@@ -125,7 +126,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse update(long id, ProductRequest request) {
         Optional<ProductModel> productOptional = repository.findById(id);
         if (productOptional.isEmpty())
-            throw new ExceptionResponse("product is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_NOT_FOUND.getMessage(), InvalidInputError.PRODUCT_NOT_FOUND);
         ProductModel product = productOptional.get();
         if (!product.getCode().equals(request.getCode())) {
             long invalidProductCodeCnt = repository.countByCode(request.getCode());
@@ -177,7 +178,7 @@ public class ProductServiceImpl implements ProductService {
     public void delete(long id) {
         Optional<ProductModel> productOptional = repository.findById(id);
         if (productOptional.isEmpty())
-            throw new ExceptionResponse("product is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(),  InvalidInputError.PRODUCT_INVALID);
         ProductModel product = productOptional.get();
         List<FileModel> files = fileRepository.findByProduct(product);
         files.forEach(file -> file.setDeleted(true));
@@ -283,7 +284,7 @@ public class ProductServiceImpl implements ProductService {
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new ExceptionResponse("import fileRequest unsuccessfully!!! ");
+            throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(),  BadRequestError.IMPORT_FAILED);
         }
 
         log.info("******************** import file successfully");
@@ -501,7 +502,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse uploadImage(long id, MultipartFile[] fileRequests) {
         Optional<ProductModel> productOptional = repository.findById(id);
         if (productOptional.isEmpty())
-            throw new ExceptionResponse("product is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(),  InvalidInputError.PRODUCT_INVALID);
         ProductModel product = productOptional.get();
 
         Set<FileModel> images = new HashSet<>();
@@ -576,7 +577,7 @@ public class ProductServiceImpl implements ProductService {
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new ExceptionResponse("import file unsuccessfully!!! ");
+            throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(),  BadRequestError.IMPORT_FAILED);
         }
         List<ProductModel> products = repository.findByCodeInOrProductNumberIn(new ArrayList<>(productCodes), new ArrayList<>(productNumbers));
         List<StoreModel> stores = storeService.findByNameIn(storeNames);
@@ -653,7 +654,7 @@ public class ProductServiceImpl implements ProductService {
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new ExceptionResponse("import file unsuccessfully!!! ");
+            throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(),  BadRequestError.IMPORT_FAILED);
         }
 
         return enrichProductCheckImport(new ArrayList<>(productNumbers), productQuantities, store);
@@ -689,7 +690,7 @@ public class ProductServiceImpl implements ProductService {
             return null;
         Optional<ProductModel> product = repository.findByProductNumber(number);
         if (product.isEmpty())
-            throw new ExceptionResponse("product is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(), InvalidInputError.PRODUCT_INVALID);
         return enrichProductResponse(List.of(product.get())).get(0);
     }
 
@@ -704,7 +705,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductSaleResponse getProductInfoBySale(long id) {
         Optional<ProductModel> productOptional = repository.findById(id);
         if (productOptional.isEmpty())
-            throw new ExceptionResponse("product is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(), InvalidInputError.PRODUCT_INVALID);
         ProductSaleResponse response = new ProductSaleResponse();
         ProductModel product = productOptional.get();
         response.setProduct(enrichProductResponse(Arrays.asList(product)).get(0));
@@ -720,7 +721,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductCheckImportResponse> checkConfirmFile(UUID id, MultipartFile file) {
         Optional<OrderModel> orderOptional = orderRepository.findById(id);
         if (orderOptional.isEmpty())
-            throw new ExceptionResponse("order is not existed!!!");
+            throw new ExceptionResponse(InvalidInputError.ORDER_INVALID.getMessage(), InvalidInputError.ORDER_INVALID);
         OrderModel order = orderOptional.get();
         String orderCode = order.getCode();
 
@@ -737,7 +738,7 @@ public class ProductServiceImpl implements ProductService {
             stores.addAll(storeService.findAll());
 
         if (stores.isEmpty())
-            throw new ExceptionResponse("Need config store for this account!!!");
+            throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(), InvalidInputError.STORE_INVALID);
 
         List<ProductCheckConfirmTemplate> template = List.of(ProductCheckConfirmTemplate.values());
         List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
@@ -750,7 +751,7 @@ public class ProductServiceImpl implements ProductService {
             for (Map<String, String> asset : assets) {
                 String orderCodeRequest = asset.get(ProductCheckConfirmTemplate.ORDER_CODE.getKey());
                 if (!orderCode.equalsIgnoreCase(orderCodeRequest))
-                    throw new ExceptionResponse("order is invalid " + idx);
+                    throw new ExceptionResponse(InvalidInputError.ORDER_CODE_INVALID.getMessage(), InvalidInputError.ORDER_CODE_INVALID);
 
                 String storeName = asset.get(ProductCheckConfirmTemplate.STORE.getKey());
                 StoreModel store = stores.stream().filter(item -> storeName.equalsIgnoreCase(item.getName())).findFirst().orElse(null);
@@ -787,7 +788,7 @@ public class ProductServiceImpl implements ProductService {
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new ExceptionResponse("import file unsuccessfully!!! ");
+            throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(), BadRequestError.IMPORT_FAILED);
         }
         return responses;
     }
