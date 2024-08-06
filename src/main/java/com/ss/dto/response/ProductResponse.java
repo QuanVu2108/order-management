@@ -26,9 +26,9 @@ public class ProductResponse extends AuditResponse {
 
     private String description;
 
-    private ProductPropertyModel category;
+    private ProductPropertyResponse category;
 
-    private ProductPropertyModel brand;
+    private ProductPropertyResponse brand;
 
     private Long soldPrice;
 
