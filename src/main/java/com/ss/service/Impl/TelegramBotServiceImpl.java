@@ -8,6 +8,8 @@ import com.ss.enums.Const;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.enums.excel.OrderItemTelegramExcel;
+import com.ss.exception.ExceptionResponse;
+import com.ss.exception.http.InvalidInputError;
 import com.ss.model.*;
 import com.ss.repository.OrderItemRepository;
 import com.ss.service.ProductService;
@@ -44,6 +46,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
     @Async
     @Transactional
     public void sendOrder(OrderModel order) {
+        log.info("********* sending order");
         StringBuilder message = new StringBuilder("Order ");
         message.append(order.getCode());
         if (OrderStatus.CHECKING.equals(order.getStatus()))
@@ -97,8 +100,12 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         data.add("Order : " + order.getCode());
         data.add("Total products : " + productCnt);
         data.add("Total product items : " + orderItemCnt);
-        File pdfFile = createPdfWithTableAndImage(title, data, tableData, imageBytes);
-        bot.sendDocument(pdfFile);
+        try {
+            File pdfFile = createPdfWithTableAndImage(title, data, tableData, imageBytes);
+            bot.sendDocument(pdfFile);
+        } catch (Exception ex) {
+            log.error("*************** create pdf file failed");
+        }
 
         List<OrderItemResponse> responses = new ArrayList<>();
         orderItems.forEach(orderItem -> {
@@ -115,6 +122,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         List<Map<String, String>> assets = getOrderItemAssets(responses);
         File excelFile = createExcelFile(assets, OrderItemTelegramExcel.values(), "order_item");
         bot.sendDocument(excelFile);
+        log.info("********* sending order successfully");
     }
 
     private List<Map<String, String>> getOrderItemAssets(List<OrderItemResponse> data) {

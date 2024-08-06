@@ -7,6 +7,7 @@ import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.ProductPropertyRequest;
 import com.ss.enums.ProductPropertyType;
 import com.ss.exception.ExceptionResponse;
+import com.ss.exception.http.InvalidInputError;
 import com.ss.model.ProductModel;
 import com.ss.model.ProductPropertyModel;
 import com.ss.repository.ProductPropertyRepository;
@@ -36,7 +37,7 @@ public class ProductPropertyServiceImpl implements ProductPropertyService {
     public ProductPropertyModel create(ProductPropertyRequest request) {
         List<ProductPropertyModel> properties = repository.findByName(request.getName());
         if (!properties.isEmpty())
-            throw new ExceptionResponse(request.getType() + " is existed!!!");
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_PROPERTY_DUPLICATED.getMessage(),  InvalidInputError.PRODUCT_PROPERTY_DUPLICATED);
         String code = genCode(request.getType());
         ProductPropertyModel property = new ProductPropertyModel(code, request.getType());
         property.update(request);
@@ -53,10 +54,10 @@ public class ProductPropertyServiceImpl implements ProductPropertyService {
     public ProductPropertyModel update(UUID id, ProductPropertyRequest request) {
         Optional<ProductPropertyModel> propertyOptional = repository.findById(id);
         if (propertyOptional.isEmpty())
-            throw new ExceptionResponse("property is existed!!!");
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_PROPERTY_INVALID.getMessage(),  InvalidInputError.PRODUCT_PROPERTY_INVALID);
         ProductPropertyModel property = propertyOptional.get();
         if (request.getType() != null && !property.getType().equals(request.getType()))
-            throw new ExceptionResponse("property type is existed!!!");
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_PROPERTY_INVALID.getMessage(),  InvalidInputError.PRODUCT_PROPERTY_INVALID);
         property.update(request);
         property = repository.save(property);
         return property;
@@ -66,12 +67,12 @@ public class ProductPropertyServiceImpl implements ProductPropertyService {
     public void delete(UUID id) {
         Optional<ProductPropertyModel> propertyOptional = repository.findById(id);
         if (propertyOptional.isEmpty())
-            throw new ExceptionResponse("property is existed!!!");
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_PROPERTY_INVALID.getMessage(),  InvalidInputError.PRODUCT_PROPERTY_INVALID);
         ProductPropertyModel property = propertyOptional.get();
         if (property.getType() != null) {
             List<ProductModel> usingPropertyProducts = productRepository.findByBrandOrCategory(property, property);
             if (!usingPropertyProducts.isEmpty())
-                throw new ExceptionResponse("exists product was using on this property");
+                throw new ExceptionResponse(InvalidInputError.PRODUCT_PROPERTY_INVALID.getMessage(),  InvalidInputError.PRODUCT_PROPERTY_INVALID);
         }
         property.setDeleted(true);
         repository.save(property);

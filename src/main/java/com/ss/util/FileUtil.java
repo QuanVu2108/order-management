@@ -45,6 +45,7 @@ import static com.ss.util.excel.ExcelUtil.autoSizeColumns;
 public final class FileUtil {
 
     public static File createPdfWithTableAndImage(String title, List<String> data, List<List<String>> tableData, List<byte[]> imageBytes) {
+        log.info("********* create pdf file");
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfWriter writer = new PdfWriter(baos);
@@ -79,7 +80,7 @@ public final class FileUtil {
             for (int i = 1; i < tableData.size(); i++) {
                 for (int j = 0; j < tableData.get(i).size(); j++ ) {
                     String cellData = tableData.get(i).get(j);
-                    if (cellData.equals("image_" + (i - 1))) {
+                    if (cellData.equals("image_" + (i - 1)) && imageBytes.get(i - 1).length > 0) {
                         ImageData imageData = ImageDataFactory.create(imageBytes.get(i - 1));
                         Image image = new Image(imageData);
                         image.setWidth(TELEGRAM_IMAGE_WITH);
@@ -134,6 +135,7 @@ public final class FileUtil {
     }
 
     public static File createExcelFile(List<Map<String, String>> assets, ExportTemplate[] columns, String fileName) {
+        log.info("********* create xlsx file");
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         Workbook workbook = null;
         try {

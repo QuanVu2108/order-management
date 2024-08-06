@@ -8,6 +8,7 @@ public enum InvalidInputError implements ResponseError {
 
     PERMISSION_GROUP_INVALID(4010000, "permission group is not existed"),
     USER_PASSWORD_INVALID(4010001, "Invalid username/password supplied"),
+    NAME_DUPLICATED(4010201, "name of group is duplicated"),
     TOKEN_EXPIRED(4010002, "Token was expired. Please make a new signin request"),
     PRODUCT_NUMBER(4010100, "product number can not be null"),
     PRODUCT_CODE(4010101, "product code can not be null"),
@@ -28,9 +29,14 @@ public enum InvalidInputError implements ResponseError {
     STORE_ITEM_INVALID(4010124,"store item is invalid!!!"),
     DELETE_EXPORT_STORE_ITEM_INVALID(4010125,"can not delete item because of quantity invalid!!!"),
     ORDER_INVALID(4010126,"order is invalid!!!"),
+    ORDER_CODE_INVALID(4010127,"order code is invalid!!!"),
 
     ORDER_ITEM_STATUS_INVALID(4010130,"order item status is invalid!!!"),
 
+    PRODUCT_NOT_FOUND(4010230, "product is not existed!!!"),
+    PRODUCT_PROPERTY_DUPLICATED(4010232, "product property is existed!!!"),
+    PRODUCT_PROPERTY_INVALID(4010233, "product property is invalid!!!"),
+    ORDER_ITEM_INVALID(4010240, "order item is invalid!!!"),
     ;
 
     private Integer code;

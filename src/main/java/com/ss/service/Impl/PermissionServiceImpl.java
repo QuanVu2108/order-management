@@ -9,6 +9,7 @@ import com.ss.dto.request.PermissionMenuRequest;
 import com.ss.dto.request.PermissionRequest;
 import com.ss.dto.response.PermissionGroupResponse;
 import com.ss.exception.ExceptionResponse;
+import com.ss.exception.http.InvalidInputError;
 import com.ss.model.PermissionGroupModel;
 import com.ss.model.PermissionMenuModel;
 import com.ss.model.PermissionModel;
@@ -53,7 +54,7 @@ public class PermissionServiceImpl implements PermissionService {
     public PermissionGroupResponse create(PermissionGroupRequest request) {
         List<PermissionGroupModel> permissionGroups = permissionGroupRepository.findByName(request.getGroupName());
         if (!permissionGroups.isEmpty())
-            throw new ExceptionResponse("name of group is duplicated");
+            throw new ExceptionResponse(InvalidInputError.NAME_DUPLICATED.getMessage(), InvalidInputError.NAME_DUPLICATED);
         PermissionGroupModel permissionGroup = new PermissionGroupModel(request.getGroupName());
         permissionGroup = permissionGroupRepository.save(permissionGroup);
         Set<PermissionModel> permissions = new HashSet<>();
