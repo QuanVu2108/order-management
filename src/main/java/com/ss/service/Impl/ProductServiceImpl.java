@@ -5,10 +5,7 @@ import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
 import com.ss.dto.request.ProductRequest;
-import com.ss.dto.response.FileResponse;
-import com.ss.dto.response.ProductCheckImportResponse;
-import com.ss.dto.response.ProductResponse;
-import com.ss.dto.response.ProductSaleResponse;
+import com.ss.dto.response.*;
 import com.ss.enums.ProductPropertyType;
 import com.ss.enums.StoreItemType;
 import com.ss.enums.excel.*;
@@ -19,6 +16,7 @@ import com.ss.model.*;
 import com.ss.repository.*;
 import com.ss.repository.query.ProductQuery;
 import com.ss.service.*;
+import com.ss.service.mapper.ProductPropertyMapper;
 import com.ss.util.StorageUtil;
 import com.ss.util.excel.ExcelTemplate;
 import lombok.Data;
@@ -75,6 +73,8 @@ public class ProductServiceImpl implements ProductService {
     private final OrderRepository orderRepository;
 
     private final OrderItemRepository orderItemRepository;
+
+    private final ProductPropertyMapper productPropertyMapper;
 
     @Data
     private static class ProductImport {
@@ -385,6 +385,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponse> enrichProductResponse(List<ProductModel> products) {
         List<ProductResponse> productResponses = new ArrayList<>();
         List<ProductPropertyModel> allProperties = propertyRepository.findAll();
+        List<ProductPropertyResponse> propertyResponses = productPropertyMapper.toTarget(allProperties);
 
         List<FileModel> allImages = fileRepository.findByProductIn(products);
 
@@ -396,10 +397,11 @@ public class ProductServiceImpl implements ProductService {
                     .collect(Collectors.toSet());
             response.setImages(images);
 
-            response.setCategory(allProperties.stream()
+            ProductPropertyResponse category = propertyResponses.stream()
                     .filter(item -> item.getId().equals(product.getCategory().getId()))
-                    .findFirst().orElse(null));
-            response.setBrand(allProperties.stream()
+                    .findFirst().orElse(null);
+            response.setCategory(category);
+            response.setBrand(propertyResponses.stream()
                     .filter(item -> item.getId().equals(product.getBrand().getId()))
                     .findFirst().orElse(null));
 
