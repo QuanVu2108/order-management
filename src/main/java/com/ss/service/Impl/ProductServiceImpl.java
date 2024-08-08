@@ -18,6 +18,7 @@ import com.ss.repository.*;
 import com.ss.repository.query.ProductQuery;
 import com.ss.service.*;
 import com.ss.service.mapper.ProductPropertyMapper;
+import com.ss.service.mapper.StoreMapper;
 import com.ss.util.StorageUtil;
 import com.ss.util.excel.ExcelTemplate;
 import lombok.Data;
@@ -76,6 +77,8 @@ public class ProductServiceImpl implements ProductService {
     private final OrderItemRepository orderItemRepository;
 
     private final ProductPropertyMapper productPropertyMapper;
+
+    private final StoreMapper storeMapper;
 
     @Data
     private static class ProductImport {
@@ -580,7 +583,8 @@ public class ProductServiceImpl implements ProductService {
             throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(),  BadRequestError.IMPORT_FAILED);
         }
         List<ProductModel> products = repository.findByCodeInOrProductNumberIn(new ArrayList<>(productCodes), new ArrayList<>(productNumbers));
-        List<StoreModel> stores = storeService.findByNameIn(storeNames);
+        List<StoreModel> storeModels = storeService.findByNameIn(storeNames);
+        List<StoreResponse> stores = storeMapper.toTarget(storeModels);
         for (int i = 0; i < responses.size(); i++) {
             ProductCheckImportResponse response = responses.get(i);
             ProductModel product = null;
@@ -597,7 +601,7 @@ public class ProductServiceImpl implements ProductService {
             if (product == null)
                 continue;
             response.setProduct(new ProductResponse(product));
-            StoreModel store = stores.stream()
+            StoreResponse store = stores.stream()
                     .filter(item -> item.getName().equals(response.getStoreName()))
                     .findFirst().orElse(null);
             response.setStore(store);
@@ -609,22 +613,23 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public List<ProductCheckImportResponse> checkImportFileKiotviet(MultipartFile file) {
         String fileName = file.getOriginalFilename();
-        StoreModel store = null;
+        StoreModel storeModel = null;
         if (fileName.endsWith(".xlsx")) {
             String storeName = fileName.substring(0, fileName.lastIndexOf(".xlsx"));
             UserModel user = userService.getUserInfo();
             if (!user.getRoles().contains(RoleModel.ROLE_ADMIN)) {
                 Set<StoreModel> stores = user.getStores();
-                store = stores.stream()
+                storeModel = stores.stream()
                         .filter(item -> item.getName().equals(storeName))
                         .findFirst().orElse(null);
             } else {
                 List<StoreModel> stores = storeService.findByNameIn(Arrays.asList(storeName));
-                store = stores.isEmpty() ? null : stores.get(0);
+                storeModel = stores.isEmpty() ? null : stores.get(0);
             }
         }
-        if (store == null)
+        if (storeModel == null)
             throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(), InvalidInputError.STORE_INVALID);
+        StoreResponse store = storeMapper.toTarget(storeModel);
 
         List<ProductCheckImportKiotvietExcelTemplate> template = List.of(ProductCheckImportKiotvietExcelTemplate.values());
         List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
@@ -661,7 +666,7 @@ public class ProductServiceImpl implements ProductService {
 
     }
 
-    private List<ProductCheckImportResponse> enrichProductCheckImport(List<String> productNumbers, Map<String, Long> productQuantities, StoreModel store) {
+    private List<ProductCheckImportResponse> enrichProductCheckImport(List<String> productNumbers, Map<String, Long> productQuantities, StoreResponse store) {
         List<ProductCheckImportResponse> responses = new ArrayList<>();
         List<ProductModel> products = repository.findByProductNumberIn(productNumbers);
         List<ProductResponse> productResponses = enrichProductResponse(products);
@@ -730,15 +735,16 @@ public class ProductServiceImpl implements ProductService {
         List<ProductResponse> allProductResponses = enrichProductResponse(allProducts);
 
         String fileName = file.getOriginalFilename();
-        List<StoreModel> stores = new ArrayList<>();
+        List<StoreModel> storeModels = new ArrayList<>();
         UserModel user = userService.getUserInfo();
         if (!user.getRoles().contains(RoleModel.ROLE_ADMIN)) {
-            stores.addAll(user.getStores());
+            storeModels.addAll(user.getStores());
         } else
-            stores.addAll(storeService.findAll());
+            storeModels.addAll(storeService.findAll());
 
-        if (stores.isEmpty())
+        if (storeModels.isEmpty())
             throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(), InvalidInputError.STORE_INVALID);
+        List<StoreResponse> stores = storeMapper.toTarget(storeModels);
 
         List<ProductCheckConfirmTemplate> template = List.of(ProductCheckConfirmTemplate.values());
         List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
@@ -754,7 +760,9 @@ public class ProductServiceImpl implements ProductService {
                     throw new ExceptionResponse(InvalidInputError.ORDER_CODE_INVALID.getMessage(), InvalidInputError.ORDER_CODE_INVALID);
 
                 String storeName = asset.get(ProductCheckConfirmTemplate.STORE.getKey());
-                StoreModel store = stores.stream().filter(item -> storeName.equalsIgnoreCase(item.getName())).findFirst().orElse(null);
+                StoreResponse store = stores.stream()
+                        .filter(item -> storeName.equalsIgnoreCase(item.getName()))
+                        .findFirst().orElse(null);
                 if (store != null) {
                     String productNumber = asset.get(ProductCheckConfirmTemplate.NUMBER.getKey());
                     if (StringUtils.hasText(productNumber)) {

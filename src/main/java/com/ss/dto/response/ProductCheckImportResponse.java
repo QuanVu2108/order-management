@@ -16,7 +16,7 @@ public class ProductCheckImportResponse {
     private Double cost;
     private Double incentive;
     private ProductResponse product;
-    private StoreModel store;
+    private StoreResponse store;
 
     public ProductCheckImportResponse(int idx, String code, String number, String storeName, Long quantity, Double cost, Double incentive) {
         this.idx = idx;
