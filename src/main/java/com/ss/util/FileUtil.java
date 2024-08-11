@@ -28,6 +28,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.util.StringUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -108,6 +109,8 @@ public final class FileUtil {
     }
 
     public static byte[] downloadImage(String imageUrl) {
+        if (!StringUtils.hasText(imageUrl))
+            return new byte[0];
         try {
             URL url = new URL(imageUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -128,9 +131,13 @@ public final class FileUtil {
                     outputStream.write(buffer, 0, bytesRead);
                 }
                 return outputStream.toByteArray();
+            } catch (Exception ex) {
+                log.error("************** image url was crush " + imageUrl);
+                return new byte[0];
             }
         } catch (Exception ex) {
-            throw new ExceptionResponse(InvalidInputError.DOWNLOAD_FILE_FAILED.getMessage(), InvalidInputError.DOWNLOAD_FILE_FAILED);
+            log.error("************** image url was crush " + imageUrl);
+            return new byte[0];
         }
     }
 

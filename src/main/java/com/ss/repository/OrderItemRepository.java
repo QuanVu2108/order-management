@@ -66,9 +66,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID>
 
     List<OrderItemModel> findByOrderModelIn(List<OrderModel> orders);
 
-    @Query("SELECT distinct orderItem.product FROM OrderItemModel orderItem WHERE orderItem.orderModel in :orders ")
+    @Query("SELECT distinct orderItem.product FROM OrderItemModel orderItem WHERE orderItem.orderModel in :orders and orderItem.deleted = false ")
     List<ProductModel> findProductsByOrders(List<OrderModel> orders);
 
-    @Query("SELECT distinct orderItem.store FROM OrderItemModel orderItem WHERE orderItem.orderModel in :orders ")
+    @Query("SELECT distinct orderItem.store FROM OrderItemModel orderItem WHERE orderItem.orderModel in :orders and orderItem.deleted = false ")
     List<StoreModel> findStoresByOrders(List<OrderModel> orders);
 }
