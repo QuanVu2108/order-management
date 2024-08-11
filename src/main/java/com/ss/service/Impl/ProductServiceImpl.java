@@ -780,14 +780,17 @@ public class ProductServiceImpl implements ProductService {
                                 if (quantity > orderItem.getQuantityOrder())
                                     quantity = orderItem.getQuantityOrder();
 
-                                ProductCheckImportResponse response = new ProductCheckImportResponse();
                                 ProductResponse productResponse = allProductResponses.stream()
                                         .filter(item -> item.getId() == orderItem.getProduct().getId())
                                         .findFirst().orElse(null);
-                                response.setProduct(productResponse);
-                                response.setQuantity(quantity);
-                                response.setStore(store);
-                                responses.add(response);
+                                if (productResponse != null) {
+                                    ProductCheckImportResponse response = new ProductCheckImportResponse();
+                                    response.setOrderItemId(orderItem.getId());
+                                    response.setProduct(productResponse);
+                                    response.setQuantity(quantity);
+                                    response.setStore(store);
+                                    responses.add(response);
+                                }
                             }
                         }
                     }

@@ -5,10 +5,13 @@ import com.ss.model.StoreModel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 public class ProductCheckImportResponse {
     private int idx;
+    private UUID orderItemId;
     private String code;
     private String number;
     private String storeName;

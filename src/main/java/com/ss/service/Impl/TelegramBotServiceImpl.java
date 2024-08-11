@@ -8,8 +8,6 @@ import com.ss.enums.Const;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
 import com.ss.enums.excel.OrderItemTelegramExcel;
-import com.ss.exception.ExceptionResponse;
-import com.ss.exception.http.InvalidInputError;
 import com.ss.model.*;
 import com.ss.repository.OrderItemRepository;
 import com.ss.service.ProductService;
@@ -73,14 +71,19 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 itemCountMap.put(product.getId(), cnt + orderItem.getQuantityOrder());
             }
         });
-        Integer productCnt = products.size();
+        Integer productCnt = 0;
         Integer orderItemCnt = 0;
-        for (int i = 0; i < products.size(); i++) {
-            List<String> tableColumns = new ArrayList<>();
-            tableColumns.add(String.valueOf(i + 1));
-            tableColumns.add("image_" + i);
+        for (Long productId : itemCountMap.keySet()) {
+            ProductResponse product = products.stream()
+                    .filter(item -> item.getId() == productId)
+                    .findFirst().orElse(null);
+            if(product == null)
+                continue;
 
-            ProductResponse product = products.get(i);
+            List<String> tableColumns = new ArrayList<>();
+            tableColumns.add(String.valueOf(productCnt + 1));
+            tableColumns.add("image_" + productCnt);
+
             StringBuilder fileData = new StringBuilder("");
             fileData.append("Number: " + product.getProductNumber() + "\n ");
             fileData.append("Color: " + product.getColor() + "\n ");
@@ -94,7 +97,9 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             } else
                 imageBytes.add(new byte[0]);
             orderItemCnt += Math.toIntExact(itemCountMap.get(product.getId()));
+            productCnt++;
         }
+
         String title = "order_" + order.getCode() + "_" + timestampToString(Const.DATE_TITLE_FORMATTER, System.currentTimeMillis());
         List<String> data = new ArrayList<>();
         data.add("Order : " + order.getCode());
