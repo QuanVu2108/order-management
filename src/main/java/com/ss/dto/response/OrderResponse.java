@@ -1,5 +1,6 @@
 package com.ss.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.ss.enums.OrderStatus;
 import com.ss.model.*;
 import lombok.Data;
@@ -44,6 +45,7 @@ public class OrderResponse {
 
         private String code;
 
+        @JsonIgnoreProperties({"hibernateLazyInitializer"})
         private StoreModel store;
 
         public ProductRes product;
