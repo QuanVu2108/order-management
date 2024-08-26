@@ -37,7 +37,7 @@ public enum InvalidInputError implements ResponseError {
     PRODUCT_PROPERTY_DUPLICATED(4010232, "product property is existed!!!"),
     PRODUCT_PROPERTY_INVALID(4010233, "product property is invalid!!!"),
     ORDER_ITEM_INVALID(4010240, "order item is invalid!!!"),
-    ;
+    PRODUCT_WAS_BE_USING(401245, "product was be using. can not delete this product!!!");
 
     private Integer code;
     private String message;
