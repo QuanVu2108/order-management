@@ -28,6 +28,9 @@ public class StorageUtil {
     @Value("${gcp.server}")
     private String serverGcp;
 
+    @Value("${gcp.domain}")
+    private String domainGcp;
+
     @Value("${gcp.port}")
     private String portGcp;
 
@@ -109,7 +112,7 @@ public class StorageUtil {
     }
 
     private String generateFileUrl(UUID bucketId, String fileName) {
-        StringBuilder url = new StringBuilder(serverGcp + portGcp);
+        StringBuilder url = new StringBuilder(domainGcp + portGcp);
         url.append("/storage/v1/b/");
         url.append(bucketId);
         url.append("/o/");

@@ -86,6 +86,7 @@ management:
 
 gcp:
   server: ${GCP_SERVER_URL:http://13.214.53.31}
+  domain: ${GCP_DOMAIN:http://13.214.53.31}
   port: ":4443"
   project:
     id: ${GCP_PROJECT_ID:order-management}
@@ -93,9 +94,9 @@ gcp:
     id: ${GCP_BUCKET_ID:order-management}
 
 telegram-bot:
-  token: "7337351130:AAGjefblo2y0vaYLEI7l4JWqYZyGLXeNmNA"
+  token: "7359711846:AAH1jQq6-mhUJueVTwKVFKf0d2g-P8zlrIg"
   username: "lux_bot"
-  group-id: -1002006995047
+  group-id: -4549980136
 
 qr-code:
   with: 200
