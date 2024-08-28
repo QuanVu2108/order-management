@@ -183,6 +183,10 @@ public class ProductServiceImpl implements ProductService {
         if (productOptional.isEmpty())
             throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(),  InvalidInputError.PRODUCT_INVALID);
         ProductModel product = productOptional.get();
+        List<OrderItemModel> orderItems = orderItemRepository.findByProduct(product);
+        if (!orderItems.isEmpty())
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_WAS_BE_USING.getMessage(),  InvalidInputError.PRODUCT_WAS_BE_USING);
+
         List<FileModel> files = fileRepository.findByProduct(product);
         files.forEach(file -> file.setDeleted(true));
         fileRepository.saveAll(files);
@@ -502,6 +506,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductResponse uploadImage(long id, MultipartFile[] fileRequests) {
         Optional<ProductModel> productOptional = repository.findById(id);
         if (productOptional.isEmpty())
