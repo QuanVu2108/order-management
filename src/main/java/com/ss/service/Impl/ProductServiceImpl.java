@@ -506,6 +506,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductResponse uploadImage(long id, MultipartFile[] fileRequests) {
         Optional<ProductModel> productOptional = repository.findById(id);
         if (productOptional.isEmpty())
