@@ -201,6 +201,7 @@ public class ProductServiceImpl implements ProductService {
         List<ProductExcelTemplate> template = ProductExcelTemplate.getColumns();
         List<ExcelTemplate> columns = template.stream().map(item -> new ExcelTemplate(item.getKey(), item.getColumn())).collect(Collectors.toList());
 
+        List<ProductModel> updatedProducts = new ArrayList<>();
         List<ProductImport> productImports = new ArrayList<>();
         Set<String> productNumbers = new HashSet<>();
         Set<String> productCodes = new HashSet<>();
@@ -278,10 +279,9 @@ public class ProductServiceImpl implements ProductService {
                     }
 
                     if (productImports.size() > 0 && (productImports.size() % 200 == 0)) {
-                        createProductByImport(productImports, fileImports, productNumbers, productCodes, categoryNames, brandNames);
+                        updatedProducts.addAll(createProductByImport(productImports, productNumbers, productCodes, categoryNames, brandNames));
 
                         productImports.clear();
-                        fileImports.clear();
                         productNumbers.clear();
                         productCodes.clear();
                         categoryNames.clear();
@@ -294,10 +294,13 @@ public class ProductServiceImpl implements ProductService {
             throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(),  BadRequestError.IMPORT_FAILED);
         }
 
+        asyncService.generateQRCodeProduct(updatedProducts);
+
+        asyncService.createImageProduct(updatedProducts, fileImports);
         log.info("******************** import file successfully");
     }
 
-    private void createProductByImport(List<ProductImport> productImports, Map<String, List<String>> fileImports, Set<String> productNumbers, Set<String> productCodes, Set<String> categoryNames, Set<String> brandNames) {
+    private List<ProductModel> createProductByImport(List<ProductImport> productImports, Set<String> productNumbers, Set<String> productCodes, Set<String> categoryNames, Set<String> brandNames) {
         log.info("******************** import file start");
         // category
         List<ProductPropertyModel> existedCategories = propertyRepository.findByTypeAndNames(ProductPropertyType.CATEGORY, categoryNames.stream().map(item -> item.toUpperCase()).collect(Collectors.toList()));
@@ -360,11 +363,7 @@ public class ProductServiceImpl implements ProductService {
             product.setBrand(brand);
             products.add(product);
         });
-        List<ProductModel> updatedProducts = repository.saveAll(products);
-
-        asyncService.generateQRCodeProduct(updatedProducts);
-
-        asyncService.createImageProduct(updatedProducts, fileImports);
+        return repository.saveAll(products);
     }
 
     @Override
