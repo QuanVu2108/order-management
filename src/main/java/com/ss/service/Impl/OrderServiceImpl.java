@@ -492,7 +492,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemToolRequest request) {
+    public OrderItemResponse updateOrderItemByTool(UUID orderItemId, OrderItemToolRequest request) {
         Optional<OrderItemModel> orderItemModelOptional = orderItemRepository.findById(orderItemId);
         if (orderItemModelOptional.isEmpty())
             throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_INVALID.getMessage(),  InvalidInputError.ORDER_ITEM_INVALID);
@@ -503,7 +503,7 @@ public class OrderServiceImpl implements OrderService {
             telegramBotService.sendOrderItem(orderItem, request.getStatus());
 
         orderItem = orderItemRepository.save(orderItem);
-        return orderItem;
+        return new OrderItemResponse(orderItem);
     }
 
     @Override
@@ -814,7 +814,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request) {
+    public List<OrderItemResponse> submitByTool(OrderItemSubmittedRequest request) {
         List<OrderItemModel> orderItems = orderItemRepository.findAllById(request.getIds());
         Map<UUID, Long> inCartOrderItem = new HashMap<>();
         orderItems.forEach(item -> {
@@ -823,6 +823,6 @@ public class OrderServiceImpl implements OrderService {
         });
         telegramBotService.sendOrderItems(orderItems, inCartOrderItem);
         orderItems = orderItemRepository.saveAll(orderItems);
-        return orderItems;
+        return orderItems.stream().map(OrderItemResponse::new).collect(Collectors.toList());
     }
 }

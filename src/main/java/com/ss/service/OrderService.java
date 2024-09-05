@@ -30,9 +30,9 @@ public interface OrderService {
 
     Resource exportOrderItem(OrderItemQuery orderItemQuery);
 
-    List<OrderItemModel> submitByTool(OrderItemSubmittedRequest request);
+    List<OrderItemResponse> submitByTool(OrderItemSubmittedRequest request);
 
-    OrderItemModel updateOrderItemByTool(UUID orderItemId, OrderItemToolRequest request);
+    OrderItemResponse updateOrderItemByTool(UUID orderItemId, OrderItemToolRequest request);
 
     List<OrderToolResponse> searchListOrder(List<UUID> ids, String code, List<OrderStatus> statuses, Long fromDate, Long toDate, String createdUser);
 
