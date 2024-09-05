@@ -2,15 +2,12 @@ package com.ss.controller;
 
 import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
-import com.ss.dto.request.OrderItemRequest;
 import com.ss.dto.request.OrderItemSubmittedRequest;
 import com.ss.dto.request.OrderItemToolRequest;
 import com.ss.dto.response.*;
 import com.ss.enums.OrderItemStatus;
 import com.ss.enums.OrderStatus;
-import com.ss.model.OrderItemModel;
 import com.ss.repository.query.OrderItemQuery;
-import com.ss.repository.query.OrderQuery;
 import com.ss.service.OrderService;
 import com.ss.service.ProductService;
 import lombok.AllArgsConstructor;
@@ -75,14 +72,14 @@ public class ToolController {
     }
 
     @PutMapping("/order-item/{orderItemId}")
-    ServiceResponse<OrderItemModel> updateOrderItem(
+    ServiceResponse<OrderItemResponse> updateOrderItem(
             @PathVariable @Valid UUID orderItemId,
             @RequestBody @Valid OrderItemToolRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.updateOrderItemByTool(orderItemId, request));
     }
 
     @PostMapping("/order-item/submit")
-    ServiceResponse<List<OrderItemModel>> submitOrderItem(
+    ServiceResponse<List<OrderItemResponse>> submitOrderItem(
             @RequestBody @Valid OrderItemSubmittedRequest request) {
         return ServiceResponse.succeed(HttpStatus.OK, orderService.submitByTool(request));
     }
