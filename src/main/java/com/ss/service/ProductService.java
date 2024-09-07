@@ -2,6 +2,7 @@ package com.ss.service;
 
 import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
+import com.ss.dto.request.MultiRequest;
 import com.ss.dto.request.ProductRequest;
 import com.ss.dto.response.ProductCheckImportResponse;
 import com.ss.dto.response.ProductResponse;
@@ -20,6 +21,8 @@ public interface ProductService {
     ProductResponse update(long id, ProductRequest request);
 
     void delete(long id);
+
+    void deleteMulti(MultiRequest request);
 
     void importFile(MultipartFile file);
 

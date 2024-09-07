@@ -10,10 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public interface ProductRepository extends JpaRepository<ProductModel, Long> {
@@ -57,4 +54,6 @@ public interface ProductRepository extends JpaRepository<ProductModel, Long> {
     Optional<ProductModel> findByProductNumber(String productNumber);
 
     List<ProductModel> findByProductNumberIn(List<String> productNumbers);
+
+    List<ProductModel> findByIdIn(Collection<Long> ids);
 }

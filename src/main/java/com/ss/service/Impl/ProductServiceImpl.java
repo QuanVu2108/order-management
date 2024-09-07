@@ -4,6 +4,7 @@ import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageCriteriaPageableMapper;
 import com.ss.dto.pagination.PageResponse;
 import com.ss.dto.pagination.Paging;
+import com.ss.dto.request.MultiRequest;
 import com.ss.dto.request.ProductRequest;
 import com.ss.dto.response.*;
 import com.ss.enums.ProductPropertyType;
@@ -16,7 +17,10 @@ import com.ss.exception.http.InvalidInputError;
 import com.ss.model.*;
 import com.ss.repository.*;
 import com.ss.repository.query.ProductQuery;
-import com.ss.service.*;
+import com.ss.service.AsyncService;
+import com.ss.service.ProductService;
+import com.ss.service.StoreService;
+import com.ss.service.UserService;
 import com.ss.service.mapper.ProductPropertyMapper;
 import com.ss.service.mapper.StoreMapper;
 import com.ss.util.StorageUtil;
@@ -44,9 +48,9 @@ import java.util.stream.Collectors;
 
 import static com.ss.enums.Const.DATE_TIME_DETAIL_FORMATTER;
 import static com.ss.enums.Const.MAX_EXPORT_SIZE;
+import static com.ss.util.CommonUtil.*;
 import static com.ss.util.DateUtils.instantToString;
 import static com.ss.util.QRCodeUtil.generateQRCodeImage;
-import static com.ss.util.CommonUtil.*;
 import static com.ss.util.excel.ExcelUtil.*;
 
 @Service
@@ -181,17 +185,50 @@ public class ProductServiceImpl implements ProductService {
     public void delete(long id) {
         Optional<ProductModel> productOptional = repository.findById(id);
         if (productOptional.isEmpty())
-            throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(),  InvalidInputError.PRODUCT_INVALID);
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(), InvalidInputError.PRODUCT_INVALID);
         ProductModel product = productOptional.get();
         List<OrderItemModel> orderItems = orderItemRepository.findByProduct(product);
         if (!orderItems.isEmpty())
-            throw new ExceptionResponse(InvalidInputError.PRODUCT_WAS_BE_USING.getMessage(),  InvalidInputError.PRODUCT_WAS_BE_USING);
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_WAS_BE_USING.getMessage(), InvalidInputError.PRODUCT_WAS_BE_USING);
 
         List<FileModel> files = fileRepository.findByProduct(product);
         files.forEach(file -> file.setDeleted(true));
         fileRepository.saveAll(files);
         product.setDeleted(true);
         repository.save(product);
+    }
+
+    @Override
+    public void deleteMulti(MultiRequest request) {
+        List<ProductModel> products = repository.findByIdIn(request.getProductIds());
+        if (products.isEmpty())
+            return;
+
+        List<ProductModel> allDeletableProducts = new ArrayList<>();
+        List<FileModel> deleteFiles = new ArrayList<>();
+        List<ProductModel> checkingProducts = new ArrayList<>();
+        for (int i = 0; i < products.size(); i++) {
+            ProductModel product = products.get(i);
+            checkingProducts.add(product);
+            if ((checkingProducts.size() == 100) || (i == products.size() - 1)) {
+                List<OrderItemModel> orderItems = orderItemRepository.findByProductIn(checkingProducts);
+                List<Long> usingProductIds = orderItems.stream()
+                        .filter(item -> item.getProduct() != null)
+                        .map(item -> item.getProduct().getId())
+                        .collect(Collectors.toList());
+                List<ProductModel> deletableProducts = checkingProducts.stream()
+                        .filter(item -> !usingProductIds.contains(item.getId()))
+                        .collect(Collectors.toList());
+                deleteFiles.addAll(fileRepository.findByProductIn(deletableProducts));
+                allDeletableProducts.addAll(deletableProducts);
+                checkingProducts.clear();
+            }
+        }
+
+        deleteFiles.forEach(file -> file.setDeleted(true));
+        fileRepository.saveAll(deleteFiles);
+        allDeletableProducts.forEach(product -> product.setDeleted(true));
+        repository.saveAll(allDeletableProducts);
     }
 
     @Override
@@ -291,7 +328,7 @@ public class ProductServiceImpl implements ProductService {
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(),  BadRequestError.IMPORT_FAILED);
+            throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(), BadRequestError.IMPORT_FAILED);
         }
 
         asyncService.generateQRCodeProduct(updatedProducts);
@@ -509,7 +546,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse uploadImage(long id, MultipartFile[] fileRequests) {
         Optional<ProductModel> productOptional = repository.findById(id);
         if (productOptional.isEmpty())
-            throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(),  InvalidInputError.PRODUCT_INVALID);
+            throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(), InvalidInputError.PRODUCT_INVALID);
         ProductModel product = productOptional.get();
 
         Set<FileModel> images = new HashSet<>();
@@ -584,7 +621,7 @@ public class ProductServiceImpl implements ProductService {
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(),  BadRequestError.IMPORT_FAILED);
+            throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(), BadRequestError.IMPORT_FAILED);
         }
         List<ProductModel> products = repository.findByCodeInOrProductNumberIn(new ArrayList<>(productCodes), new ArrayList<>(productNumbers));
         List<StoreModel> storeModels = storeService.findByNameIn(storeNames);
@@ -663,7 +700,7 @@ public class ProductServiceImpl implements ProductService {
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(),  BadRequestError.IMPORT_FAILED);
+            throw new ExceptionResponse(BadRequestError.IMPORT_FAILED.getMessage(), BadRequestError.IMPORT_FAILED);
         }
 
         return enrichProductCheckImport(new ArrayList<>(productNumbers), productQuantities, store);

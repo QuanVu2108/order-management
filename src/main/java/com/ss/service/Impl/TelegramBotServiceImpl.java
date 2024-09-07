@@ -14,6 +14,7 @@ import com.ss.service.ProductService;
 import com.ss.service.TelegramBotService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,9 @@ public class TelegramBotServiceImpl implements TelegramBotService {
     private final OrderItemRepository orderItemRepository;
 
     private final ProductService productService;
+
+    @Value("${gcp.server}")
+    private String serverGcp;
 
     @Override
     @Async
@@ -77,7 +81,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             ProductResponse product = products.stream()
                     .filter(item -> item.getId() == productId)
                     .findFirst().orElse(null);
-            if(product == null)
+            if (product == null)
                 continue;
 
             List<String> tableColumns = new ArrayList<>();
@@ -93,7 +97,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             tableData.add(tableColumns);
             if (product.getImages() != null && !product.getImages().isEmpty()) {
                 FileResponse file = new ArrayList<>(product.getImages()).get(0);
-                imageBytes.add(downloadImage(file.getUrl()));
+                imageBytes.add(downloadImage(file.getUrl(), serverGcp));
             } else
                 imageBytes.add(new byte[0]);
             orderItemCnt += Math.toIntExact(itemCountMap.get(product.getId()));
@@ -177,7 +181,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             tableData.add(tableColumns);
             if (orderItem.getProduct().getImages() != null && !orderItem.getProduct().getImages().isEmpty()) {
                 FileModel file = new ArrayList<>(orderItem.getProduct().getImages()).get(0);
-                imageBytes.add(downloadImage(file.getUrl()));
+                imageBytes.add(downloadImage(file.getUrl(), serverGcp));
             } else
                 imageBytes.add(new byte[0]);
 

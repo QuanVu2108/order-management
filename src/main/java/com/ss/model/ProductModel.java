@@ -1,7 +1,6 @@
 package com.ss.model;
 
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.ss.dto.request.ProductRequest;
 import lombok.*;
 import org.hibernate.annotations.Where;

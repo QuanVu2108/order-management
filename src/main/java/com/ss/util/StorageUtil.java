@@ -75,7 +75,7 @@ public class StorageUtil {
     }
 
     public String uploadFileByUrl(String fileName, String url) {
-        byte[] fileBytes = FileUtil.downloadImage(url);
+        byte[] fileBytes = FileUtil.downloadImage(url, serverGcp);
         MultipartFile file = new CustomMultipartFile(fileBytes, fileName, IMAGE_CONTENT_TYPE);
         if (file == null)
             return null;
