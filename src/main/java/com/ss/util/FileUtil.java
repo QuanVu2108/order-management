@@ -14,35 +14,28 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
-import com.ss.dto.pagination.PageCriteria;
-import com.ss.dto.pagination.PageResponse;
-import com.ss.dto.response.OrderItemResponse;
-import com.ss.enums.excel.OrderItemExportExcel;
 import com.ss.exception.ExceptionResponse;
 import com.ss.exception.http.InvalidInputError;
-import com.ss.repository.query.OrderItemQuery;
 import com.ss.util.excel.ExportTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
-import static com.ss.enums.Const.*;
+import static com.ss.enums.Const.TELEGRAM_IMAGE_HEIGHT;
+import static com.ss.enums.Const.TELEGRAM_IMAGE_WITH;
 import static com.ss.util.excel.ExcelUtil.*;
-import static com.ss.util.excel.ExcelUtil.autoSizeColumns;
 
 @Slf4j
+@Component
 public final class FileUtil {
 
     public static File createPdfWithTableAndImage(String title, List<String> data, List<List<String>> tableData, List<byte[]> imageBytes) {
@@ -79,7 +72,7 @@ public final class FileUtil {
             // Add table rows
             font = PdfFontFactory.createFont("Helvetica");
             for (int i = 1; i < tableData.size(); i++) {
-                for (int j = 0; j < tableData.get(i).size(); j++ ) {
+                for (int j = 0; j < tableData.get(i).size(); j++) {
                     String cellData = tableData.get(i).get(j);
                     if (cellData.equals("image_" + (i - 1)) && imageBytes.get(i - 1).length > 0) {
                         ImageData imageData = ImageDataFactory.create(imageBytes.get(i - 1));
@@ -108,10 +101,11 @@ public final class FileUtil {
         }
     }
 
-    public static byte[] downloadImage(String imageUrl) {
+    public static byte[] downloadImage(String imageUrl, String serverGcp) {
         if (!StringUtils.hasText(imageUrl))
             return new byte[0];
         try {
+            imageUrl = imageUrl.replace(serverGcp, "http://localhost");
             URL url = new URL(imageUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");

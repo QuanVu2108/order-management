@@ -2,6 +2,7 @@ package com.ss.controller;
 
 import com.ss.dto.pagination.PageCriteria;
 import com.ss.dto.pagination.PageResponse;
+import com.ss.dto.request.MultiRequest;
 import com.ss.dto.request.ProductPropertyRequest;
 import com.ss.dto.request.ProductRequest;
 import com.ss.dto.response.ProductCheckImportResponse;
@@ -53,6 +54,12 @@ public class ProductController {
     @DeleteMapping("/{id}")
     ServiceResponse<Void> delete(@PathVariable @Valid long id) {
         productService.delete(id);
+        return ServiceResponse.succeed(HttpStatus.OK, null);
+    }
+
+    @DeleteMapping("/delete-multi")
+    ServiceResponse<Void> deleteMulti(@RequestBody @Valid MultiRequest request) {
+        productService.deleteMulti(request);
         return ServiceResponse.succeed(HttpStatus.OK, null);
     }
 
