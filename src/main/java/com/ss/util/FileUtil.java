@@ -30,8 +30,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
-import static com.ss.enums.Const.TELEGRAM_IMAGE_HEIGHT;
-import static com.ss.enums.Const.TELEGRAM_IMAGE_WITH;
+import static com.ss.enums.Const.*;
 import static com.ss.util.excel.ExcelUtil.*;
 
 @Slf4j
@@ -105,7 +104,7 @@ public final class FileUtil {
         if (!StringUtils.hasText(imageUrl))
             return new byte[0];
         try {
-            imageUrl = imageUrl.replace(serverGcp, "http://localhost");
+            imageUrl = imageUrl.replace(serverGcp, GCP_SERVER_URL);
             URL url = new URL(imageUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
