@@ -16,7 +16,7 @@ public interface Const {
 
     String ORDER_ITEM_COUNT = "ORDER_ITEM_COUNT";
 
-    String GCP_SERVER_URL = "http://fake-gs-server";
+    String GCP_SERVER_URL = "http://fake-gcs-server";
 
     int MAX_EXPORT_SIZE = 100000;
 

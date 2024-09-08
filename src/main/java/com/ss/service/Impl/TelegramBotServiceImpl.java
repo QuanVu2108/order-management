@@ -44,6 +44,9 @@ public class TelegramBotServiceImpl implements TelegramBotService {
     @Value("${gcp.server}")
     private String serverGcp;
 
+    @Value("${gcp.domain}")
+    private String domainGcp;
+
     @Override
     @Async
     @Transactional
@@ -97,7 +100,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             tableData.add(tableColumns);
             if (product.getImages() != null && !product.getImages().isEmpty()) {
                 FileResponse file = new ArrayList<>(product.getImages()).get(0);
-                imageBytes.add(downloadImage(file.getUrl(), serverGcp));
+                imageBytes.add(downloadImage(file.getUrl(), domainGcp));
             } else
                 imageBytes.add(new byte[0]);
             orderItemCnt += Math.toIntExact(itemCountMap.get(product.getId()));
@@ -181,7 +184,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             tableData.add(tableColumns);
             if (orderItem.getProduct().getImages() != null && !orderItem.getProduct().getImages().isEmpty()) {
                 FileModel file = new ArrayList<>(orderItem.getProduct().getImages()).get(0);
-                imageBytes.add(downloadImage(file.getUrl(), serverGcp));
+                imageBytes.add(downloadImage(file.getUrl(), domainGcp));
             } else
                 imageBytes.add(new byte[0]);
 
