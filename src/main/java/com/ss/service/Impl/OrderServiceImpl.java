@@ -34,6 +34,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -112,9 +113,6 @@ public class OrderServiceImpl implements OrderService {
                 updatingItemIds.add(itemRequest.getId());
             }
         });
-        // create new order item
-        List<OrderItemModel> orderItems = createOrderItem(newItems, order);
-
         // update order item
         List<UUID> storeIds = updatingItems.stream()
                 .filter(item -> item.getStoreId() != null)
@@ -127,9 +125,9 @@ public class OrderServiceImpl implements OrderService {
                 .map(OrderItemRequest::getProductId)
                 .collect(Collectors.toList());
         List<ProductModel> products = productService.findByIds(productIds);
-        List<FileModel> files = fileRepository.findByProductIn(products);
 
-        List<OrderItemModel> existedItems = orderItemRepository.findAllById(updatingItemIds);
+        List<OrderItemModel> orderItems = new ArrayList<>();
+        List<OrderItemModel> existedItems = orderItemRepository.findByOrderModel(order);
         existedItems.forEach(existedItem -> {
             OrderItemRequest itemRequest = updatingItems.stream()
                     .filter(item -> item.getId().equals(existedItem.getId()))
@@ -154,6 +152,9 @@ public class OrderServiceImpl implements OrderService {
             orderItems.add(existedItem);
         });
 
+        // create new order item
+        orderItems.addAll(createOrderItem(newItems, order));
+
         order.update(request);
         order = orderRepository.save(order);
         List<OrderItemModel> updatedOrderItems = orderItemRepository.saveAll(orderItems);
@@ -165,6 +166,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     public List<OrderItemModel> createOrderItem(List<OrderItemRequest> itemRequests, OrderModel order) {
+        if (CollectionUtils.isEmpty(itemRequests))
+            return new ArrayList<>();
         List<UUID> storeIds = itemRequests.stream()
                 .filter(item -> item.getStoreId() != null)
                 .map(OrderItemRequest::getStoreId)
