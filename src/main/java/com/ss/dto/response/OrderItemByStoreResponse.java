@@ -24,7 +24,8 @@ public class OrderItemByStoreResponse {
     }
 
     public void addOrder(OrderModel order) {
-        this.orderIds.add(order.getId());
+        if (order != null)
+            this.orderIds.add(order.getId());
     }
 
     public void updateProductCnt(Long itemQuantity) {

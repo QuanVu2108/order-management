@@ -28,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -44,9 +43,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.ss.enums.Const.*;
+import static com.ss.util.CommonUtil.convertToString;
 import static com.ss.util.DateUtils.instantToString;
 import static com.ss.util.DateUtils.timestampToString;
-import static com.ss.util.CommonUtil.convertToString;
 import static com.ss.util.excel.ExcelUtil.*;
 
 @Service
@@ -137,13 +136,13 @@ public class OrderServiceImpl implements OrderService {
                         .filter(item -> itemRequest.getStoreId() != null && item.getId().equals(itemRequest.getStoreId()))
                         .findFirst().orElse(null);
                 if (store == null)
-                    throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(),  InvalidInputError.STORE_INVALID);
+                    throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(), InvalidInputError.STORE_INVALID);
 
                 ProductModel product = products.stream()
                         .filter(item -> itemRequest.getProductId() != null && item.getId() == itemRequest.getProductId())
                         .findFirst().orElse(null);
                 if (product == null)
-                    throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(),  InvalidInputError.PRODUCT_INVALID);
+                    throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(), InvalidInputError.PRODUCT_INVALID);
 
                 existedItem.update(itemRequest, store, product);
             } else {
@@ -189,13 +188,13 @@ public class OrderServiceImpl implements OrderService {
                     .filter(item -> itemRequest.getStoreId() != null && item.getId().equals(itemRequest.getStoreId()))
                     .findFirst().orElse(null);
             if (store == null)
-                throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(),  InvalidInputError.STORE_INVALID);
+                throw new ExceptionResponse(InvalidInputError.STORE_INVALID.getMessage(), InvalidInputError.STORE_INVALID);
 
             ProductModel product = products.stream()
                     .filter(item -> itemRequest.getProductId() != null && item.getId() == itemRequest.getProductId())
                     .findFirst().orElse(null);
             if (product == null)
-                throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(),  InvalidInputError.PRODUCT_INVALID);
+                throw new ExceptionResponse(InvalidInputError.PRODUCT_INVALID.getMessage(), InvalidInputError.PRODUCT_INVALID);
 
             orderItem.update(itemRequest, store, product);
             orderItems.add(orderItem);
@@ -346,7 +345,7 @@ public class OrderServiceImpl implements OrderService {
     public void receiveItemMulti(UUID orderId, List<OrderItemReceivedMultiRequest> request) {
         Optional<OrderModel> orderModelOptional = orderRepository.findById(orderId);
         if (orderModelOptional.isEmpty())
-            throw new ExceptionResponse(InvalidInputError.ORDER_INVALID.getMessage(),  InvalidInputError.ORDER_INVALID);
+            throw new ExceptionResponse(InvalidInputError.ORDER_INVALID.getMessage(), InvalidInputError.ORDER_INVALID);
         OrderModel order = orderModelOptional.get();
         List<OrderItemModel> orderItems = order.getItems();
         List<OrderItemModel> importOrderItems = new ArrayList<>();
@@ -499,7 +498,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderItemResponse updateOrderItemByTool(UUID orderItemId, OrderItemToolRequest request) {
         Optional<OrderItemModel> orderItemModelOptional = orderItemRepository.findById(orderItemId);
         if (orderItemModelOptional.isEmpty())
-            throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_INVALID.getMessage(),  InvalidInputError.ORDER_ITEM_INVALID);
+            throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_INVALID.getMessage(), InvalidInputError.ORDER_ITEM_INVALID);
         OrderItemModel orderItem = orderItemModelOptional.get();
         orderItem.updateByTool(request);
 
@@ -655,7 +654,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderItemResponse receiveItem(UUID orderItemId, OrderItemReceivedRequest request) {
         Optional<OrderItemModel> itemOptional = orderItemRepository.findById(orderItemId);
         if (itemOptional.isEmpty())
-            throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_INVALID.getMessage(),  InvalidInputError.ORDER_ITEM_INVALID);
+            throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_INVALID.getMessage(), InvalidInputError.ORDER_ITEM_INVALID);
         OrderItemModel item = itemOptional.get();
         item.updateByReceive(request);
         item = orderItemRepository.save(item);
@@ -682,29 +681,43 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
     public List<OrderItemByStoreResponse> getOrderByStore(List<OrderItemStatus> statuses) {
         List<OrderItemModel> orderItems = orderItemRepository.findByStatusIn(statuses);
-        Set<OrderItemByStoreResponse> responses = orderItems.stream()
-                .map(item -> new OrderItemByStoreResponse(item.getStore()))
+        return getOrderItemByStoreResponse(orderItems);
+    }
+
+    private List<OrderItemByStoreResponse> getOrderItemByStoreResponse(List<OrderItemModel> orderItems) {
+        Set<UUID> storeIds = orderItems.stream()
+                .filter(item -> item.getStore() != null)
+                .map(item -> item.getStore().getId())
                 .collect(Collectors.toSet());
+        Set<StoreModel> stores = storeService.findByIds(storeIds);
+        List<OrderItemByStoreResponse> responses = new ArrayList<>();
         orderItems.forEach(orderItem -> {
-            OrderItemByStoreResponse response = responses.stream()
-                    .filter(item -> item.getStore() != null && item.getStore().equals(orderItem.getStore()))
-                    .findFirst().orElse(null);
-            if (response != null) {
+            if (orderItem.getStore() != null) {
+                StoreModel store = stores.stream()
+                        .filter(item -> item.getId().equals(orderItem.getStore().getId()))
+                        .findFirst().orElse(null);
+                OrderItemByStoreResponse response = new OrderItemByStoreResponse(store);
                 response.addOrder(orderItem.getOrderModel());
-                response.updateProductCnt(orderItem.getQuantityOrder());
+                response.updateProductCnt(orderItem.getQuantityInCart());
+                responses.add(response);
             }
         });
-        return new ArrayList<>(responses);
+        return responses;
+    }
+
+    @Override
+    public List<OrderItemByStoreResponse> getStoreOrderByInCart() {
+        List<OrderItemModel> orderItems = orderItemRepository.findByStatusInAndQuantityInCartGreaterThan(Arrays.asList(OrderItemStatus.PENDING), Long.valueOf(0));
+        return getOrderItemByStoreResponse(orderItems);
     }
 
     @Override
     public OrderItemResponse cancelItem(UUID orderItemId) {
         Optional<OrderItemModel> itemOptional = orderItemRepository.findById(orderItemId);
         if (itemOptional.isEmpty())
-            throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_INVALID.getMessage(),  InvalidInputError.ORDER_ITEM_INVALID);
+            throw new ExceptionResponse(InvalidInputError.ORDER_ITEM_INVALID.getMessage(), InvalidInputError.ORDER_ITEM_INVALID);
         OrderItemModel item = itemOptional.get();
         item.setStatus(OrderItemStatus.CANCEL);
         item = orderItemRepository.save(item);
@@ -716,24 +729,6 @@ public class OrderServiceImpl implements OrderService {
     public OrderItemStatisticResponse getOrderItemStatistic(OrderItemQuery orderItemQuery) {
         List<OrderItemModel> orderItems = orderItemRepository.searchList(orderItemQuery);
         return enrichItemStatistic(orderItems);
-    }
-
-    @Override
-    public List<OrderItemByStoreResponse> getStoreOrderByInCart() {
-        List<OrderItemModel> orderItems = orderItemRepository.findByStatusInAndQuantityInCartGreaterThan(Arrays.asList(OrderItemStatus.PENDING), Long.valueOf(0));
-        Set<OrderItemByStoreResponse> responses = orderItems.stream()
-                .map(item -> new OrderItemByStoreResponse(item.getStore()))
-                .collect(Collectors.toSet());
-        orderItems.forEach(orderItem -> {
-            OrderItemByStoreResponse response = responses.stream()
-                    .filter(item -> item.getStore() != null && item.getStore().equals(orderItem.getStore()))
-                    .findFirst().orElse(null);
-            if (response != null) {
-                response.addOrder(orderItem.getOrderModel());
-                response.updateProductCnt(orderItem.getQuantityInCart());
-            }
-        });
-        return new ArrayList<>(responses);
     }
 
     @Override
