@@ -22,4 +22,5 @@ public class OrderItemQuery {
     private List<UUID> storeIds;
     private List<OrderItemStatus> statuses;
     private OrderStatus orderStatus;
+    private Boolean isGetInCart;
 }

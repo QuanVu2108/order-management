@@ -49,6 +49,7 @@ public class ToolController {
             @RequestParam(name = "storeIds", required = false) List<UUID> storeIds,
             @RequestParam(name = "store", required = false) String store,
             @RequestParam(name = "statuses", required = false) List<OrderItemStatus> statuses,
+            @RequestParam(name = "isGetInCart", required = false) Boolean isGetInCart,
             @Valid PageCriteria pageCriteria) {
 
         OrderItemQuery orderItemQuery = OrderItemQuery.builder()
@@ -62,6 +63,7 @@ public class ToolController {
                 .storeIds(storeIds)
                 .statuses(statuses)
                 .orderStatus(OrderStatus.PENDING)
+                .isGetInCart(isGetInCart)
                 .build();
         return PageResponse.succeed(HttpStatus.OK, orderService.searchOrderItem(orderItemQuery, pageCriteria));
     }

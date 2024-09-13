@@ -37,6 +37,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItemModel, UUID>
             " AND (:#{#query.storeIds} is null or store.id in :#{#query.storeIds}) " +
             " AND (:#{#query.statuses} is null or orderItem.status in :#{#query.statuses}) " +
             " AND (:#{#query.orderStatus} is null or orderModel.status = :#{#query.orderStatus}) " +
+            " AND (:#{#query.isGetInCart} is null or :#{#query.isGetInCart} is false or (:#{#query.isGetInCart} is true and orderItem.quantityInCart > 0)) " +
             " ORDER BY orderItem.updatedAt DESC " +
             ""
     )
