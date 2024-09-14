@@ -1,6 +1,7 @@
 
 package com.ss.dto.response;
 
+import com.ss.model.OrderItemModel;
 import com.ss.model.OrderModel;
 import com.ss.model.StoreModel;
 import lombok.Data;
@@ -23,12 +24,10 @@ public class OrderItemByStoreResponse {
         this.itemCnt = 0;
     }
 
-    public void addOrder(OrderModel order) {
-        if (order != null)
-            this.orderIds.add(order.getId());
-    }
-
-    public void updateProductCnt(Long itemQuantity) {
-        this.itemCnt = this.itemCnt + itemQuantity;
+    public void updateOrder(OrderItemModel orderItem) {
+        if (orderItem.getOrderModel() != null) {
+            this.orderIds.add(orderItem.getOrderModel().getId());
+        }
+        this.itemCnt = this.itemCnt + orderItem.getQuantityInCart();
     }
 }

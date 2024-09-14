@@ -699,8 +699,7 @@ public class OrderServiceImpl implements OrderService {
                         .filter(item -> item.getId().equals(orderItem.getStore().getId()))
                         .findFirst().orElse(null);
                 OrderItemByStoreResponse response = new OrderItemByStoreResponse(store);
-                response.addOrder(orderItem.getOrderModel());
-                response.updateProductCnt(orderItem.getQuantityInCart());
+                response.updateOrder(orderItem);
                 responses.add(response);
             }
         });
@@ -710,7 +709,32 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderItemByStoreResponse> getStoreOrderByInCart() {
         List<OrderItemModel> orderItems = orderItemRepository.findByStatusInAndQuantityInCartGreaterThan(Arrays.asList(OrderItemStatus.PENDING), Long.valueOf(0));
-        return getOrderItemByStoreResponse(orderItems);
+
+        Set<UUID> storeIds = orderItems.stream()
+                .filter(item -> item.getStore() != null)
+                .map(item -> item.getStore().getId())
+                .collect(Collectors.toSet());
+        Set<StoreModel> stores = storeService.findByIds(storeIds);
+        List<OrderItemByStoreResponse> responses = new ArrayList<>();
+        orderItems.forEach(orderItem -> {
+            if (orderItem.getStore() != null) {
+                StoreModel store = stores.stream()
+                        .filter(item -> item.getId().equals(orderItem.getStore().getId()))
+                        .findFirst().orElse(null);
+                if (store != null) {
+                    OrderItemByStoreResponse response = responses.stream()
+                            .filter(item -> item.getStore() != null && store.getId().equals(item.getStore().getId()))
+                            .findFirst().orElse(null);
+                    if (response == null) {
+                        response = new OrderItemByStoreResponse(store);
+                        response.updateOrder(orderItem);
+                        responses.add(response);
+                    } else
+                        response.updateOrder(orderItem);
+                }
+            }
+        });
+        return responses;
     }
 
     @Override
